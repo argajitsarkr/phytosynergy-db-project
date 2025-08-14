@@ -1,0 +1,1 @@
+web: gunicorn phytosynergy_project.wsgi
