@@ -1,0 +1,80 @@
+{% extends 'synergy_data/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<!-- Section 1: Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <h1>Accelerating the Fight Against AMR with Curated Synergy Data</h1>
+                <p class="tagline">The world's first curated database dedicated to phytochemical-antibiotic combinations against ESKAPE pathogens.</p>
+                
+                <div class="hero-search-bar">
+                    <form action="{% url 'database_search' %}" method="get" class="input-group">
+                        <input type="text" name="query" class="form-control" placeholder="Search by Phytochemical, Antibiotic, or Pathogen...">
+                        <button class="btn btn-primary" type="submit">Search</button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Section 2: Statistics Bar -->
+<section class="stats-bar">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3 stat-item">
+                <span class="stat-number">500+</span>
+                <span class="stat-label">Synergy Entries</span>
+                <small class="text-muted">Curated & Validated</small>
+            </div>
+            <div class="col-md-3 stat-item">
+                <span class="stat-number">350+</span>
+                <span class="stat-label">Unique Phytochemicals</span>
+                <small class="text-muted">Computationally Enriched</small>
+            </div>
+            <div class="col-md-3 stat-item">
+                <span class="stat-number">6</span>
+                <span class="stat-label">ESKAPE Pathogens</span>
+                <small class="text-muted">Clinically Critical</small>
+            </div>
+            <div class="col-md-3 stat-item">
+                <span class="stat-number">200+</span>
+                <span class="stat-label">Source Publications</span>
+                <small class="text-muted">Peer-Reviewed</small>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Section 3: How PhytoSynergyDB Empowers Your Research -->
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">From Data to Discovery in Three Steps</h2>
+        <div class="row">
+            <div class="col-md-4 feature-item">
+                <div class="icon">🔍</div> <!-- Placeholder for a real icon -->
+                <h4>Search & Filter</h4>
+                <p>Instantly search thousands of data points. Filter by pathogen, compound, or mechanism of action to find exactly what you need.</p>
+            </div>
+            <div class="col-md-4 feature-item">
+                <div class="icon">📊</div> <!-- Placeholder for a real icon -->
+                <h4>Analyze & Visualize</h4>
+                <p>Gain Deeper Insights: Use our interactive tools—from synergy heatmaps to 3D molecular viewers—to understand complex relationships in the data.</p>
+            </div>
+            <div class="col-md-4 feature-item">
+                <div class="icon">💾</div> <!-- Placeholder for a real icon -->
+                <h4>Download & Integrate</h4>
+                <p>Access structured, machine-readable datasets to integrate directly into your own research and analysis pipelines.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- You can continue adding the "Key Features" and "Our Mission" sections here following the same pattern -->
+
+{% endblock %}
