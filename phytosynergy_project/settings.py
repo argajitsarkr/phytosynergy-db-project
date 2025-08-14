@@ -9,6 +9,8 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
+import os
+import dj_database_url
 
 from pathlib import Path
 
@@ -80,15 +82,15 @@ WSGI_APPLICATION = "phytosynergy_project.wsgi.application"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'phytosynergy_db',       # The name of the database we created
-        'USER': 'postgres',             # The default superuser for PostgreSQL
-        'PASSWORD': 'cU7qPwzFwgT*',    # The password we created for the PostgreSQL user
-        'HOST': 'localhost',            # This means the database is on your computer
-        'PORT': '5432',                 # The default PostgreSQL port
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'phytosynergy_db',
+            'USER': 'postgres',
+            'PASSWORD': 'YOUR_PASSWORD', # Make sure this is still your local password
+            'HOST': 'localhost',
+            'PORT': '5432',
+        }
     }
-}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
