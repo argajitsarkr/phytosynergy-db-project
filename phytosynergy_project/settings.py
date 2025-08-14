@@ -25,8 +25,10 @@ SECRET_KEY = "django-insecure-k^wkjbs5-*op*k6psjgoeur)76)nhqa^9%oxi_trah=o&$cjw(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = [
+    'web-production-412c7.up.railway.app',  # production site
+    '127.0.0.1',                         # local development site
+]
 
 # Application definition
 
