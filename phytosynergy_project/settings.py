@@ -19,87 +19,57 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# ==============================================================================
+# CORE PRODUCTION SETTINGS
+# ==============================================================================
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+# Get the secret key from an environment variable.
+# For local dev, we provide a default fallback value.
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY', 
+    'django-insecure-fallback-key-for-local-development-only'
+)
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-k^wkjbs5-*op*k6psjgoeur)76)nhqa^9%oxi_trah=o&$cjw("
+# DEBUG is False in production, but True if we're running locally.
+# We check for the RAILWAY_STATIC_URL variable, which only exists on Railway.
+DEBUG = 'RAILWAY_STATIC_URL' not in os.environ
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
+# Define the allowed hosts.
 ALLOWED_HOSTS = [
-    'web-production-412c7.up.railway.app',  # production site
-    '127.0.0.1',                         # local development site
+    '127.0.0.1', # For local development
 ]
 
-# Application definition
-
-INSTALLED_APPS = [
-    "synergy_data", # Our new app for all project data
-    "bootstrap5",
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
-]
-
-MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
-]
-
-ROOT_URLCONF = "phytosynergy_project.urls"
-
-TEMPLATES = [
-    {
-        "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
-        "APP_DIRS": True,
-        "OPTIONS": {
-            "context_processors": [
-                "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
-
-                'django.contrib.messages.context_processors.messages',
-                'synergy_data.context_processors.view_counter',
-            ],
-        },
-    },
-]
-
-WSGI_APPLICATION = "phytosynergy_project.wsgi.application"
+# Get the production hostname from Railway's environment variables.
+RAILWAY_HOSTNAME = os.environ.get('RAILWAY_STATIC_URL')
+if RAILWAY_HOSTNAME:
+    # The URL from Railway doesn't have https://, so we remove it.
+    ALLOWED_HOSTS.append(RAILWAY_HOSTNAME.replace('https://', ''))
 
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+# DATABASE CONFIGURATION (The most important part)
 
+# If DATABASE_URL is in the environment, use it (for Railway).
+# Otherwise, use the local PostgreSQL database (for your laptop).
 if 'DATABASE_URL' in os.environ:
-    # This code runs ONLY ON RAILWAY
     DATABASES = {
         'default': dj_database_url.config(conn_max_age=600, ssl_require=False)
     }
 else:
-    # This code runs ONLY ON YOUR LAPTOP
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'phytosynergy_db',
             'USER': 'postgres',
-            'PASSWORD': 'YOUR_PASSWORD', # Your local password
+            'PASSWORD': 'YOUR_LOCAL_PASSWORD', # <-- IMPORTANT: Put your local password here
             'HOST': 'localhost',
             'PORT': '5432',
         }
     }
+
+# CSRF and Trusted Origins for Production
+# This tells Django to trust requests from your production site.
+if RAILWAY_HOSTNAME:
+    CSRF_TRUSTED_ORIGINS = ['https://' + RAILWAY_HOSTNAME]
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -143,10 +113,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles' # This is the new line to add
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# ==============================================================================
-#                      PRODUCTION DATABASE CONFIGURATION
-# ==============================================================================
+# PRODUCTION DATABASE CONFIGURATION
 # This section makes your app production-ready.
+
 import dj_database_url
 import os
 
@@ -155,3 +124,4 @@ import os
 # Otherwise, it leaves your local database settings untouched for local development.
 if 'DATABASE_URL' in os.environ:
     DATABASES['default'] = dj_database_url.config(conn_max_age=600, ssl_require=False)
+
