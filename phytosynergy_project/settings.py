@@ -129,3 +129,16 @@ STATIC_ROOT = BASE_DIR / 'staticfiles' # This is the new line to add
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ==============================================================================
+#                      PRODUCTION DATABASE CONFIGURATION
+# ==============================================================================
+# This section makes your app production-ready.
+import dj_database_url
+import os
+
+# This line checks if the DATABASE_URL environment variable (provided by Railway) exists.
+# If it does, it updates the DATABASES setting to use the cloud database.
+# Otherwise, it leaves your local database settings untouched for local development.
+if 'DATABASE_URL' in os.environ:
+    DATABASES['default'] = dj_database_url.config(conn_max_age=600, ssl_require=False)
