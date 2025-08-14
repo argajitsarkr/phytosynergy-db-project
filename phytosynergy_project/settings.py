@@ -1,3 +1,6 @@
+import os
+import dj_database_url
+
 """
 Django settings for phytosynergy_project project.
 
@@ -9,8 +12,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-import os
-import dj_database_url
+
 
 from pathlib import Path
 
@@ -81,12 +83,19 @@ WSGI_APPLICATION = "phytosynergy_project.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
+if 'DATABASE_URL' in os.environ:
+    # This code runs ONLY ON RAILWAY
+    DATABASES = {
+        'default': dj_database_url.config(conn_max_age=600, ssl_require=False)
+    }
+else:
+    # This code runs ONLY ON YOUR LAPTOP
+    DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'phytosynergy_db',
             'USER': 'postgres',
-            'PASSWORD': 'YOUR_PASSWORD', # Make sure this is still your local password
+            'PASSWORD': 'YOUR_PASSWORD', # Your local password
             'HOST': 'localhost',
             'PORT': '5432',
         }
