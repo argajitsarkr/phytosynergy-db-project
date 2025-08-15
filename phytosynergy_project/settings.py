@@ -41,11 +41,15 @@ ALLOWED_HOSTS = [
     '127.0.0.1', # For local development
 ]
 
-# Get the production hostname from Railway's environment variables and add it.
-RAILWAY_HOSTNAME = os.environ.get('RAILWAY_STATIC_URL')
-if RAILWAY_HOSTNAME:
-    ALLOWED_HOSTS.append(RAILWAY_HOSTNAME.replace('https://', ''))
+# Get the production hostname from Railway's official environment variable.
+RAILWAY_PUBLIC_DOMAIN = os.environ.get('RAILWAY_PUBLIC_DOMAIN')
+if RAILWAY_PUBLIC_DOMAIN:
+    ALLOWED_HOSTS.append(RAILWAY_PUBLIC_DOMAIN)
 
+# CSRF and Trusted Origins for Production
+# This tells Django to trust requests from your production site for secure forms.
+if RAILWAY_PUBLIC_DOMAIN:
+    CSRF_TRUSTED_ORIGINS = ['https://' + RAILWAY_PUBLIC_DOMAIN]
 
 # ==============================================================================
 # APPLICATION DEFINITION (RESTORED)
