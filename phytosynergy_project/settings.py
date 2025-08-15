@@ -18,7 +18,8 @@ SECRET_KEY = os.environ.get(
 )
 
 # DEBUG is False in production, but True if we're running locally.
-DEBUG = 'RAILWAY_STATIC_URL' not in os.environ
+# DEBUG will be True only if an environment variable named DJANGO_DEBUG is set to 'True'
+DEBUG = os.environ.get('DJANGO_DEBUG', '') == 'True'
 
 # Define the allowed hosts.
 ALLOWED_HOSTS = [
