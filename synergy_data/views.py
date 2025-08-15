@@ -1,8 +1,7 @@
-# synergy_data/views.py
-
 from django.shortcuts import render
 from django.db.models import Q
 from .models import Phytochemical, Antibiotic, Pathogen, SynergyExperiment, Source
+from django.http import HttpResponse # <-- ADD THIS IMPORT
 
 # View for the new, modern homepage
 def home_page(request):
@@ -70,3 +69,11 @@ def database_search_page(request):
 # Placeholder for the data download feature
 def download_data(request):
     pass
+
+# ==============================================================================
+# FAILSAFE DIAGNOSTIC VIEW
+# This view does not touch the database at all.
+# ==============================================================================
+def health_check(request):
+    """A simple view that proves the Django app is running."""
+    return HttpResponse("Health Check OK. The Django application is running.", status=200)

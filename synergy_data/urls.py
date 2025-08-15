@@ -1,10 +1,13 @@
 # synergy_data/urls.py
-from django.urls import path
-from . import views
+from django.contrib import admin
+from django.urls import path, include
+from synergy_data import views as synergy_views # Import views for direct access
 
 urlpatterns = [
-    path('', views.home_page, name='home'),
-    path('database/', views.database_search_page, name='database_search'),
-    path('about/', views.about_page, name='about'),
-    path('database/download/', views.download_data, name='download_data'),
+    # TEMPORARY: For debugging, we are making the failsafe health_check our homepage.
+    path('', synergy_views.health_check, name='health_check'),
+
+    # The other URLs are still here but won't be used by the root path for now.
+    path('admin/', admin.site.urls),
+    path('app/', include('synergy_data.urls')), 
 ]
