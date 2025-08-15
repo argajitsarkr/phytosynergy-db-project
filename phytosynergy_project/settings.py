@@ -2,41 +2,24 @@ import os
 import dj_database_url
 from pathlib import Path
 
-# --- START OF DIAGNOSTIC BLOCK ---
-# We will force the application to print its environment variables on startup.
-# ==============================================================================
-print("--- SETTINGS.PY FILE IS BEING LOADED ---")
-db_url = os.environ.get('DATABASE_URL')
-if db_url:
-    print(f"SUCCESS: DATABASE_URL variable was found.")
-else:
-    print(f"CRITICAL FAILURE: The DATABASE_URL environment variable was NOT FOUND (is None).")
-
-print(f"DJANGO_SETTINGS_MODULE is: {os.environ.get('DJANGO_SETTINGS_MODULE')}")
-print("--- END OF DIAGNOSTIC BLOCK ---")
-# ==============================================================================
-
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # ==============================================================================
 # CORE SECURITY & PRODUCTION SETTINGS
-# This section should come first.
 # ==============================================================================
 
-# Get the secret key from an environment variable for security.
 SECRET_KEY = os.environ.get(
     'SECRET_KEY', 
     'django-insecure-fallback-key-for-local-development-only'
 )
 
 # DEBUG is False in production, but True if we're running locally.
-# DEBUG will be True only if an environment variable named DJANGO_DEBUG is set to 'True'
 DEBUG = os.environ.get('DJANGO_DEBUG', '') == 'True'
 
-# Define the allowed hosts.
+
+# --- CORRECTED ALLOWED_HOSTS AND CSRF LOGIC ---
 ALLOWED_HOSTS = [
     '127.0.0.1', # For local development
 ]
@@ -45,15 +28,12 @@ ALLOWED_HOSTS = [
 RAILWAY_PUBLIC_DOMAIN = os.environ.get('RAILWAY_PUBLIC_DOMAIN')
 if RAILWAY_PUBLIC_DOMAIN:
     ALLOWED_HOSTS.append(RAILWAY_PUBLIC_DOMAIN)
-
-# CSRF and Trusted Origins for Production
-# This tells Django to trust requests from your production site for secure forms.
-if RAILWAY_PUBLIC_DOMAIN:
+    # This also tells Django to trust requests from your production site for secure forms.
     CSRF_TRUSTED_ORIGINS = ['https://' + RAILWAY_PUBLIC_DOMAIN]
 
+
 # ==============================================================================
-# APPLICATION DEFINITION (RESTORED)
-# This is the core Django configuration that was missing.
+# APPLICATION DEFINITION
 # ==============================================================================
 
 INSTALLED_APPS = [
@@ -100,27 +80,26 @@ WSGI_APPLICATION = 'phytosynergy_project.wsgi.application'
 
 # ==============================================================================
 # DATABASE CONFIGURATION
-# This is the smart logic that switches between local and production.
 # ==============================================================================
 
-if 'DATABASE_URL' in os.environ:
-    DATABASES = {
-        'default': dj_database_url.config(conn_max_age=600, ssl_require=False)
-    }
-else:
-   DATABASES = {
+DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'phytosynergy_db',
         'USER': 'postgres',
-        'PASSWORD': 'cU7qPwzFwgT*', # <-- IMPORTANT: Put your local password here
+        'PASSWORD': 'cU7qPwzFwgT*',
         'HOST': 'localhost',
         'PORT': '5432',
     }
 }
 
+# If the DATABASE_URL environment variable exists, it will override the default settings.
+if 'DATABASE_URL' in os.environ:
+    DATABASES['default'].update(dj_database_url.config(conn_max_age=600, ssl_require=False))
+
+
 # ==============================================================================
-# PASSWORD VALIDATION, INTERNATIONALIZATION, STATIC FILES (Standard Stuff)
+# STANDARD DJANGO SETTINGS
 # ==============================================================================
 
 # Password validation
@@ -143,7 +122,3 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-# CSRF and Trusted Origins for Production
-if RAILWAY_HOSTNAME:
-    CSRF_TRUSTED_ORIGINS = ['https://' + RAILWAY_HOSTNAME]
