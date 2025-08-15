@@ -88,17 +88,16 @@ if 'DATABASE_URL' in os.environ:
         'default': dj_database_url.config(conn_max_age=600, ssl_require=False)
     }
 else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'phytosynergy_db',
-            'USER': 'postgres',
-            'PASSWORD': 'cU7qPwzFwgT*',
-            'HOST': 'localhost',
-            'PORT': '5432',
-        }
+   DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'phytosynergy_db',
+        'USER': 'postgres',
+        'PASSWORD': 'cU7qPwzFwgT*', # <-- IMPORTANT: Put your local password here
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
-
+}
 
 # ==============================================================================
 # PASSWORD VALIDATION, INTERNATIONALIZATION, STATIC FILES (Standard Stuff)
