@@ -2,6 +2,21 @@ import os
 import dj_database_url
 from pathlib import Path
 
+# --- START OF DIAGNOSTIC BLOCK ---
+# We will force the application to print its environment variables on startup.
+# ==============================================================================
+print("--- SETTINGS.PY FILE IS BEING LOADED ---")
+db_url = os.environ.get('DATABASE_URL')
+if db_url:
+    print(f"SUCCESS: DATABASE_URL variable was found.")
+else:
+    print(f"CRITICAL FAILURE: The DATABASE_URL environment variable was NOT FOUND (is None).")
+
+print(f"DJANGO_SETTINGS_MODULE is: {os.environ.get('DJANGO_SETTINGS_MODULE')}")
+print("--- END OF DIAGNOSTIC BLOCK ---")
+# ==============================================================================
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
