@@ -10,4 +10,3 @@ soupsieve==2.7
 sqlparse==0.5.3
 typing_extensions==4.14.1
 tzdata==2025.2
-py -3.13 -m pip freeze > requirements.txt
