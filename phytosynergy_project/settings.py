@@ -10,19 +10,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # CORE SECURITY & PRODUCTION SETTINGS
 # ==============================================================================
 
-SECRET_KEY = os.environ.get(
-    'SECRET_KEY', 
-    'django-insecure-fallback-key-for-local-development-only'
-)
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'a-default-secret-key-for-development')
+# In production, ensure DJANGO_SECRET_KEY is set in the environment variables.
 
 # DEBUG is False in production, but True if we're running locally.
-DEBUG = os.environ.get('DJANGO_DEBUG', '') == 'True'
+DEBUG = os.environ.get('DEBUG', '1') == '1' # Defaults to True for development
 
 
 # --- CORRECTED ALLOWED_HOSTS AND CSRF LOGIC ---
-ALLOWED_HOSTS = [
-    '127.0.0.1', # For local development
-]
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
 # Get the production hostname from Railway's official environment variable.
 RAILWAY_PUBLIC_DOMAIN = os.environ.get('RAILWAY_PUBLIC_DOMAIN')
@@ -82,16 +78,23 @@ WSGI_APPLICATION = 'phytosynergy_project.wsgi.application'
 # DATABASE CONFIGURATION
 # ==============================================================================
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'phytosynergy_db',
-        'USER': 'postgres',
-        'PASSWORD': 'cU7qPwzFwgT*',
-        'HOST': 'localhost',
-        'PORT': '5432',
+# settings.py
+if 'DATABASE_URL' in os.environ:
+    DATABASES = {
+        'default': dj_database_url.config(conn_max_age=600, ssl_require=False)
     }
-}
+else:
+    # Your old local database settings here for when you develop on your laptop
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'phytosynergy_db',
+            'USER': 'postgres',
+            'PASSWORD': 'YOUR_LOCAL_DB_PASSWORD', # Your password on your laptop
+            'HOST': 'localhost',
+            'PORT': '5432',
+        }
+    }
 
 # If the DATABASE_URL environment variable exists, it will override the default settings.
 if 'DATABASE_URL' in os.environ:
@@ -117,7 +120,7 @@ USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = "static/"
+STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
