@@ -26,4 +26,4 @@ EXPOSE 8000
 
 # The command to run when the container starts
 # We add --no-input to collectstatic for non-interactive environments
-CMD sh -c "python manage.py collectstatic --no-input && gunicorn phytosynergy_project.wsgi:application --bind 0.0.0.0:8000"
+CMD sh -c "python manage.py migrate --no-input && python manage.py collectstatic --no-input && gunicorn phytosynergy_project.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120"

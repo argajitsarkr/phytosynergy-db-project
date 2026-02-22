@@ -1,80 +1,238 @@
 {% extends 'synergy_data/base.html' %}
 {% load static %}
 
+{% block title %}PhytoSynergyDB &mdash; Phytochemical-Antibiotic Synergy Database{% endblock %}
+
 {% block content %}
 
-<!-- Section 1: Hero Section -->
+<!-- ===== HERO ===== -->
 <section class="hero-section">
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-lg-10">
-                <h1>Accelerating the Fight Against AMR with Curated Synergy Data</h1>
-                <p class="tagline">The world's first curated database dedicated to phytochemical-antibiotic combinations against ESKAPE pathogens.</p>
-                
+            <div class="col-lg-9 text-center">
+                <span class="hero-badge">ESKAPE Pathogens &bull; FIC-Indexed &bull; Peer-Reviewed</span>
+                <h1 class="hero-title">Accelerating the Fight Against AMR with Curated Synergy Data</h1>
+                <p class="hero-tagline">
+                    The world's first curated, searchable database dedicated to phytochemical–antibiotic combinations against ESKAPE pathogens. Every entry is manually extracted and validated from peer-reviewed literature.
+                </p>
                 <div class="hero-search-bar">
-                    <form action="{% url 'database_search' %}" method="get" class="input-group">
-                        <input type="text" name="query" class="form-control" placeholder="Search by Phytochemical, Antibiotic, or Pathogen...">
-                        <button class="btn btn-primary" type="submit">Search</button>
+                    <form action="{% url 'database_search' %}" method="get" class="d-flex gap-2">
+                        <input type="text" name="query" class="form-control form-control-lg"
+                               placeholder="Search phytochemical, antibiotic, or pathogen…">
+                        <button class="btn btn-primary btn-lg px-4" type="submit">
+                            <i class="fas fa-search me-1"></i>Search
+                        </button>
                     </form>
                 </div>
-
+                <div class="hero-cta-links mt-3">
+                    <a href="{% url 'database_search' %}" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-table me-1"></i>Browse All Entries
+                    </a>
+                    <a href="{% url 'stats' %}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-chart-pie me-1"></i>View Statistics
+                    </a>
+                    <a href="{% url 'download_data' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-download me-1"></i>Download CSV
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Section 2: Statistics Bar -->
+<!-- ===== LIVE STATS BAR ===== -->
 <section class="stats-bar">
     <div class="container">
-        <div class="row">
-            <div class="col-md-3 stat-item">
-                <span class="stat-number">500+</span>
+        <div class="row g-0">
+            <div class="col-6 col-md-3 stat-item">
+                <span class="stat-number">{{ synergy_entries_count }}</span>
                 <span class="stat-label">Synergy Entries</span>
-                <small class="text-muted">Curated & Validated</small>
+                <small>Curated &amp; Validated</small>
             </div>
-            <div class="col-md-3 stat-item">
-                <span class="stat-number">350+</span>
+            <div class="col-6 col-md-3 stat-item">
+                <span class="stat-number">{{ phytochemical_count }}</span>
                 <span class="stat-label">Unique Phytochemicals</span>
-                <small class="text-muted">Computationally Enriched</small>
+                <small>Computationally Enriched</small>
             </div>
-            <div class="col-md-3 stat-item">
-                <span class="stat-number">6</span>
+            <div class="col-6 col-md-3 stat-item">
+                <span class="stat-number">{{ eskape_pathogen_count }}</span>
                 <span class="stat-label">ESKAPE Pathogens</span>
-                <small class="text-muted">Clinically Critical</small>
+                <small>Clinically Critical</small>
             </div>
-            <div class="col-md-3 stat-item">
-                <span class="stat-number">200+</span>
+            <div class="col-6 col-md-3 stat-item">
+                <span class="stat-number">{{ source_count }}</span>
                 <span class="stat-label">Source Publications</span>
-                <small class="text-muted">Peer-Reviewed</small>
+                <small>Peer-Reviewed (2020–2025)</small>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Section 3: How PhytoSynergyDB Empowers Your Research -->
+<!-- ===== ESKAPE PATHOGENS ===== -->
+<section class="section bg-light">
+    <div class="container">
+        <h2 class="section-title">Targeting the ESKAPE Pathogens</h2>
+        <p class="section-subtitle">
+            ESKAPE pathogens are the leading cause of hospital-acquired infections worldwide and represent the greatest AMR threat. PhytoSynergyDB covers all six species.
+        </p>
+        <div class="row g-3 justify-content-center">
+            <div class="col-sm-6 col-md-4 col-lg-2">
+                <div class="eskape-card gram-pos">
+                    <div class="eskape-letter">E</div>
+                    <div class="eskape-name"><em>Enterococcus faecium</em></div>
+                    <div class="eskape-gram">Gram +</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-4 col-lg-2">
+                <div class="eskape-card gram-pos">
+                    <div class="eskape-letter">S</div>
+                    <div class="eskape-name"><em>Staphylococcus aureus</em></div>
+                    <div class="eskape-gram">Gram +</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-4 col-lg-2">
+                <div class="eskape-card gram-neg">
+                    <div class="eskape-letter">K</div>
+                    <div class="eskape-name"><em>Klebsiella pneumoniae</em></div>
+                    <div class="eskape-gram">Gram &minus;</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-4 col-lg-2">
+                <div class="eskape-card gram-neg">
+                    <div class="eskape-letter">A</div>
+                    <div class="eskape-name"><em>Acinetobacter baumannii</em></div>
+                    <div class="eskape-gram">Gram &minus;</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-4 col-lg-2">
+                <div class="eskape-card gram-neg">
+                    <div class="eskape-letter">P</div>
+                    <div class="eskape-name"><em>Pseudomonas aeruginosa</em></div>
+                    <div class="eskape-gram">Gram &minus;</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-4 col-lg-2">
+                <div class="eskape-card gram-neg">
+                    <div class="eskape-letter">E</div>
+                    <div class="eskape-name"><em>Enterobacter</em> spp.</div>
+                    <div class="eskape-gram">Gram &minus;</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== HOW IT WORKS ===== -->
 <section class="section">
     <div class="container">
         <h2 class="section-title">From Data to Discovery in Three Steps</h2>
-        <div class="row">
-            <div class="col-md-4 feature-item">
-                <div class="icon">🔍</div> <!-- Placeholder for a real icon -->
-                <h4>Search & Filter</h4>
-                <p>Instantly search thousands of data points. Filter by pathogen, compound, or mechanism of action to find exactly what you need.</p>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-search"></i></div>
+                    <h4>Search &amp; Filter</h4>
+                    <p>Search across {{ synergy_entries_count }} curated entries. Filter by pathogen, antibiotic class, phytochemical name, or FIC interpretation to find exactly what you need.</p>
+                    <a href="{% url 'database_search' %}" class="btn btn-sm btn-primary mt-2">Explore Database</a>
+                </div>
             </div>
-            <div class="col-md-4 feature-item">
-                <div class="icon">📊</div> <!-- Placeholder for a real icon -->
-                <h4>Analyze & Visualize</h4>
-                <p>Gain Deeper Insights: Use our interactive tools—from synergy heatmaps to 3D molecular viewers—to understand complex relationships in the data.</p>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-chart-bar"></i></div>
+                    <h4>Analyze &amp; Visualize</h4>
+                    <p>Explore interactive charts: synergy distribution by pathogen, publication trends over the last 5 years, top phytochemicals, and antibiotic class coverage.</p>
+                    <a href="{% url 'stats' %}" class="btn btn-sm btn-primary mt-2">View Statistics</a>
+                </div>
             </div>
-            <div class="col-md-4 feature-item">
-                <div class="icon">💾</div> <!-- Placeholder for a real icon -->
-                <h4>Download & Integrate</h4>
-                <p>Access structured, machine-readable datasets to integrate directly into your own research and analysis pipelines.</p>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-download"></i></div>
+                    <h4>Download &amp; Integrate</h4>
+                    <p>Export the full dataset or your filtered results as a structured CSV file for seamless integration into your own research and analysis pipelines.</p>
+                    <a href="{% url 'download_data' %}" class="btn btn-sm btn-primary mt-2">Download CSV</a>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- You can continue adding the "Key Features" and "Our Mission" sections here following the same pattern -->
+<!-- ===== FIC EXPLAINED ===== -->
+<section class="section bg-light">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <h2 class="section-title text-start">What is the FIC Index?</h2>
+                <p>
+                    The <strong>Fractional Inhibitory Concentration (FIC) Index</strong> is the gold-standard metric for quantifying drug-combination interactions. It is calculated as:
+                </p>
+                <div class="fic-formula">
+                    FIC = (MIC<sub>A in combo</sub> / MIC<sub>A alone</sub>) + (MIC<sub>B in combo</sub> / MIC<sub>B alone</sub>)
+                </div>
+                <p class="mt-3">All entries in PhytoSynergyDB include FIC values where available, extracted directly from the source publication.</p>
+            </div>
+            <div class="col-lg-6">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="fic-card synergy">
+                            <div class="fic-value">≤ 0.5</div>
+                            <div class="fic-label">Synergy</div>
+                            <div class="fic-desc">Combined effect significantly greater than additive</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="fic-card additive">
+                            <div class="fic-value">0.5 – 1.0</div>
+                            <div class="fic-label">Additive</div>
+                            <div class="fic-desc">Combined effect equals sum of individual effects</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="fic-card indifference">
+                            <div class="fic-value">1.0 – 4.0</div>
+                            <div class="fic-label">Indifference</div>
+                            <div class="fic-desc">No meaningful interaction between agents</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="fic-card antagonism">
+                            <div class="fic-value">&gt; 4.0</div>
+                            <div class="fic-label">Antagonism</div>
+                            <div class="fic-desc">Combination is less effective than either alone</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== DATA SCOPE ===== -->
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">Data Scope &amp; Curation</h2>
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-4">
+                <div class="scope-card">
+                    <i class="fas fa-calendar-alt scope-icon"></i>
+                    <h5>2020 – 2025</h5>
+                    <p>Literature coverage from the past 5 years only, ensuring the dataset reflects current clinically-relevant resistance profiles.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="scope-card">
+                    <i class="fas fa-microscope scope-icon"></i>
+                    <h5>In Vitro MIC Data</h5>
+                    <p>All entries are based on broth microdilution or agar dilution MIC assays as reported in peer-reviewed journals.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="scope-card">
+                    <i class="fas fa-check-double scope-icon"></i>
+                    <h5>Manual Curation</h5>
+                    <p>Every entry is manually extracted and verified by trained curators, with source DOI linked for full traceability.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
 {% endblock %}

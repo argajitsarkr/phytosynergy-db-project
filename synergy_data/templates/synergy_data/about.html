@@ -1,0 +1,99 @@
+{% extends 'synergy_data/base.html' %}
+{% load static %}
+
+{% block title %}About &mdash; PhytoSynergyDB{% endblock %}
+
+{% block content %}
+<div class="db-page-header">
+    <div class="container">
+        <h1 class="db-page-title">
+            <i class="fas fa-users me-2"></i>About PhytoSynergyDB
+        </h1>
+        <p class="db-page-subtitle">
+            A collaborative, manually curated database for AMR researchers.
+        </p>
+    </div>
+</div>
+
+<div class="container mt-5 mb-5">
+
+    <!-- Mission -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-8">
+            <div class="about-section">
+                <h2><i class="fas fa-bullseye me-2 text-primary"></i>Our Mission</h2>
+                <p>
+                    PhytoSynergyDB was created to address a critical gap in AMR research: the absence of a centralised, curated repository for phytochemical–antibiotic synergy data against clinically significant ESKAPE pathogens.
+                </p>
+                <p>
+                    By systematically extracting and standardising Fractional Inhibitory Concentration (FIC) data from peer-reviewed literature published between 2020 and 2025, we aim to accelerate hypothesis generation, support drug discovery pipelines, and reduce duplication of effort across research groups worldwide.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- What we cover -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-8">
+            <div class="about-section">
+                <h2><i class="fas fa-list-check me-2 text-primary"></i>What We Cover</h2>
+                <ul class="about-list">
+                    <li><strong>Pathogens:</strong> All six ESKAPE species &mdash; <em>Enterococcus faecium</em>, <em>Staphylococcus aureus</em>, <em>Klebsiella pneumoniae</em>, <em>Acinetobacter baumannii</em>, <em>Pseudomonas aeruginosa</em>, and <em>Enterobacter</em> spp.</li>
+                    <li><strong>Phytochemicals:</strong> Plant-derived compounds including polyphenols, alkaloids, terpenoids, flavonoids, and essential oil constituents.</li>
+                    <li><strong>Antibiotics:</strong> All major antibiotic classes including beta-lactams, aminoglycosides, fluoroquinolones, macrolides, tetracyclines, and more.</li>
+                    <li><strong>FIC Data:</strong> MIC values tested alone and in combination, FIC Index, and FIC interpretation (Synergy / Additive / Indifference / Antagonism).</li>
+                    <li><strong>Mechanism of Action:</strong> Curated notes on the observed mechanisms of synergy where reported by the original authors.</li>
+                    <li><strong>Source Traceability:</strong> Every entry is linked to its source publication via DOI.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Curation methodology -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-8">
+            <div class="about-section">
+                <h2><i class="fas fa-magnifying-glass me-2 text-primary"></i>Curation Methodology</h2>
+                <p>
+                    Literature was identified through systematic searches of PubMed, Web of Science, and Scopus using controlled vocabulary terms for ESKAPE pathogens, phytochemicals, antibiotic combinations, and FIC/MIC assays. Publications were included if they reported quantitative MIC data from standardised broth microdilution or agar dilution assays.
+                </p>
+                <p>
+                    Data were extracted manually by trained curators and cross-validated against the source tables and figures. Compound identifiers were harmonised against PubChem CIDs where available.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- How to cite -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-8">
+            <div class="about-section citation-box">
+                <h2><i class="fas fa-quote-right me-2 text-primary"></i>How to Cite</h2>
+                <p>If you use PhytoSynergyDB in your research, please cite:</p>
+                <div class="citation-text">
+                    PhytoSynergyDB: A curated database of phytochemical-antibiotic synergy against ESKAPE pathogens. [Manuscript in preparation]
+                </div>
+                <p class="mt-3 text-muted small">
+                    Please also consider citing the individual source publications listed in each database entry.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-8">
+            <div class="about-section">
+                <h2><i class="fas fa-envelope me-2 text-primary"></i>Contact &amp; Feedback</h2>
+                <p>
+                    We welcome reports of errors, suggestions for additional data, and general feedback. If you have identified a publication that should be included in PhytoSynergyDB, please get in touch.
+                </p>
+                <p>
+                    To report an issue or request a data addition, please open an issue on our project repository or contact the curation team directly.
+                </p>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

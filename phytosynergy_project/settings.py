@@ -17,15 +17,15 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'a-default-secret-key-for-devel
 DEBUG = os.environ.get('DEBUG', '1') == '1' # Defaults to True for development
 
 
-# --- CORRECTED ALLOWED_HOSTS AND CSRF LOGIC ---
+# ALLOWED_HOSTS: comma-separated list set in the .env file on the server.
+# e.g.  ALLOWED_HOSTS=192.168.1.100,phytosynergydb.yourdomain.com
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
-# Get the production hostname from Railway's official environment variable.
-RAILWAY_PUBLIC_DOMAIN = os.environ.get('RAILWAY_PUBLIC_DOMAIN')
-if RAILWAY_PUBLIC_DOMAIN:
-    ALLOWED_HOSTS.append(RAILWAY_PUBLIC_DOMAIN)
-    # This also tells Django to trust requests from your production site for secure forms.
-    CSRF_TRUSTED_ORIGINS = ['https://' + RAILWAY_PUBLIC_DOMAIN]
+# CSRF trusted origins: needed when the site is accessed over HTTPS.
+# e.g.  CSRF_TRUSTED_ORIGINS=https://phytosynergydb.yourdomain.com
+_csrf_origins = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
+if _csrf_origins:
+    CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_origins.split(',') if o.strip()]
 
 
 # ==============================================================================
@@ -66,6 +66,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'synergy_data.context_processors.view_counter',
             ],
         },
     },

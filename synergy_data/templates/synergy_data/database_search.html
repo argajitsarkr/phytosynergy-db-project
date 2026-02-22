@@ -1,129 +1,269 @@
 {% extends 'synergy_data/base.html' %}
 {% load static %}
 
-{% block title %}Explore Data - PhytoSynergyDB{% endblock %}
+{% block title %}Database &mdash; PhytoSynergyDB{% endblock %}
 
 {% block content %}
-<div class="search-page-container">
-    
-    <!-- Search Panel Card -->
-    <div class="card search-panel-card mb-5">
-        <form method="GET" action="{% url 'database_search' %}" class="p-4">
-            <div class="row g-3 align-items-center">
-                <div class="col-lg-12">
-                    <input type="text" name="query" class="form-control form-control-lg" placeholder="Search by name, pathogen, etc..." value="{{ search_query }}">
+<div class="database-page">
+
+    <!-- Page Header -->
+    <div class="db-page-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="db-page-title">
+                        <i class="fas fa-database me-2"></i>Synergy Database
+                    </h1>
+                    <p class="db-page-subtitle">
+                        Browse all curated phytochemical–antibiotic synergy experiments against ESKAPE pathogens.
+                    </p>
                 </div>
-                <div class="col-md-3">
-                    <select name="pathogen" class="form-select">
-                        <option value="">Any Pathogen</option>
-                        {% for p in pathogens %}
-                            <option value="{{ p.id }}" {% if p.id|stringformat:"s" == selected_pathogen %}selected{% endif %}>{{ p }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <select name="antibiotic" class="form-select">
-                        <option value="">Any Antibiotic</option>
-                        {% for a in antibiotics %}
-                            <option value="{{ a.id }}" {% if a.id|stringformat:"s" == selected_antibiotic %}selected{% endif %}>{{ a.antibiotic_name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <select name="mechanism" class="form-select">
-                        <option value="">Any Mechanism</option>
-                        {% for m in mechanisms %}
-                             <option value="{{ m }}" {% if m == selected_mechanism %}selected{% endif %}>{{ m }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-3 d-grid">
-                    <button type="submit" class="btn btn-primary btn-lg">Search Database</button>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <a href="{% url 'download_data' %}?query={{ search_query }}&pathogen={{ selected_pathogen }}&antibiotic={{ selected_antibiotic }}&interpretation={{ selected_interpretation }}&abx_class={{ selected_abx_class }}"
+                       class="btn btn-success">
+                        <i class="fas fa-download me-1"></i>Download Results (CSV)
+                    </a>
                 </div>
             </div>
-        </form>
+        </div>
     </div>
 
-  <!-- ================================== Search Results Section ================================== -->
-    <div class="results-header d-flex justify-content-between align-items-center mb-3">
-        <h4>Search Results</h4>
-        {% if results %}
-            <span class="badge bg-success rounded-pill">{{ results.count }} synergistic pairs found</span>
+    <div class="container mt-4">
+
+        <!-- Filter Panel -->
+        <div class="filter-panel card mb-4">
+            <div class="card-body p-4">
+                <form method="GET" action="{% url 'database_search' %}">
+                    <div class="row g-3">
+                        <div class="col-lg-12">
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                                <input type="text" name="query" class="form-control border-start-0 ps-0"
+                                       placeholder="Search by phytochemical, antibiotic, or pathogen name…"
+                                       value="{{ search_query }}">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted fw-semibold">PATHOGEN</label>
+                            <select name="pathogen" class="form-select">
+                                <option value="">All Pathogens</option>
+                                {% for p in pathogens %}
+                                    <option value="{{ p.id }}"
+                                        {% if p.id|stringformat:"s" == selected_pathogen %}selected{% endif %}>
+                                        {{ p }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted fw-semibold">ANTIBIOTIC</label>
+                            <select name="antibiotic" class="form-select">
+                                <option value="">All Antibiotics</option>
+                                {% for a in antibiotics %}
+                                    <option value="{{ a.id }}"
+                                        {% if a.id|stringformat:"s" == selected_antibiotic %}selected{% endif %}>
+                                        {{ a.antibiotic_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted fw-semibold">ANTIBIOTIC CLASS</label>
+                            <select name="abx_class" class="form-select">
+                                <option value="">All Classes</option>
+                                {% for cls in abx_classes %}
+                                    <option value="{{ cls.id }}"
+                                        {% if cls.id|stringformat:"s" == selected_abx_class %}selected{% endif %}>
+                                        {{ cls.class_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted fw-semibold">FIC INTERPRETATION</label>
+                            <select name="interpretation" class="form-select">
+                                <option value="">All Interpretations</option>
+                                {% for value, label in interpretation_choices %}
+                                    <option value="{{ value }}"
+                                        {% if value == selected_interpretation %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12 d-flex gap-2 justify-content-end">
+                            <a href="{% url 'database_search' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Clear Filters
+                            </a>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fas fa-filter me-1"></i>Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Results Summary Bar -->
+        <div class="results-summary-bar d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <span class="fw-semibold">{{ results_count }}</span>
+                <span class="text-muted"> experiment{% if results_count != 1 %}s{% endif %} found</span>
+                {% if search_query or selected_pathogen or selected_antibiotic or selected_interpretation or selected_abx_class %}
+                    <span class="badge bg-primary-subtle text-primary ms-2">Filtered</span>
+                {% endif %}
+            </div>
+            <div class="text-muted small">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </div>
+        </div>
+
+        <!-- Results Table -->
+        {% if page_obj %}
+        <div class="table-responsive results-table-wrapper mb-4">
+            <table class="table table-hover results-table">
+                <thead>
+                    <tr>
+                        <th>Phytochemical</th>
+                        <th>Antibiotic</th>
+                        <th>Class</th>
+                        <th>Pathogen</th>
+                        <th>Strain</th>
+                        <th title="MIC of phytochemical alone">MIC<sub>P</sub></th>
+                        <th title="MIC of antibiotic alone">MIC<sub>A</sub></th>
+                        <th title="MIC of phytochemical in combination">MIC<sub>P+A</sub></th>
+                        <th title="MIC of antibiotic in combination">MIC<sub>A+P</sub></th>
+                        <th>Units</th>
+                        <th>FIC</th>
+                        <th>Interpretation</th>
+                        <th>Year</th>
+                        <th>Source</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for exp in page_obj %}
+                    <tr>
+                        <td class="fw-semibold">{{ exp.phytochemical.compound_name }}</td>
+                        <td>{{ exp.antibiotic.antibiotic_name }}</td>
+                        <td>
+                            {% if exp.antibiotic.antibiotic_class %}
+                                <span class="badge bg-secondary-subtle text-secondary">
+                                    {{ exp.antibiotic.antibiotic_class.class_name }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td><em>{{ exp.pathogen.genus }} {{ exp.pathogen.species }}</em></td>
+                        <td class="text-muted small">{{ exp.pathogen.strain|default:"—" }}</td>
+                        <td>{{ exp.mic_phyto_alone|default:"—" }}</td>
+                        <td>{{ exp.mic_abx_alone|default:"—" }}</td>
+                        <td>{{ exp.mic_phyto_in_combo|default:"—" }}</td>
+                        <td>{{ exp.mic_abx_in_combo|default:"—" }}</td>
+                        <td class="text-muted small">{{ exp.mic_units }}</td>
+                        <td class="fw-semibold">
+                            {% if exp.fic_index %}
+                                {{ exp.fic_index|floatformat:3 }}
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if exp.interpretation == 'Synergy' %}
+                                <span class="badge interpretation-badge synergy">Synergy</span>
+                            {% elif exp.interpretation == 'Additive' %}
+                                <span class="badge interpretation-badge additive">Additive</span>
+                            {% elif exp.interpretation == 'Indifference' %}
+                                <span class="badge interpretation-badge indifference">Indifference</span>
+                            {% elif exp.interpretation == 'Antagonism' %}
+                                <span class="badge interpretation-badge antagonism">Antagonism</span>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ exp.source.publication_year|default:"—" }}</td>
+                        <td>
+                            {% if exp.source.doi %}
+                                <a href="https://doi.org/{{ exp.source.doi }}" target="_blank"
+                                   rel="noopener noreferrer" class="btn btn-xs btn-outline-primary"
+                                   title="{{ exp.source.doi }}">
+                                    <i class="fas fa-external-link-alt"></i> DOI
+                                </a>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <!-- MoA row if present -->
+                    {% if exp.moa_observed %}
+                    <tr class="moa-row">
+                        <td colspan="14">
+                            <span class="text-muted small">
+                                <i class="fas fa-atom me-1"></i><strong>MoA:</strong>
+                                {{ exp.moa_observed }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.paginator.num_pages > 1 %}
+        <nav aria-label="Results pagination" class="mb-5">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?query={{ search_query }}&pathogen={{ selected_pathogen }}&antibiotic={{ selected_antibiotic }}&interpretation={{ selected_interpretation }}&abx_class={{ selected_abx_class }}&page=1">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?query={{ search_query }}&pathogen={{ selected_pathogen }}&antibiotic={{ selected_antibiotic }}&interpretation={{ selected_interpretation }}&abx_class={{ selected_abx_class }}&page={{ page_obj.previous_page_number }}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > page_obj.number|add:"-4" and num < page_obj.number|add:"4" %}
+                        <li class="page-item">
+                            <a class="page-link" href="?query={{ search_query }}&pathogen={{ selected_pathogen }}&antibiotic={{ selected_antibiotic }}&interpretation={{ selected_interpretation }}&abx_class={{ selected_abx_class }}&page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?query={{ search_query }}&pathogen={{ selected_pathogen }}&antibiotic={{ selected_antibiotic }}&interpretation={{ selected_interpretation }}&abx_class={{ selected_abx_class }}&page={{ page_obj.next_page_number }}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?query={{ search_query }}&pathogen={{ selected_pathogen }}&antibiotic={{ selected_antibiotic }}&interpretation={{ selected_interpretation }}&abx_class={{ selected_abx_class }}&page={{ page_obj.paginator.num_pages }}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
         {% endif %}
+
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">No Results Found</h4>
+            <p class="text-muted">Try a different query or clear the filters.</p>
+            <a href="{% url 'database_search' %}" class="btn btn-outline-primary">Clear All Filters</a>
+        </div>
+        {% endif %}
+
     </div>
-
-    <div class="results-list">
-        {% for experiment in results %}
-            <!-- START: SINGLE RESULT CARD -->
-            <div class="result-card">
-                <!-- Main Title Area -->
-                <div class="rc-main">
-                    <div class="rc-icon-logo">
-                        <img src="{% static 'synergy_data/images/molecule-icon.svg' %}" alt="Molecule"/>
-                    </div>
-                    <div>
-                        <h5 class="rc-title">{{ experiment.phytochemical.compound_name }}</h5>
-                        <span class="rc-subtitle">{{ experiment.phytochemical.inchi_key|slice:":14" }}</span> {# Using first 14 chars of InChIKey as a unique ID #}
-                    </div>
-                </div>
-
-                <!-- FIC Index -->
-                <div class="rc-data-point">
-                    <span class="rc-value">{{ experiment.fic_index|floatformat:2 }}</span>
-                    <span class="rc-label">FIC Index</span>
-                </div>
-
-                <!-- MIC Antibiotic (in combination) -->
-                <div class="rc-data-point">
-                    <span class="rc-value">{{ experiment.mic_abx_in_combo|floatformat:2 }} µg/mL</span>
-                    <span class="rc-label">MIC (Antibiotic)</span>
-                </div>
-
-                <!-- MIC Phytochemical (in combination) -->
-                <div class="rc-data-point">
-                    <span class="rc-value">{{ experiment.mic_phyto_in_combo|floatformat:2 }} µg/mL</span>
-                    <span class="rc-label">MIC (Combination)</span>
-                </div>
-
-                <!-- Publication Year -->
-                <div class="rc-data-point">
-                    <span class="rc-value">{{ experiment.source.publication_year }}</span>
-                    <span class="rc-label">Publication Year</span>
-                </div>
-
-                <!-- Synergy Badge -->
-                <div class="rc-badge">
-    {% if experiment.interpretation == 'Synergy' %}
-        <span class="badge rounded-pill synergy-badge">Strong Synergy</span>
-    {% else %}
-        <span class="badge rounded-pill other-badge">{{ experiment.interpretation }}</span>
-    {% endif %}
 </div>
-
-                <!-- Footer with MoA and PubChem -->
-                <div class="rc-footer">
-                    <div class="rc-footer-item">
-                        <i class="fas fa-atom"></i> {# Using FontAwesome Icon #}
-                        {{ experiment.moa_observed }}
-                    </div>
-                    <div class="rc-footer-item">
-                        <i class="fas fa-link"></i>
-                        PubChem: {{ experiment.phytochemical.pubchem_cid }}
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="rc-actions">
-                    <a href="#" class="btn btn-sm btn-outline-secondary">3D Structure</a>
-                    <a href="https://doi.org/{{ experiment.source.doi }}" target="_blank" class="btn btn-sm btn-primary">Source Paper</a>
-                </div>
-            </div>
-            <!-- END: SINGLE RESULT CARD -->
-        {% empty %}
-            <div class="text-center p-5 bg-light rounded border">
-                <h4 class="text-muted">No Results Found</h4>
-                <p>Your search did not match any synergistic experiments. Please try a different query.</p>
-            </div>
-        {% endfor %}
-    </div>
 {% endblock %}

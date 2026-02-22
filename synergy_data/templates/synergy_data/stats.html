@@ -1,0 +1,322 @@
+{% extends 'synergy_data/base.html' %}
+{% load static %}
+
+{% block title %}Database Statistics &mdash; PhytoSynergyDB{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="stats-page">
+
+    <!-- Page Header -->
+    <div class="db-page-header">
+        <div class="container">
+            <h1 class="db-page-title">
+                <i class="fas fa-chart-bar me-2"></i>Database Statistics
+            </h1>
+            <p class="db-page-subtitle">
+                An overview of the data currently in PhytoSynergyDB.
+            </p>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+
+        <!-- Summary Cards Row -->
+        <div class="row g-3 mb-5">
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="summary-stat-card">
+                    <div class="summary-icon"><i class="fas fa-flask"></i></div>
+                    <div class="summary-value">{{ total_experiments }}</div>
+                    <div class="summary-label">Experiments</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="summary-stat-card">
+                    <div class="summary-icon"><i class="fas fa-leaf"></i></div>
+                    <div class="summary-value">{{ total_phytochemicals }}</div>
+                    <div class="summary-label">Phytochemicals</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="summary-stat-card">
+                    <div class="summary-icon"><i class="fas fa-pills"></i></div>
+                    <div class="summary-value">{{ total_antibiotics }}</div>
+                    <div class="summary-label">Antibiotics</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="summary-stat-card">
+                    <div class="summary-icon"><i class="fas fa-bacterium"></i></div>
+                    <div class="summary-value">{{ total_pathogens }}</div>
+                    <div class="summary-label">Pathogen Strains</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="summary-stat-card">
+                    <div class="summary-icon"><i class="fas fa-file-alt"></i></div>
+                    <div class="summary-value">{{ total_sources }}</div>
+                    <div class="summary-label">Publications</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="summary-stat-card text-center">
+                    <div class="summary-icon"><i class="fas fa-biohazard"></i></div>
+                    <div class="summary-value">6</div>
+                    <div class="summary-label">ESKAPE Spp.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 1: Interpretation Doughnut + Publications by Year -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-5">
+                <div class="chart-card">
+                    <h5 class="chart-title">FIC Interpretation Distribution</h5>
+                    <div class="chart-container-sm">
+                        <canvas id="interpretationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-7">
+                <div class="chart-card">
+                    <h5 class="chart-title">Experiments by Publication Year</h5>
+                    <div class="chart-container">
+                        <canvas id="yearChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 2: Experiments by Pathogen -->
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <div class="chart-card">
+                    <h5 class="chart-title">Experiments by Pathogen (Top 10)</h5>
+                    <div class="chart-container">
+                        <canvas id="pathogenChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 3: Top Phytochemicals + Antibiotic Class -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="chart-card">
+                    <h5 class="chart-title">Top 10 Phytochemicals by Experiment Count</h5>
+                    <div class="chart-container">
+                        <canvas id="phytochemicalChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-card">
+                    <h5 class="chart-title">Experiments by Antibiotic Class</h5>
+                    <div class="chart-container">
+                        <canvas id="abxClassChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 4: Top Antibiotics -->
+        <div class="row g-4 mb-5">
+            <div class="col-12">
+                <div class="chart-card">
+                    <h5 class="chart-title">Top 10 Antibiotics by Experiment Count</h5>
+                    <div class="chart-container">
+                        <canvas id="antibioticChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Pass data to JS safely -->
+{{ interpretation_labels|json_script:"interpretation-labels" }}
+{{ interpretation_values|json_script:"interpretation-values" }}
+{{ pathogen_labels|json_script:"pathogen-labels" }}
+{{ pathogen_values|json_script:"pathogen-values" }}
+{{ antibiotic_labels|json_script:"antibiotic-labels" }}
+{{ antibiotic_values|json_script:"antibiotic-values" }}
+{{ phytochemical_labels|json_script:"phytochemical-labels" }}
+{{ phytochemical_values|json_script:"phytochemical-values" }}
+{{ year_labels|json_script:"year-labels" }}
+{{ year_values|json_script:"year-values" }}
+{{ abx_class_labels|json_script:"abxclass-labels" }}
+{{ abx_class_values|json_script:"abxclass-values" }}
+
+<script>
+(function () {
+    'use strict';
+
+    // Colour palette
+    const COLORS = {
+        synergy:     '#22c55e',
+        additive:    '#3b82f6',
+        indifference:'#f59e0b',
+        antagonism:  '#ef4444',
+        palette: [
+            '#3D52A0','#7091E6','#8697C4','#ADBBDA',
+            '#5e9ef7','#2dd4bf','#f97316','#a855f7',
+            '#ec4899','#84cc16',
+        ],
+    };
+
+    function getJSON(id) {
+        const el = document.getElementById(id);
+        return el ? JSON.parse(el.textContent) : [];
+    }
+
+    const defaultFont = { family: "'Plus Jakarta Sans', sans-serif", size: 13 };
+    Chart.defaults.font = defaultFont;
+
+    // ---- Interpretation Doughnut ----
+    const intLabels = getJSON('interpretation-labels');
+    const intValues = getJSON('interpretation-values');
+    const intColors = intLabels.map(l => {
+        const key = l ? l.toLowerCase() : 'unknown';
+        return COLORS[key] || COLORS.palette[0];
+    });
+
+    new Chart(document.getElementById('interpretationChart'), {
+        type: 'doughnut',
+        data: {
+            labels: intLabels,
+            datasets: [{ data: intValues, backgroundColor: intColors, borderWidth: 2 }],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'bottom' },
+            },
+        },
+    });
+
+    // ---- Year Bar ----
+    new Chart(document.getElementById('yearChart'), {
+        type: 'bar',
+        data: {
+            labels: getJSON('year-labels'),
+            datasets: [{
+                label: 'Experiments',
+                data: getJSON('year-values'),
+                backgroundColor: COLORS.palette[1],
+                borderRadius: 6,
+            }],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, ticks: { precision: 0 } },
+                x: { grid: { display: false } },
+            },
+            plugins: { legend: { display: false } },
+        },
+    });
+
+    // ---- Pathogen Horizontal Bar ----
+    new Chart(document.getElementById('pathogenChart'), {
+        type: 'bar',
+        data: {
+            labels: getJSON('pathogen-labels'),
+            datasets: [{
+                label: 'Experiments',
+                data: getJSON('pathogen-values'),
+                backgroundColor: COLORS.palette,
+                borderRadius: 5,
+            }],
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { beginAtZero: true, ticks: { precision: 0 } },
+                y: { grid: { display: false }, ticks: { font: { style: 'italic' } } },
+            },
+            plugins: { legend: { display: false } },
+        },
+    });
+
+    // ---- Phytochemical Horizontal Bar ----
+    new Chart(document.getElementById('phytochemicalChart'), {
+        type: 'bar',
+        data: {
+            labels: getJSON('phytochemical-labels'),
+            datasets: [{
+                label: 'Experiments',
+                data: getJSON('phytochemical-values'),
+                backgroundColor: COLORS.palette[0],
+                borderRadius: 5,
+            }],
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { beginAtZero: true, ticks: { precision: 0 } },
+                y: { grid: { display: false } },
+            },
+            plugins: { legend: { display: false } },
+        },
+    });
+
+    // ---- Antibiotic Class Polar Area ----
+    const aclLabels = getJSON('abxclass-labels');
+    const aclValues = getJSON('abxclass-values');
+    if (aclValues.length > 0) {
+        new Chart(document.getElementById('abxClassChart'), {
+            type: 'polarArea',
+            data: {
+                labels: aclLabels,
+                datasets: [{
+                    data: aclValues,
+                    backgroundColor: COLORS.palette.map(c => c + 'cc'),
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right' } },
+            },
+        });
+    } else {
+        document.getElementById('abxClassChart').parentElement.innerHTML =
+            '<p class="text-muted text-center pt-4">No antibiotic class data available yet.</p>';
+    }
+
+    // ---- Antibiotic Horizontal Bar ----
+    new Chart(document.getElementById('antibioticChart'), {
+        type: 'bar',
+        data: {
+            labels: getJSON('antibiotic-labels'),
+            datasets: [{
+                label: 'Experiments',
+                data: getJSON('antibiotic-values'),
+                backgroundColor: COLORS.palette[3],
+                borderRadius: 5,
+            }],
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { beginAtZero: true, ticks: { precision: 0 } },
+                y: { grid: { display: false } },
+            },
+            plugins: { legend: { display: false } },
+        },
+    });
+})();
+</script>
+{% endblock %}

@@ -10,8 +10,6 @@ class AntibioticClass(models.Model):
 
     def __str__(self):
         return self.class_name
-    def __str__(self):
-        return self.class_name
 
 # Table for storing phytochemical information.
 class Phytochemical(models.Model):

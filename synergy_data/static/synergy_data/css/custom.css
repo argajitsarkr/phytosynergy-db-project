@@ -1,233 +1,605 @@
-/*
-=====================================================
-==         PhytoSynergyDB Official Stylesheet        ==
-=====================================================
-*/
+/* ============================================================
+   PhytoSynergyDB — Master Stylesheet
+   ============================================================ */
 
-/*
-==================================
-1. Brand Color Palette & Fonts
-==================================
-"/* --- PhytoSynergyDB Design System --- */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-/* 1. Color Palette Definition */
+/* ------------------------------------------------------------
+   1. Design Tokens
+   ------------------------------------------------------------ */
 :root {
-    --dark-blue: #3D52A0;
-    --primary-blue: #7091E6;
-    --medium-blue: #8697C4;
-    --light-blue: #ADBBDA;
+    --dark-blue:     #3D52A0;
+    --primary-blue:  #7091E6;
+    --medium-blue:   #8697C4;
+    --light-blue:    #ADBBDA;
     --pale-lavender: #EDE8F5;
-    --text-dark: #212529;
-    --text-light: #f8f9fa;
-    --white: #ffffff;
+
+    --synergy-color:     #22c55e;
+    --additive-color:    #3b82f6;
+    --indifference-color:#f59e0b;
+    --antagonism-color:  #ef4444;
+
+    --text-dark:  #212529;
+    --text-muted: #6c757d;
+    --white:      #ffffff;
+    --bg-light:   #f8f9fa;
+    --border:     #e9ecef;
+
+    --radius-sm: 0.5rem;
+    --radius:    0.75rem;
+    --radius-lg: 1.25rem;
+
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+    --shadow:    0 4px 20px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
 }
 
-/* 2. General Body & Typography */
+/* ------------------------------------------------------------
+   2. Base
+   ------------------------------------------------------------ */
+*, *::before, *::after { box-sizing: border-box; }
+
 body {
-    /* The new font-family rule */
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     background-color: var(--white);
     color: var(--text-dark);
+    line-height: 1.6;
 }
 
-/* 3. Section Styling */
-.section {
-    padding: 80px 0; /* Add generous spacing between sections */
-}
+a { color: var(--dark-blue); }
+a:hover { color: var(--primary-blue); }
 
-.section-title {
-    text-align: center;
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 50px;
-}
-
-/* 4. Navigation Bar Styling */
+/* ------------------------------------------------------------
+   3. Navigation
+   ------------------------------------------------------------ */
 .navbar-custom {
-    background-color: var(--white);
-    border-bottom: 1px solid #e9ecef;
-    padding: 1rem 0;
+    background-color: var(--white) !important;
+    border-bottom: 1px solid var(--border);
+    padding: 0.875rem 0;
+    box-shadow: var(--shadow-sm);
 }
+
 .navbar-custom .navbar-brand {
-    font-weight: 700;
+    font-weight: 800;
+    font-size: 1.2rem;
     color: var(--dark-blue);
+    gap: 0.5rem;
 }
+
 .navbar-custom .nav-link {
     color: var(--text-dark);
     font-weight: 500;
-}
-.navbar-custom .nav-link:hover {
-    color: var(--primary-blue);
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s, color 0.15s;
+    font-size: 0.95rem;
 }
 
-/* --- Homepage Specific Sections --- */
-
-/* 5. Hero Section */
-.hero-section {
+.navbar-custom .nav-link:hover,
+.navbar-custom .nav-link.active {
+    color: var(--dark-blue);
     background-color: var(--pale-lavender);
-    text-align: center;
-    padding: 100px 0;
 }
-.hero-section h1 {
-    font-size: 4rem;
+
+/* ------------------------------------------------------------
+   4. Hero Section
+   ------------------------------------------------------------ */
+.hero-section {
+    background: linear-gradient(135deg, var(--pale-lavender) 0%, #dde6ff 100%);
+    text-align: center;
+    padding: 90px 0 80px;
+}
+
+.hero-badge {
+    display: inline-block;
+    background: rgba(61,82,160,0.1);
+    color: var(--dark-blue);
+    border: 1px solid rgba(61,82,160,0.2);
+    border-radius: 50px;
+    padding: 0.3rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+}
+
+.hero-title {
+    font-size: clamp(2rem, 4.5vw, 3.6rem);
     font-weight: 800;
     color: var(--dark-blue);
+    line-height: 1.15;
+    margin-bottom: 1.25rem;
 }
-.hero-section .tagline {
-    font-size: 1.25rem;
+
+.hero-tagline {
+    font-size: 1.15rem;
     color: var(--medium-blue);
-    margin-top: 1rem;
-    margin-bottom: 2.5rem;
+    max-width: 680px;
+    margin: 0 auto 2.5rem;
 }
+
 .hero-search-bar {
-    max-width: 600px;
-    margin: 0 auto;
+    max-width: 620px;
+    margin: 0 auto 1.5rem;
 }
+
 .hero-search-bar .form-control {
-    padding: 0.75rem 1.5rem;
-    border-radius: 50px; /* Pill-shaped search bar */
+    padding: 0.8rem 1.5rem;
+    border-radius: 50px 0 0 50px;
     border: 2px solid var(--light-blue);
+    font-size: 1rem;
 }
-.hero-search-bar .btn {
-    border-radius: 50px;
-    padding: 0.75rem 2rem;
-    background-color: var(--primary-blue);
+.hero-search-bar .form-control:focus {
     border-color: var(--primary-blue);
+    box-shadow: 0 0 0 0.2rem rgba(112,145,230,0.25);
+}
+
+.hero-search-bar .btn {
+    border-radius: 0 50px 50px 0;
+    padding: 0.8rem 2rem;
+    background-color: var(--dark-blue);
+    border-color: var(--dark-blue);
     font-weight: 600;
 }
+.hero-search-bar .btn:hover {
+    background-color: var(--primary-blue);
+    border-color: var(--primary-blue);
+}
 
-/* 6. Statistics Bar */
+/* ------------------------------------------------------------
+   5. Stats Bar
+   ------------------------------------------------------------ */
 .stats-bar {
-    background-color: var(--white);
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
     padding: 40px 0;
 }
+
 .stat-item {
     text-align: center;
+    padding: 0.5rem 1rem;
+    border-right: 1px solid var(--border);
 }
+.stat-item:last-child { border-right: none; }
+
 .stat-number {
-    font-size: 3rem;
-    font-weight: 700;
-    color: var(--dark-blue);
     display: block;
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: var(--dark-blue);
+    line-height: 1;
 }
 .stat-label {
-    font-size: 1rem;
-    color: var(--medium-blue);
-    margin-top: 0.5rem;
     display: block;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--medium-blue);
+    margin-top: 0.4rem;
+}
+.stat-item small {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
 }
 
-/* 7. Features / How-it-works Section */
-.feature-item {
+/* ------------------------------------------------------------
+   6. Generic Section
+   ------------------------------------------------------------ */
+.section { padding: 80px 0; }
+
+.section-title {
     text-align: center;
-    padding: 20px;
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 800;
+    color: var(--dark-blue);
+    margin-bottom: 1rem;
 }
-.feature-item .icon {
-    font-size: 3rem; /* Placeholder for icon */
+
+.section-subtitle {
+    text-align: center;
+    font-size: 1.05rem;
+    color: var(--text-muted);
+    max-width: 680px;
+    margin: 0 auto 3rem;
+}
+
+/* ------------------------------------------------------------
+   7. ESKAPE Cards
+   ------------------------------------------------------------ */
+.eskape-card {
+    border-radius: var(--radius);
+    padding: 1.25rem 1rem;
+    text-align: center;
+    height: 100%;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.eskape-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow);
+}
+
+.eskape-card.gram-pos {
+    background: #fff0f3;
+    border: 1px solid #ffd6e0;
+}
+.eskape-card.gram-neg {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+}
+
+.eskape-letter {
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+.gram-pos .eskape-letter { color: #be123c; }
+.gram-neg .eskape-letter { color: #1d4ed8; }
+
+.eskape-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 0.4rem;
+}
+
+.eskape-gram {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 50px;
+}
+.gram-pos .eskape-gram { background: #ffd6e0; color: #9f1239; }
+.gram-neg .eskape-gram { background: #bfdbfe; color: #1e3a8a; }
+
+/* ------------------------------------------------------------
+   8. Feature Cards
+   ------------------------------------------------------------ */
+.feature-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2rem 1.75rem;
+    height: 100%;
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+.feature-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
+}
+
+.feature-icon {
+    font-size: 2rem;
     color: var(--primary-blue);
     margin-bottom: 1rem;
 }
 
-/*
-==================================
-New Search Page Design
-==================================
-*/
-
-.search-panel-card {
-    background-color: #ffffff;
-    border: none;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.07);
+/* ------------------------------------------------------------
+   9. FIC Formula & Cards
+   ------------------------------------------------------------ */
+.fic-formula {
+    background: var(--pale-lavender);
+    border-left: 4px solid var(--primary-blue);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 1rem 1.5rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--dark-blue);
+    margin: 1rem 0;
 }
 
-.result-card {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr) 150px; /* 6 data columns, 1 action column */
-    grid-template-rows: auto auto;
-    gap: 1rem;
-    background-color: #ffffff;
-    border: 1px solid #e9ecef;
-    border-radius: 0.75rem;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    align-items: center;
-    transition: all 0.2s ease-in-out;
+.fic-card {
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    text-align: center;
+    height: 100%;
+}
+.fic-card.synergy     { background: #f0fdf4; border: 1px solid #86efac; }
+.fic-card.additive    { background: #eff6ff; border: 1px solid #93c5fd; }
+.fic-card.indifference{ background: #fffbeb; border: 1px solid #fcd34d; }
+.fic-card.antagonism  { background: #fef2f2; border: 1px solid #fca5a5; }
+
+.fic-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.35rem;
+}
+.fic-card.synergy      .fic-value { color: #15803d; }
+.fic-card.additive     .fic-value { color: #1d4ed8; }
+.fic-card.indifference .fic-value { color: #b45309; }
+.fic-card.antagonism   .fic-value { color: #b91c1c; }
+
+.fic-label {
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+}
+.fic-desc { font-size: 0.78rem; color: var(--text-muted); }
+
+/* ------------------------------------------------------------
+   10. Scope Cards
+   ------------------------------------------------------------ */
+.scope-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    text-align: center;
+    height: 100%;
+    transition: box-shadow 0.2s;
+}
+.scope-card:hover { box-shadow: var(--shadow); }
+
+.scope-icon {
+    font-size: 2rem;
+    color: var(--primary-blue);
+    display: block;
+    margin-bottom: 1rem;
 }
 
-.result-card:hover {
-    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
-    border-color: #a5b4fc; /* A nice purple-blue on hover */
+/* ------------------------------------------------------------
+   11. Page Header (Database / Stats / About)
+   ------------------------------------------------------------ */
+.db-page-header {
+    background: linear-gradient(135deg, var(--pale-lavender) 0%, #dde6ff 100%);
+    padding: 2.5rem 0 2rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.db-page-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--dark-blue);
+    margin-bottom: 0.4rem;
+}
+
+.db-page-subtitle {
+    font-size: 1rem;
+    color: var(--medium-blue);
+    margin: 0;
+}
+
+/* ------------------------------------------------------------
+   12. Filter Panel (Database page)
+   ------------------------------------------------------------ */
+.filter-panel {
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-sm) !important;
+}
+
+.filter-panel .input-group-text {
+    border-right: none !important;
+}
+
+.filter-panel .form-control.border-start-0 {
+    border-left: none !important;
+}
+
+/* ------------------------------------------------------------
+   13. Results Table
+   ------------------------------------------------------------ */
+.results-table-wrapper {
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.results-table {
+    margin: 0;
+    font-size: 0.88rem;
+}
+
+.results-table thead th {
+    background: var(--pale-lavender);
+    color: var(--dark-blue);
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    border-bottom: 2px solid var(--light-blue);
+    padding: 0.8rem 0.75rem;
+}
+
+.results-table tbody tr:hover { background-color: #f5f7ff; }
+
+.results-table td {
+    padding: 0.65rem 0.75rem;
+    vertical-align: middle;
+}
+
+.moa-row td {
+    background: #fafafa;
+    padding: 0.4rem 0.75rem 0.6rem;
+    border-top: none;
+    font-size: 0.82rem;
+}
+
+/* Interpretation badges */
+.interpretation-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.3em 0.7em;
+    border-radius: 50px;
+}
+.interpretation-badge.synergy     { background: #dcfce7; color: #15803d; }
+.interpretation-badge.additive    { background: #dbeafe; color: #1d4ed8; }
+.interpretation-badge.indifference{ background: #fef9c3; color: #854d0e; }
+.interpretation-badge.antagonism  { background: #fee2e2; color: #b91c1c; }
+
+/* Small DOI button */
+.btn-xs {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+/* ------------------------------------------------------------
+   14. Statistics Page
+   ------------------------------------------------------------ */
+.summary-stat-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1rem;
+    text-align: center;
+    transition: box-shadow 0.2s, transform 0.2s;
+    height: 100%;
+}
+.summary-stat-card:hover {
+    box-shadow: var(--shadow);
     transform: translateY(-3px);
 }
 
-.rc-main { grid-column: 1 / 3; } /* Span 2 columns */
-.rc-fic { grid-column: 3 / 4; }
-.rc-mic-abx { grid-column: 4 / 5; }
-.rc-mic-phyto { grid-column: 5 / 6; }
-.rc-year { grid-column: 6 / 7; }
-.rc-badge { grid-column: 7 / 8; text-align: right; }
-
-.rc-footer { grid-column: 1 / 5; grid-row: 2; display: flex; gap: 1.5rem; }
-.rc-actions { grid-column: 6 / 8; grid-row: 2; text-align: right; }
-
-.rc-title { margin-bottom: 0; font-weight: 600; }
-.rc-subtitle { font-size: 0.9rem; color: #6c757d; }
-.rc-fic-value { font-size: 1.75rem; font-weight: 700; color: #2c3e50; }
-.rc-mic-value, .rc-year-value { font-size: 1.25rem; font-weight: 500; }
-.rc-fic-label, .rc-mic-label, .rc-year-label { font-size: 0.8rem; color: #6c757d; display: block; }
-
-.rc-footer-item { color: #6c757d; font-size: 0.9rem; }
-.rc-icon { width: 16px; height: 16px; margin-right: 0.25rem; opacity: 0.7; }
-
-.bg-success-light { background-color: #e6f9f0; }
-.text-success { color: #198754 !important; }
-.bg-secondary-light { background-color: #f8f9fa; }
-.text-secondary { color: #6c757d !important; }
-
-/* Responsive adjustments for mobile */
-@media (max-width: 992px) {
-    .result-card {
-        grid-template-columns: 1fr 1fr; /* Stack into 2 columns */
-    }
-    .rc-main { grid-column: 1 / 3; grid-row: 1; }
-    .rc-fic { grid-column: 1 / 2; grid-row: 2; }
-    .rc-badge { grid-column: 2 / 3; grid-row: 2; text-align: right; }
-    .rc-mic-abx, .rc-mic-phyto, .rc-year { grid-column: auto; grid-row: auto; }
-    .rc-footer { grid-column: 1 / 3; grid-row: 4; flex-direction: column; gap: 0.5rem; }
-    .rc-actions { grid-column: 1 / 3; grid-row: 5; text-align: left; }
+.summary-icon {
+    font-size: 1.5rem;
+    color: var(--primary-blue);
+    margin-bottom: 0.5rem;
+}
+.summary-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--dark-blue);
+    line-height: 1;
+}
+.summary-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-top: 0.3rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 
-/* synergy_data/static/synergy_data/css/custom.css */
-
-/*
-==================================
-Custom Navbar Styling
-==================================
-*/
-.navbar-custom {
-    background-color: #ffffff !important; /* Force a white background */
-    border-bottom: 1px solid #e9ecef; /* Subtle bottom border */
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-    transition: all 0.3s ease;
+.chart-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    height: 100%;
+    box-shadow: var(--shadow-sm);
 }
 
-.navbar-custom .navbar-brand {
+.chart-title {
     font-weight: 700;
-    font-size: 1.25rem;
-    color: #2c3e50; /* Dark blue-grey text */
+    color: var(--dark-blue);
+    font-size: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
 }
 
-.navbar-custom .nav-link {
-    color: #5a6a7a; /* Softer text color for links */
+.chart-container {
+    position: relative;
+    height: 300px;
+}
+
+.chart-container-sm {
+    position: relative;
+    height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ------------------------------------------------------------
+   15. About Page
+   ------------------------------------------------------------ */
+.about-section {
+    margin-bottom: 2.5rem;
+}
+
+.about-section h2 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--dark-blue);
+    margin-bottom: 1rem;
+}
+
+.about-list {
+    padding-left: 1.25rem;
+}
+.about-list li {
+    margin-bottom: 0.6rem;
+    line-height: 1.7;
+}
+
+.citation-box {
+    background: var(--pale-lavender);
+    border: 1px solid var(--light-blue);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+}
+
+.citation-text {
+    background: var(--white);
+    border-left: 4px solid var(--primary-blue);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 1rem 1.5rem;
+    font-style: italic;
+    color: var(--dark-blue);
     font-weight: 500;
-    margin-left: 0.5rem;
-    margin-right: 0.5rem;
 }
 
-.navbar-custom .nav-link:hover,
-.navbar-custom .nav-link.active { /* Style for the active page link */
-    color: #0d6efd; /* Primary blue color */
+/* ------------------------------------------------------------
+   16. Footer
+   ------------------------------------------------------------ */
+.site-footer {
+    background: var(--dark-blue);
+    color: rgba(255,255,255,0.85);
+    padding: 2.5rem 0;
+    margin-top: 4rem;
+}
+
+.site-footer strong { color: var(--white); }
+
+.site-footer .text-muted {
+    color: rgba(255,255,255,0.55) !important;
+}
+
+.footer-link {
+    color: rgba(255,255,255,0.75);
+    text-decoration: none;
+    display: block;
+    padding: 0.15rem 0;
+    transition: color 0.15s;
+}
+.footer-link:hover { color: var(--white); }
+
+.view-counter {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.75);
+}
+
+.site-footer .btn-outline-light {
+    font-size: 0.82rem;
+    padding: 0.3rem 0.8rem;
+}
+
+/* ------------------------------------------------------------
+   17. Responsive
+   ------------------------------------------------------------ */
+@media (max-width: 767px) {
+    .hero-section { padding: 60px 0 50px; }
+    .hero-search-bar .form-control { border-radius: var(--radius); }
+    .hero-search-bar .btn          { border-radius: var(--radius); }
+    .hero-search-bar { display: flex; flex-direction: column; gap: 0.5rem; }
+
+    .stat-item { border-right: none; border-bottom: 1px solid var(--border); }
+    .stat-item:last-child { border-bottom: none; }
+
+    .db-page-header { padding: 1.5rem 0; }
+    .db-page-title  { font-size: 1.4rem; }
+
+    .chart-container, .chart-container-sm { height: 220px; }
+
+    .results-table { font-size: 0.8rem; }
 }
