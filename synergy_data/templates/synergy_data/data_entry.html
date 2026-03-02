@@ -1,0 +1,209 @@
+{% extends 'synergy_data/base.html' %}
+
+{% block title %}Data Entry - PhytoSynergyDB{% endblock %}
+
+{% block content %}
+<div class="data-entry-container">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 style="color: var(--dark-blue); font-weight: 700; margin-bottom: 0.25rem;">Data Entry</h2>
+            <p class="text-muted mb-0">Add a new synergy experiment record to the database.</p>
+        </div>
+        <a href="{% url 'database_search' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i> Back to Database
+        </a>
+    </div>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        <!-- Section 1: Source & Entities -->
+        <div class="data-entry-card mb-4">
+            <div class="card-header">
+                <i class="fas fa-book-open me-2"></i> Source & Entities
+            </div>
+            <div class="card-body p-4">
+                <!-- Source DOI -->
+                <div class="mb-3">
+                    <label for="{{ form.source_doi.id_for_label }}" class="form-label fw-semibold">
+                        {{ form.source_doi.label }} <span class="text-danger">*</span>
+                    </label>
+                    {{ form.source_doi }}
+                    {% if form.source_doi.help_text %}
+                    <div class="form-text">{{ form.source_doi.help_text }}</div>
+                    {% endif %}
+                    {% if form.source_doi.errors %}
+                    <div class="text-danger small mt-1">{{ form.source_doi.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Pathogen Full Name -->
+                <div class="mb-3">
+                    <label for="{{ form.pathogen_full_name.id_for_label }}" class="form-label fw-semibold">
+                        {{ form.pathogen_full_name.label }} <span class="text-danger">*</span>
+                    </label>
+                    {{ form.pathogen_full_name }}
+                    {% if form.pathogen_full_name.help_text %}
+                    <div class="form-text">{{ form.pathogen_full_name.help_text }}</div>
+                    {% endif %}
+                    <div id="pathogen-preview" class="pathogen-preview" style="display: none;">
+                        Parsed as: <strong>Genus=<span id="parsed-genus"></span></strong>,
+                        <strong>Species=<span id="parsed-species"></span></strong>,
+                        <strong>Strain=<span id="parsed-strain"></span></strong>
+                    </div>
+                    {% if form.pathogen_full_name.errors %}
+                    <div class="text-danger small mt-1">{{ form.pathogen_full_name.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Phytochemical & Antibiotic (side by side) -->
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.phytochemical_name.id_for_label }}" class="form-label fw-semibold">
+                            {{ form.phytochemical_name.label }} <span class="text-danger">*</span>
+                        </label>
+                        {{ form.phytochemical_name }}
+                        {% if form.phytochemical_name.errors %}
+                        <div class="text-danger small mt-1">{{ form.phytochemical_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.antibiotic_name.id_for_label }}" class="form-label fw-semibold">
+                            {{ form.antibiotic_name.label }} <span class="text-danger">*</span>
+                        </label>
+                        {{ form.antibiotic_name }}
+                        {% if form.antibiotic_name.errors %}
+                        <div class="text-danger small mt-1">{{ form.antibiotic_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: MIC Values -->
+        <div class="data-entry-card mb-4">
+            <div class="card-header">
+                <i class="fas fa-vial me-2"></i> MIC Values
+            </div>
+            <div class="card-body p-4">
+                <p class="text-muted small mb-3">All MIC fields are optional. Fill in what's available from the paper.</p>
+
+                <div class="field-group-title">Tested Alone</div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.mic_phyto_alone.id_for_label }}" class="form-label">{{ form.mic_phyto_alone.label }}</label>
+                        {{ form.mic_phyto_alone }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.mic_abx_alone.id_for_label }}" class="form-label">{{ form.mic_abx_alone.label }}</label>
+                        {{ form.mic_abx_alone }}
+                    </div>
+                </div>
+
+                <div class="field-group-title">Tested in Combination</div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.mic_phyto_in_combo.id_for_label }}" class="form-label">{{ form.mic_phyto_in_combo.label }}</label>
+                        {{ form.mic_phyto_in_combo }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.mic_abx_in_combo.id_for_label }}" class="form-label">{{ form.mic_abx_in_combo.label }}</label>
+                        {{ form.mic_abx_in_combo }}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="{{ form.mic_units.id_for_label }}" class="form-label">{{ form.mic_units.label }}</label>
+                        {{ form.mic_units }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: Synergy Assessment -->
+        <div class="data-entry-card mb-4">
+            <div class="card-header">
+                <i class="fas fa-chart-line me-2"></i> Synergy Assessment
+            </div>
+            <div class="card-body p-4">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.fic_index.id_for_label }}" class="form-label fw-semibold">{{ form.fic_index.label }}</label>
+                        {{ form.fic_index }}
+                        <div class="auto-calc-hint mt-1">
+                            <i class="fas fa-calculator me-1"></i>
+                            Leave blank to auto-calculate: FIC = (MIC<sub>phyto,combo</sub> / MIC<sub>phyto,alone</sub>) + (MIC<sub>abx,combo</sub> / MIC<sub>abx,alone</sub>)
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.interpretation.id_for_label }}" class="form-label fw-semibold">{{ form.interpretation.label }}</label>
+                        {{ form.interpretation }}
+                        <div class="auto-calc-hint mt-1">
+                            <i class="fas fa-magic me-1"></i>
+                            Auto-derived from FIC if left blank
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: Additional Information -->
+        <div class="data-entry-card mb-4">
+            <div class="card-header">
+                <i class="fas fa-sticky-note me-2"></i> Additional Information
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <label for="{{ form.moa_observed.id_for_label }}" class="form-label fw-semibold">{{ form.moa_observed.label }}</label>
+                    {{ form.moa_observed }}
+                </div>
+                <div class="mb-3">
+                    <label for="{{ form.notes.id_for_label }}" class="form-label">{{ form.notes.label }}</label>
+                    {{ form.notes }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex gap-3 mb-5">
+            <button type="submit" name="save_and_another" class="btn btn-primary btn-lg"
+                    style="background-color: var(--dark-blue); border-color: var(--dark-blue); font-weight: 600;">
+                <i class="fas fa-plus me-2"></i> Save & Add Another
+            </button>
+            <button type="submit" name="save_and_return" class="btn btn-outline-primary btn-lg"
+                    style="color: var(--dark-blue); border-color: var(--dark-blue); font-weight: 600;">
+                <i class="fas fa-check me-2"></i> Save & Return to Database
+            </button>
+        </div>
+
+    </form>
+</div>
+
+<!-- Live pathogen name parsing preview -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var pathogenInput = document.getElementById('{{ form.pathogen_full_name.id_for_label }}');
+    var preview = document.getElementById('pathogen-preview');
+    var genusSpan = document.getElementById('parsed-genus');
+    var speciesSpan = document.getElementById('parsed-species');
+    var strainSpan = document.getElementById('parsed-strain');
+
+    if (pathogenInput) {
+        pathogenInput.addEventListener('input', function() {
+            var val = this.value.trim();
+            if (!val) {
+                preview.style.display = 'none';
+                return;
+            }
+            var parts = val.split(/\s+/);
+            genusSpan.textContent = parts[0] || '';
+            speciesSpan.textContent = parts[1] || '(empty)';
+            strainSpan.textContent = parts.length > 2 ? parts.slice(2).join(' ') : '(none)';
+            preview.style.display = 'block';
+        });
+    }
+});
+</script>
+{% endblock %}

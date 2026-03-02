@@ -1,0 +1,56 @@
+{% extends 'synergy_data/base.html' %}
+
+{% block title %}About - PhytoSynergyDB{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h1 class="section-title">About PhytoSynergyDB</h1>
+
+                <p class="lead text-muted text-center mb-5">
+                    The first curated database dedicated to phytochemical-antibiotic synergies against ESKAPE pathogens.
+                </p>
+
+                <h3 style="color: var(--dark-blue); font-weight: 700;">The Problem</h3>
+                <p>
+                    Antimicrobial resistance (AMR) is a growing global health crisis. The ESKAPE pathogens
+                    &mdash; <em>Enterococcus faecium</em>, <em>Staphylococcus aureus</em>,
+                    <em>Klebsiella pneumoniae</em>, <em>Acinetobacter baumannii</em>,
+                    <em>Pseudomonas aeruginosa</em>, and <em>Enterobacter</em> spp. &mdash;
+                    are responsible for the majority of hospital-acquired infections and are increasingly
+                    resistant to conventional antibiotics.
+                </p>
+
+                <h3 class="mt-5" style="color: var(--dark-blue); font-weight: 700;">Our Approach</h3>
+                <p>
+                    PhytoSynergyDB systematically curates data from peer-reviewed scientific literature on
+                    synergistic interactions between plant-derived phytochemicals and conventional antibiotics.
+                    Each entry includes Minimum Inhibitory Concentration (MIC) values, Fractional Inhibitory
+                    Concentration (FIC) indices, synergy interpretations, and observed mechanisms of action.
+                </p>
+
+                <h3 class="mt-5" style="color: var(--dark-blue); font-weight: 700;">Data Standards</h3>
+                <p>
+                    All data in PhytoSynergyDB is manually extracted from peer-reviewed publications and
+                    undergoes quality validation. Each record links to its original source via DOI,
+                    ensuring full traceability and reproducibility.
+                </p>
+
+                <h3 class="mt-5" style="color: var(--dark-blue); font-weight: 700;">Contact</h3>
+                <p>
+                    For questions, collaborations, or data contributions, please reach out to the PhytoSynergyDB team.
+                </p>
+
+                <div class="text-center mt-5">
+                    <a href="{% url 'database_search' %}" class="btn btn-primary"
+                       style="background-color: var(--dark-blue); border-color: var(--dark-blue); font-weight: 600;">
+                        Explore the Database <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

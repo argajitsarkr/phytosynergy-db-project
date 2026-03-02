@@ -10,8 +10,6 @@ class AntibioticClass(models.Model):
 
     def __str__(self):
         return self.class_name
-    def __str__(self):
-        return self.class_name
 
 # Table for storing phytochemical information.
 class Phytochemical(models.Model):
@@ -42,6 +40,11 @@ class Pathogen(models.Model):
 
     class Meta:
         unique_together = ('genus', 'species', 'strain') # Ensures we don't enter the same strain twice
+
+    def save(self, *args, **kwargs):
+        if self.strain == '':
+            self.strain = None
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.genus} {self.species} {self.strain or ''}".strip()

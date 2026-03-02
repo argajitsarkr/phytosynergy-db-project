@@ -66,6 +66,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'synergy_data.context_processors.view_counter',
             ],
         },
     },
@@ -125,3 +126,10 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ==============================================================================
+# AUTHENTICATION SETTINGS
+# ==============================================================================
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'data_entry'
+LOGOUT_REDIRECT_URL = 'home'

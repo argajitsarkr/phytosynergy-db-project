@@ -1,6 +1,8 @@
 {% extends 'synergy_data/base.html' %}
 {% load static %}
 
+{% block title %}PhytoSynergyDB - Phytochemical-Antibiotic Synergy Database{% endblock %}
+
 {% block content %}
 
 <!-- Section 1: Hero Section -->
@@ -8,73 +10,277 @@
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-10">
-                <h1>Accelerating the Fight Against AMR with Curated Synergy Data</h1>
-                <p class="tagline">The world's first curated database dedicated to phytochemical-antibiotic combinations against ESKAPE pathogens.</p>
-                
+                <h1>PhytoSynergyDB</h1>
+                <p class="tagline">A Curated Database of Phytochemical-Antibiotic Synergies Against ESKAPE Pathogens</p>
+
                 <div class="hero-search-bar">
                     <form action="{% url 'database_search' %}" method="get" class="input-group">
                         <input type="text" name="query" class="form-control" placeholder="Search by Phytochemical, Antibiotic, or Pathogen...">
-                        <button class="btn btn-primary" type="submit">Search</button>
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-search me-1"></i> Search
+                        </button>
                     </form>
                 </div>
 
+                <div class="hero-quick-links mt-4">
+                    <a href="{% url 'database_search' %}" class="btn btn-outline-light btn-sm me-2">Browse All Entries</a>
+                    <a href="#eskape-section" class="btn btn-outline-light btn-sm me-2">View by Pathogen</a>
+                    <a href="#recent-section" class="btn btn-outline-light btn-sm">Recent Additions</a>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Section 2: Statistics Bar -->
+<!-- Section 2: Dynamic Statistics Bar -->
 <section class="stats-bar">
     <div class="container">
         <div class="row">
-            <div class="col-md-3 stat-item">
-                <span class="stat-number">500+</span>
-                <span class="stat-label">Synergy Entries</span>
-                <small class="text-muted">Curated & Validated</small>
+            <div class="col-md-2 stat-item">
+                <span class="stat-number">{{ synergy_entries_count }}</span>
+                <span class="stat-label">Total Experiments</span>
             </div>
-            <div class="col-md-3 stat-item">
-                <span class="stat-number">350+</span>
-                <span class="stat-label">Unique Phytochemicals</span>
-                <small class="text-muted">Computationally Enriched</small>
+            <div class="col-md-2 stat-item">
+                <span class="stat-number">{{ phytochemical_count }}</span>
+                <span class="stat-label">Phytochemicals</span>
             </div>
-            <div class="col-md-3 stat-item">
-                <span class="stat-number">6</span>
+            <div class="col-md-2 stat-item">
+                <span class="stat-number">{{ antibiotic_count }}</span>
+                <span class="stat-label">Antibiotics</span>
+            </div>
+            <div class="col-md-2 stat-item">
+                <span class="stat-number">{{ synergy_confirmed_count }}</span>
+                <span class="stat-label">Confirmed Synergies</span>
+            </div>
+            <div class="col-md-2 stat-item">
+                <span class="stat-number">{{ eskape_pathogen_count }}</span>
                 <span class="stat-label">ESKAPE Pathogens</span>
-                <small class="text-muted">Clinically Critical</small>
             </div>
-            <div class="col-md-3 stat-item">
-                <span class="stat-number">200+</span>
-                <span class="stat-label">Source Publications</span>
-                <small class="text-muted">Peer-Reviewed</small>
+            <div class="col-md-2 stat-item">
+                <span class="stat-number">{{ source_count }}</span>
+                <span class="stat-label">Publications</span>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Section 3: How PhytoSynergyDB Empowers Your Research -->
+<!-- Section 3: About the Database -->
+<section class="about-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <h2 class="section-title text-start">About PhytoSynergyDB</h2>
+                <p>
+                    Antimicrobial resistance (AMR) is one of the greatest threats to global health. The ESKAPE pathogens
+                    &mdash; <em>Enterococcus faecium</em>, <em>Staphylococcus aureus</em>, <em>Klebsiella pneumoniae</em>,
+                    <em>Acinetobacter baumannii</em>, <em>Pseudomonas aeruginosa</em>, and <em>Enterobacter</em> spp.
+                    &mdash; are responsible for the majority of hospital-acquired infections worldwide.
+                </p>
+                <p>
+                    PhytoSynergyDB is the first curated database dedicated to cataloguing synergistic interactions
+                    between phytochemicals (plant-derived compounds) and conventional antibiotics against these
+                    critical pathogens. Each entry includes MIC values, FIC indices, interpretation, and
+                    observed mechanisms of action, all extracted from peer-reviewed literature.
+                </p>
+                <p>
+                    Our goal is to accelerate the discovery of combination therapies that can restore the
+                    efficacy of existing antibiotics and provide researchers with a centralized, structured
+                    resource for antimicrobial synergy data.
+                </p>
+            </div>
+            <div class="col-lg-5">
+                <div class="about-info-card">
+                    <div class="about-info-item">
+                        <i class="fas fa-database"></i>
+                        <div>
+                            <strong>Structured Data</strong>
+                            <p>MIC values, FIC indices, and synergy interpretations for every entry</p>
+                        </div>
+                    </div>
+                    <div class="about-info-item">
+                        <i class="fas fa-book"></i>
+                        <div>
+                            <strong>Peer-Reviewed Sources</strong>
+                            <p>All data extracted from published scientific literature with DOI links</p>
+                        </div>
+                    </div>
+                    <div class="about-info-item">
+                        <i class="fas fa-flask"></i>
+                        <div>
+                            <strong>Mechanism Insights</strong>
+                            <p>Observed mechanisms of action for phytochemical-antibiotic combinations</p>
+                        </div>
+                    </div>
+                    <div class="about-info-item">
+                        <i class="fas fa-download"></i>
+                        <div>
+                            <strong>Open Access</strong>
+                            <p>Free to search, browse, and download for academic research</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Section 4: Featured ESKAPE Pathogens -->
+<section class="section" id="eskape-section">
+    <div class="container">
+        <h2 class="section-title">The ESKAPE Pathogens</h2>
+        <p class="text-center text-muted mb-5" style="max-width: 700px; margin: -2rem auto 3rem;">
+            The six clinically critical pathogens responsible for the majority of nosocomial infections and antimicrobial resistance.
+        </p>
+        <div class="row g-4">
+            {% for pathogen in eskape_data %}
+            <div class="col-md-4">
+                <div class="pathogen-card">
+                    <div class="pathogen-letter">{{ pathogen.letter }}</div>
+                    <div class="pathogen-name"><em>{{ pathogen.name }}</em></div>
+                    <span class="badge {% if pathogen.gram == 'Gram-positive' %}bg-gram-positive{% else %}bg-gram-negative{% endif %} mt-2">
+                        {{ pathogen.gram }}
+                    </span>
+                    <span class="pathogen-count">{{ pathogen.count }}</span>
+                    <span class="stat-label">Experiments</span>
+                    <a href="{% url 'database_search' %}?query={{ pathogen.genus }}" class="btn btn-sm btn-outline-primary mt-2"
+                       style="color: var(--dark-blue); border-color: var(--dark-blue);">
+                        Explore <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Section 5: Recent Entries -->
+<section class="section bg-light" id="recent-section">
+    <div class="container">
+        <h2 class="section-title">Recent Entries</h2>
+        {% if recent_entries %}
+        <div class="table-responsive">
+            <table class="recent-entries-table">
+                <thead>
+                    <tr>
+                        <th>Phytochemical</th>
+                        <th>Antibiotic</th>
+                        <th>Pathogen</th>
+                        <th>FIC Index</th>
+                        <th>Interpretation</th>
+                        <th>Source</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in recent_entries %}
+                    <tr>
+                        <td><strong>{{ entry.phytochemical.compound_name }}</strong></td>
+                        <td>{{ entry.antibiotic.antibiotic_name }}</td>
+                        <td><em>{{ entry.pathogen }}</em></td>
+                        <td>
+                            {% if entry.fic_index %}
+                                {{ entry.fic_index }}
+                            {% else %}
+                                <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if entry.interpretation %}
+                            <span class="badge {% if entry.interpretation == 'Synergy' %}synergy-badge{% elif entry.interpretation == 'Antagonism' %}antagonism-badge{% else %}other-badge{% endif %}">
+                                {{ entry.interpretation }}
+                            </span>
+                            {% else %}
+                                <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if entry.source.doi %}
+                                <a href="https://doi.org/{{ entry.source.doi }}" target="_blank" rel="noopener" style="color: var(--primary-blue);">
+                                    {{ entry.source.doi|truncatechars:30 }}
+                                </a>
+                            {% else %}
+                                <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="text-center mt-4">
+            <a href="{% url 'database_search' %}" class="btn btn-primary"
+               style="background-color: var(--dark-blue); border-color: var(--dark-blue); font-weight: 600;">
+                View All Entries <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-database" style="font-size: 3rem; color: var(--light-blue); margin-bottom: 1rem;"></i>
+            <p class="text-muted">No entries yet. Data curation is in progress.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Section 6: How to Use -->
 <section class="section">
     <div class="container">
         <h2 class="section-title">From Data to Discovery in Three Steps</h2>
         <div class="row">
             <div class="col-md-4 feature-item">
-                <div class="icon">🔍</div> <!-- Placeholder for a real icon -->
+                <div class="step-number">Step 1</div>
+                <div class="step-icon">
+                    <i class="fas fa-search"></i>
+                </div>
                 <h4>Search & Filter</h4>
-                <p>Instantly search thousands of data points. Filter by pathogen, compound, or mechanism of action to find exactly what you need.</p>
+                <p>Use the search bar or advanced filters to find synergy data by compound, pathogen, antibiotic, or mechanism of action.</p>
             </div>
             <div class="col-md-4 feature-item">
-                <div class="icon">📊</div> <!-- Placeholder for a real icon -->
-                <h4>Analyze & Visualize</h4>
-                <p>Gain Deeper Insights: Use our interactive tools—from synergy heatmaps to 3D molecular viewers—to understand complex relationships in the data.</p>
+                <div class="step-number">Step 2</div>
+                <div class="step-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <h4>Analyze & Compare</h4>
+                <p>Examine MIC values, FIC indices, and mechanism details. Compare synergy profiles across pathogens and compounds.</p>
             </div>
             <div class="col-md-4 feature-item">
-                <div class="icon">💾</div> <!-- Placeholder for a real icon -->
+                <div class="step-number">Step 3</div>
+                <div class="step-icon">
+                    <i class="fas fa-download"></i>
+                </div>
                 <h4>Download & Integrate</h4>
-                <p>Access structured, machine-readable datasets to integrate directly into your own research and analysis pipelines.</p>
+                <p>Export structured, machine-readable datasets to integrate directly into your own research and analysis pipelines.</p>
             </div>
         </div>
     </div>
 </section>
 
-<!-- You can continue adding the "Key Features" and "Our Mission" sections here following the same pattern -->
+<!-- Section 7: Mission / CTA -->
+<section class="mission-section">
+    <div class="container">
+        <h2>Our Mission</h2>
+        <p>
+            PhytoSynergyDB aims to bridge the gap between phytochemistry and clinical antimicrobial research.
+            By providing a centralized, curated repository of synergy data, we empower researchers worldwide
+            to discover new combination therapies against the most dangerous drug-resistant pathogens.
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{% url 'database_search' %}" class="btn btn-primary btn-lg"
+               style="background-color: var(--dark-blue); border-color: var(--dark-blue); font-weight: 600;">
+                Explore the Database
+            </a>
+            {% if user.is_authenticated %}
+            <a href="{% url 'data_entry' %}" class="btn btn-outline-primary btn-lg"
+               style="color: var(--dark-blue); border-color: var(--dark-blue); font-weight: 600;">
+                Contribute Data
+            </a>
+            {% else %}
+            <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg"
+               style="color: var(--dark-blue); border-color: var(--dark-blue); font-weight: 600;">
+                Researcher Login
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
 
 {% endblock %}

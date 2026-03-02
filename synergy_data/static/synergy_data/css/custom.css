@@ -4,20 +4,16 @@
 =====================================================
 */
 
-/*
-==================================
-1. Brand Color Palette & Fonts
-==================================
-"/* --- PhytoSynergyDB Design System --- */
+/* --- PhytoSynergyDB Design System --- */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap');
 
 /* 1. Color Palette Definition */
 :root {
-    --dark-blue: #3D52A0;
-    --primary-blue: #7091E6;
-    --medium-blue: #8697C4;
-    --light-blue: #ADBBDA;
-    --pale-lavender: #EDE8F5;
+    --dark-blue: #5D001E;       /* Deep crimson */
+    --primary-blue: #EE4C7C;    /* Vibrant pink */
+    --medium-blue: #E3AFBC;     /* Soft rose */
+    --light-blue: #9A1750;      /* Magenta */
+    --pale-lavender: #E3E2DF;   /* Warm cream */
     --text-dark: #212529;
     --text-light: #f8f9fa;
     --white: #ffffff;
@@ -25,16 +21,14 @@
 
 /* 2. General Body & Typography */
 body {
-    /* The new font-family rule */
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    
     background-color: var(--white);
     color: var(--text-dark);
 }
 
 /* 3. Section Styling */
 .section {
-    padding: 80px 0; /* Add generous spacing between sections */
+    padding: 80px 0;
 }
 
 .section-title {
@@ -42,44 +36,57 @@ body {
     font-size: 2.5rem;
     font-weight: 700;
     margin-bottom: 50px;
+    color: var(--dark-blue);
 }
 
 /* 4. Navigation Bar Styling */
 .navbar-custom {
-    background-color: var(--white);
+    background-color: #ffffff !important;
     border-bottom: 1px solid #e9ecef;
-    padding: 1rem 0;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    transition: all 0.3s ease;
 }
 .navbar-custom .navbar-brand {
     font-weight: 700;
+    font-size: 1.25rem;
     color: var(--dark-blue);
 }
 .navbar-custom .nav-link {
-    color: var(--text-dark);
+    color: #5a6a7a;
     font-weight: 500;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
 }
-.navbar-custom .nav-link:hover {
+.navbar-custom .nav-link:hover,
+.navbar-custom .nav-link.active {
     color: var(--primary-blue);
 }
 
-/* --- Homepage Specific Sections --- */
+
+/* ==========================================================
+   HOMEPAGE SECTIONS
+   ========================================================== */
 
 /* 5. Hero Section */
 .hero-section {
-    background-color: var(--pale-lavender);
+    background-color: var(--dark-blue);
     text-align: center;
-    padding: 100px 0;
+    padding: 100px 0 80px;
 }
 .hero-section h1 {
-    font-size: 4rem;
+    font-size: 3.5rem;
     font-weight: 800;
-    color: var(--dark-blue);
+    color: var(--white);
 }
 .hero-section .tagline {
-    font-size: 1.25rem;
-    color: var(--medium-blue);
+    font-size: 1.2rem;
+    color: var(--light-blue);
     margin-top: 1rem;
     margin-bottom: 2.5rem;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
 }
 .hero-search-bar {
     max-width: 600px;
@@ -87,7 +94,7 @@ body {
 }
 .hero-search-bar .form-control {
     padding: 0.75rem 1.5rem;
-    border-radius: 50px; /* Pill-shaped search bar */
+    border-radius: 50px;
     border: 2px solid var(--light-blue);
 }
 .hero-search-bar .btn {
@@ -97,44 +104,263 @@ body {
     border-color: var(--primary-blue);
     font-weight: 600;
 }
+.hero-quick-links .btn-outline-light {
+    border-color: rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.8);
+    font-size: 0.85rem;
+}
+.hero-quick-links .btn-outline-light:hover {
+    background-color: rgba(255,255,255,0.15);
+    color: var(--white);
+    border-color: rgba(255,255,255,0.5);
+}
 
 /* 6. Statistics Bar */
 .stats-bar {
-    background-color: var(--white);
+    background-color: var(--pale-lavender);
     padding: 40px 0;
+    border-bottom: 1px solid #d4d0c8;
 }
 .stat-item {
     text-align: center;
+    padding: 10px 5px;
 }
 .stat-number {
-    font-size: 3rem;
+    font-size: 2.5rem;
     font-weight: 700;
     color: var(--dark-blue);
     display: block;
 }
 .stat-label {
-    font-size: 1rem;
+    font-size: 0.85rem;
     color: var(--medium-blue);
-    margin-top: 0.5rem;
+    margin-top: 0.25rem;
     display: block;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
-/* 7. Features / How-it-works Section */
+/* 7. About Section */
+.about-section {
+    background-color: var(--white);
+    padding: 80px 0;
+}
+.about-section .section-title {
+    text-align: left;
+    margin-bottom: 1.5rem;
+}
+.about-section p {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: #555;
+}
+.about-info-card {
+    background-color: var(--pale-lavender);
+    border-radius: 0.75rem;
+    padding: 2rem;
+}
+.about-info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 0;
+}
+.about-info-item:not(:last-child) {
+    border-bottom: 1px solid rgba(93, 0, 30, 0.1);
+}
+.about-info-item i {
+    font-size: 1.5rem;
+    color: var(--dark-blue);
+    margin-top: 0.15rem;
+    min-width: 30px;
+    text-align: center;
+}
+.about-info-item strong {
+    color: var(--dark-blue);
+    display: block;
+    margin-bottom: 0.25rem;
+}
+.about-info-item p {
+    font-size: 0.9rem;
+    margin-bottom: 0;
+    color: #666;
+    line-height: 1.5;
+}
+
+/* 8. ESKAPE Pathogen Cards */
+.pathogen-card {
+    background: var(--white);
+    border: 1px solid #e9ecef;
+    border-radius: 0.75rem;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+    height: 100%;
+}
+.pathogen-card:hover {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    transform: translateY(-3px);
+    border-color: var(--light-blue);
+}
+.pathogen-letter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: var(--dark-blue);
+    color: var(--white);
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+}
+.pathogen-name {
+    font-size: 1.05rem;
+    color: var(--dark-blue);
+    font-weight: 600;
+    display: block;
+}
+.pathogen-count {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+    display: block;
+    margin: 0.5rem 0 0;
+}
+.bg-gram-positive {
+    background-color: #d4edda;
+    color: #155724;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.bg-gram-negative {
+    background-color: #cce5ff;
+    color: #004085;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* 9. Recent Entries Table */
+.recent-entries-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--white);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+.recent-entries-table thead th {
+    background-color: var(--dark-blue);
+    color: var(--white);
+    padding: 0.85rem 1rem;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: none;
+}
+.recent-entries-table tbody td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.95rem;
+    vertical-align: middle;
+}
+.recent-entries-table tbody tr:last-child td {
+    border-bottom: none;
+}
+.recent-entries-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* 10. Synergy Interpretation Badges */
+.synergy-badge {
+    background-color: #d4edda;
+    color: #155724;
+    font-weight: 600;
+    font-size: 0.8rem;
+    padding: 0.35em 0.75em;
+    border-radius: 50px;
+}
+.antagonism-badge {
+    background-color: #f8d7da;
+    color: #842029;
+    font-weight: 600;
+    font-size: 0.8rem;
+    padding: 0.35em 0.75em;
+    border-radius: 50px;
+}
+.other-badge {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    font-weight: 600;
+    font-size: 0.8rem;
+    padding: 0.35em 0.75em;
+    border-radius: 50px;
+}
+
+/* 11. Step / Workflow Section */
 .feature-item {
     text-align: center;
     padding: 20px;
 }
-.feature-item .icon {
-    font-size: 3rem; /* Placeholder for icon */
+.step-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: var(--pale-lavender);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+.step-icon i {
+    font-size: 2rem;
+    color: var(--dark-blue);
+}
+.step-number {
+    font-size: 0.8rem;
+    font-weight: 700;
     color: var(--primary-blue);
-    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+}
+.feature-item h4 {
+    color: var(--dark-blue);
+    font-weight: 700;
+}
+.feature-item p {
+    color: #666;
+    font-size: 0.95rem;
 }
 
-/*
-==================================
-New Search Page Design
-==================================
-*/
+/* 12. Mission / CTA Section */
+.mission-section {
+    background-color: var(--pale-lavender);
+    padding: 80px 0;
+    text-align: center;
+}
+.mission-section h2 {
+    color: var(--dark-blue);
+    font-weight: 700;
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+}
+.mission-section p {
+    max-width: 700px;
+    margin: 0 auto 2rem;
+    font-size: 1.1rem;
+    color: #555;
+    line-height: 1.8;
+}
+
+
+/* ==========================================================
+   SEARCH PAGE
+   ========================================================== */
 
 .search-panel-card {
     background-color: #ffffff;
@@ -144,7 +370,7 @@ New Search Page Design
 
 .result-card {
     display: grid;
-    grid-template-columns: repeat(6, 1fr) 150px; /* 6 data columns, 1 action column */
+    grid-template-columns: repeat(6, 1fr) 150px;
     grid-template-rows: auto auto;
     gap: 1rem;
     background-color: #ffffff;
@@ -155,14 +381,13 @@ New Search Page Design
     align-items: center;
     transition: all 0.2s ease-in-out;
 }
-
 .result-card:hover {
     box-shadow: 0 8px 30px rgba(0,0,0,0.1);
-    border-color: #a5b4fc; /* A nice purple-blue on hover */
+    border-color: #E3AFBC;
     transform: translateY(-3px);
 }
 
-.rc-main { grid-column: 1 / 3; } /* Span 2 columns */
+.rc-main { grid-column: 1 / 3; }
 .rc-fic { grid-column: 3 / 4; }
 .rc-mic-abx { grid-column: 4 / 5; }
 .rc-mic-phyto { grid-column: 5 / 6; }
@@ -182,14 +407,12 @@ New Search Page Design
 .rc-icon { width: 16px; height: 16px; margin-right: 0.25rem; opacity: 0.7; }
 
 .bg-success-light { background-color: #e6f9f0; }
-.text-success { color: #198754 !important; }
 .bg-secondary-light { background-color: #f8f9fa; }
-.text-secondary { color: #6c757d !important; }
 
-/* Responsive adjustments for mobile */
+/* Search page responsive */
 @media (max-width: 992px) {
     .result-card {
-        grid-template-columns: 1fr 1fr; /* Stack into 2 columns */
+        grid-template-columns: 1fr 1fr;
     }
     .rc-main { grid-column: 1 / 3; grid-row: 1; }
     .rc-fic { grid-column: 1 / 2; grid-row: 2; }
@@ -199,35 +422,100 @@ New Search Page Design
     .rc-actions { grid-column: 1 / 3; grid-row: 5; text-align: left; }
 }
 
-/* synergy_data/static/synergy_data/css/custom.css */
 
-/*
-==================================
-Custom Navbar Styling
-==================================
-*/
-.navbar-custom {
-    background-color: #ffffff !important; /* Force a white background */
-    border-bottom: 1px solid #e9ecef; /* Subtle bottom border */
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-    transition: all 0.3s ease;
+/* ==========================================================
+   DATA ENTRY PAGE
+   ========================================================== */
+
+.data-entry-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 1rem;
 }
-
-.navbar-custom .navbar-brand {
+.data-entry-card {
+    background: var(--white);
+    border: 1px solid #e9ecef;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+.data-entry-card .card-header {
+    background-color: var(--dark-blue);
+    color: var(--white);
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    font-size: 1.05rem;
+    border: none;
+}
+.field-group-title {
+    font-size: 0.85rem;
     font-weight: 700;
-    font-size: 1.25rem;
-    color: #2c3e50; /* Dark blue-grey text */
+    color: var(--dark-blue);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--pale-lavender);
+}
+.auto-calc-hint {
+    font-size: 0.8rem;
+    color: var(--medium-blue);
+    font-style: italic;
+}
+.pathogen-preview {
+    font-size: 0.85rem;
+    color: var(--primary-blue);
+    margin-top: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    background-color: var(--pale-lavender);
+    border-radius: 0.25rem;
+    display: inline-block;
 }
 
-.navbar-custom .nav-link {
-    color: #5a6a7a; /* Softer text color for links */
-    font-weight: 500;
-    margin-left: 0.5rem;
-    margin-right: 0.5rem;
+
+/* ==========================================================
+   LOGIN PAGE
+   ========================================================== */
+
+.login-container {
+    max-width: 450px;
+    margin: 5rem auto;
+    padding: 0 1rem;
+}
+.login-card {
+    background: var(--white);
+    border-radius: 0.75rem;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.07);
+    padding: 2.5rem;
+    border: 1px solid #e9ecef;
 }
 
-.navbar-custom .nav-link:hover,
-.navbar-custom .nav-link.active { /* Style for the active page link */
-    color: #0d6efd; /* Primary blue color */
+
+/* ==========================================================
+   RESPONSIVE ADJUSTMENTS
+   ========================================================== */
+
+@media (max-width: 768px) {
+    .hero-section h1 {
+        font-size: 2.25rem;
+    }
+    .hero-section .tagline {
+        font-size: 1rem;
+    }
+    .stat-number {
+        font-size: 1.75rem;
+    }
+    .stat-label {
+        font-size: 0.75rem;
+    }
+    .section-title {
+        font-size: 1.75rem;
+    }
+    .about-section .section-title {
+        text-align: center;
+    }
+    .data-entry-container {
+        margin: 1rem auto;
+    }
 }

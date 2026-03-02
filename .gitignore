@@ -13,5 +13,11 @@ db.sqlite3-journal
 # Static files
 /staticfiles/
 
+# Preview database
+db_preview.sqlite3
+
+# Claude Code workspace
+.claude/
+
 # Other
 .DS_Store
