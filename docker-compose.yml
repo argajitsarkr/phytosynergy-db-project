@@ -8,7 +8,7 @@ services:
     environment:
       - POSTGRES_DB=phytosynergy_db
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=YOUR_STRONG_DATABASE_PASSWORD # <-- CHANGE THIS
+      - POSTGRES_PASSWORD=E6fgO4KM7xDkXbysGVLhFEflgZuEZu14xKoBxh5G7FA
     restart: always
 
   web:
@@ -20,10 +20,10 @@ services:
     depends_on:
       - db
     environment:
-      - DATABASE_URL=postgres://postgres:YOUR_STRONG_DATABASE_PASSWORD@db:5432/phytosynergy_db # <-- CHANGE THIS to match above
-      - DJANGO_SECRET_KEY=yu2ds(3gm3wm1yonzm^!blh4=)*g31!=_9(+_l-ahr#282y#tj # <-- CHANGE THIS
+      - DATABASE_URL=postgres://postgres:E6fgO4KM7xDkXbysGVLhFEflgZuEZu14xKoBxh5G7FA@db:5432/phytosynergy_db
+      - DJANGO_SECRET_KEY=aky@!o6_4fyp%ox59q^xfe0*#^6n83(dz)rjs!c34j-+ul3%u^
       - DEBUG=0 # Set to 0 for production
-      - ALLOWED_HOSTS=* # Start with a wildcard, we can restrict this later
+      - ALLOWED_HOSTS=192.168.1.35,localhost
     restart: always
 
   nginx:
