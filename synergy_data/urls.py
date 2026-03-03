@@ -18,6 +18,11 @@ urlpatterns = [
     # Data entry (login-protected)
     path('data-entry/', views.data_entry_view, name='data_entry'),
 
+    # API endpoints
+    path('api/v1/experiments/', views.api_experiments, name='api_experiments'),
+    path('api/v1/statistics/', views.api_statistics, name='api_statistics'),
+    path('api/docs/', views.api_docs, name='api_docs'),
+
     # Authentication
     path('accounts/login/', auth_views.LoginView.as_view(
         template_name='synergy_data/login.html'

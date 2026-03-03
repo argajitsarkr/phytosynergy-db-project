@@ -1,0 +1,180 @@
+{% extends 'synergy_data/base.html' %}
+
+{% block title %}API Documentation - PhytoSynergyDB{% endblock %}
+
+{% block content %}
+
+<div class="about-page-header">
+    <div class="container">
+        <h1>API Documentation</h1>
+        <p>Programmatic access to PhytoSynergyDB for computational research pipelines.</p>
+    </div>
+</div>
+
+<div class="about-content-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+
+                <h3>Overview</h3>
+                <p>
+                    PhytoSynergyDB provides a read-only REST API for programmatic access to synergy
+                    experiment data. All responses are in JSON format. No authentication is required.
+                </p>
+
+                <!-- Experiments Endpoint -->
+                <h3 class="mt-5">Experiments Endpoint</h3>
+                <div class="citation-box mb-4">
+                    <strong>GET</strong> <code style="display: inline; background: none; border: none; padding: 0; margin: 0;">/api/v1/experiments/</code>
+                    <p class="mt-2 mb-0">Returns a paginated list of synergy experiments with full details.</p>
+                </div>
+
+                <h5>Query Parameters</h5>
+                <div class="table-responsive mb-4">
+                    <table class="recent-entries-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>query</code></td><td>string</td><td>Text search across phytochemical, antibiotic, and pathogen names</td></tr>
+                            <tr><td><code>interpretation</code></td><td>string</td><td>Filter by: Synergy, Additive, Indifference, Antagonism</td></tr>
+                            <tr><td><code>eskape</code></td><td>string</td><td>Filter by ESKAPE genus (e.g., Staphylococcus, Pseudomonas)</td></tr>
+                            <tr><td><code>pathogen</code></td><td>integer</td><td>Filter by pathogen ID</td></tr>
+                            <tr><td><code>antibiotic</code></td><td>integer</td><td>Filter by antibiotic ID</td></tr>
+                            <tr><td><code>mechanism</code></td><td>string</td><td>Text search within mechanism of action</td></tr>
+                            <tr><td><code>limit</code></td><td>integer</td><td>Results per page (default: 100, max: 500)</td></tr>
+                            <tr><td><code>offset</code></td><td>integer</td><td>Number of results to skip (default: 0)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h5>Example Request</h5>
+                <div class="citation-box mb-4">
+                    <code>GET /api/v1/experiments/?eskape=Staphylococcus&interpretation=Synergy&limit=10</code>
+                </div>
+
+                <h5>Response Format</h5>
+                <div class="citation-box mb-5">
+<code>{
+  "count": 42,
+  "limit": 10,
+  "offset": 0,
+  "results": [
+    {
+      "id": 1,
+      "phytochemical": {
+        "name": "Vitexin",
+        "pubchem_cid": 5280441,
+        "inchi_key": "SGEWCQFRYRRZDC-UHFFFAOYSA-N",
+        "smiles": "..."
+      },
+      "antibiotic": {
+        "name": "Azithromycin",
+        "drugbank_id": "DB00207",
+        "class": "Macrolide"
+      },
+      "pathogen": {
+        "genus": "Staphylococcus",
+        "species": "aureus",
+        "strain": "ATCC 25923",
+        "gram_stain": "Gram-positive"
+      },
+      "mic_phyto_alone": "256.0000",
+      "mic_abx_alone": "64.0000",
+      "mic_phyto_in_combo": "32.0000",
+      "mic_abx_in_combo": "8.0000",
+      "mic_units": "\u00b5g/mL",
+      "fic_index": "0.2500",
+      "interpretation": "Synergy",
+      "mechanism_of_action": "Efflux pump inhibition",
+      "source": {
+        "doi": "10.1038/srep23347",
+        "pmid": 27001328,
+        "journal": "Scientific Reports",
+        "year": 2016,
+        "title": "..."
+      }
+    }
+  ]
+}</code>
+                </div>
+
+                <!-- Statistics Endpoint -->
+                <h3>Statistics Endpoint</h3>
+                <div class="citation-box mb-4">
+                    <strong>GET</strong> <code style="display: inline; background: none; border: none; padding: 0; margin: 0;">/api/v1/statistics/</code>
+                    <p class="mt-2 mb-0">Returns aggregate statistics about the database.</p>
+                </div>
+
+                <h5>Response Format</h5>
+                <div class="citation-box mb-5">
+<code>{
+  "total_experiments": 150,
+  "total_phytochemicals": 45,
+  "total_antibiotics": 22,
+  "total_sources": 38,
+  "total_pathogens": 28,
+  "interpretations": {
+    "synergy": 95,
+    "additive": 30,
+    "indifference": 20,
+    "antagonism": 5
+  },
+  "eskape_counts": {
+    "Enterococcus": 12,
+    "Staphylococcus": 48,
+    "Klebsiella": 25,
+    "Acinetobacter": 18,
+    "Pseudomonas": 35,
+    "Enterobacter": 12
+  }
+}</code>
+                </div>
+
+                <!-- Usage Examples -->
+                <h3>Usage Examples</h3>
+
+                <h5>Python</h5>
+                <div class="citation-box mb-3">
+<code>import requests
+
+response = requests.get(
+    "https://your-domain.com/api/v1/experiments/",
+    params={"interpretation": "Synergy", "eskape": "Pseudomonas"}
+)
+data = response.json()
+print(f"Found {data['count']} synergistic pairs")</code>
+                </div>
+
+                <h5>R</h5>
+                <div class="citation-box mb-3">
+<code>library(httr)
+library(jsonlite)
+
+resp <- GET("https://your-domain.com/api/v1/experiments/",
+            query = list(interpretation = "Synergy"))
+data <- fromJSON(content(resp, "text"))
+cat(paste("Found", data$count, "synergistic pairs\n"))</code>
+                </div>
+
+                <h5>curl</h5>
+                <div class="citation-box mb-5">
+<code>curl "https://your-domain.com/api/v1/experiments/?interpretation=Synergy&limit=5"</code>
+                </div>
+
+                <div class="text-center mt-4">
+                    <a href="{% url 'database_search' %}" class="btn btn-primary-custom btn-lg">
+                        Explore via Web Interface <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

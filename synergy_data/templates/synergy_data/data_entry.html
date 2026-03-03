@@ -7,10 +7,10 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 style="color: var(--dark-blue); font-weight: 700; margin-bottom: 0.25rem;">Data Entry</h2>
+            <h2 style="color: var(--text-primary); font-weight: 800; margin-bottom: 0.25rem;">Data Entry</h2>
             <p class="text-muted mb-0">Add a new synergy experiment record to the database.</p>
         </div>
-        <a href="{% url 'database_search' %}" class="btn btn-outline-secondary btn-sm">
+        <a href="{% url 'database_search' %}" class="btn btn-outline-custom btn-sm">
             <i class="fas fa-arrow-left me-1"></i> Back to Database
         </a>
     </div>
@@ -24,7 +24,6 @@
                 <i class="fas fa-book-open me-2"></i> Source & Entities
             </div>
             <div class="card-body p-4">
-                <!-- Source DOI -->
                 <div class="mb-3">
                     <label for="{{ form.source_doi.id_for_label }}" class="form-label fw-semibold">
                         {{ form.source_doi.label }} <span class="text-danger">*</span>
@@ -38,7 +37,6 @@
                     {% endif %}
                 </div>
 
-                <!-- Pathogen Full Name -->
                 <div class="mb-3">
                     <label for="{{ form.pathogen_full_name.id_for_label }}" class="form-label fw-semibold">
                         {{ form.pathogen_full_name.label }} <span class="text-danger">*</span>
@@ -57,7 +55,6 @@
                     {% endif %}
                 </div>
 
-                <!-- Phytochemical & Antibiotic (side by side) -->
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="{{ form.phytochemical_name.id_for_label }}" class="form-label fw-semibold">
@@ -141,7 +138,7 @@
                         <label for="{{ form.interpretation.id_for_label }}" class="form-label fw-semibold">{{ form.interpretation.label }}</label>
                         {{ form.interpretation }}
                         <div class="auto-calc-hint mt-1">
-                            <i class="fas fa-magic me-1"></i>
+                            <i class="fas fa-wand-magic-sparkles me-1"></i>
                             Auto-derived from FIC if left blank
                         </div>
                     </div>
@@ -168,12 +165,10 @@
 
         <!-- Action Buttons -->
         <div class="d-flex gap-3 mb-5">
-            <button type="submit" name="save_and_another" class="btn btn-primary btn-lg"
-                    style="background-color: var(--dark-blue); border-color: var(--dark-blue); font-weight: 600;">
+            <button type="submit" name="save_and_another" class="btn btn-primary-custom btn-lg">
                 <i class="fas fa-plus me-2"></i> Save & Add Another
             </button>
-            <button type="submit" name="save_and_return" class="btn btn-outline-primary btn-lg"
-                    style="color: var(--dark-blue); border-color: var(--dark-blue); font-weight: 600;">
+            <button type="submit" name="save_and_return" class="btn btn-outline-custom btn-lg">
                 <i class="fas fa-check me-2"></i> Save & Return to Database
             </button>
         </div>

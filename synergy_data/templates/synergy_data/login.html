@@ -6,8 +6,8 @@
 <div class="login-container">
     <div class="login-card">
         <div class="text-center mb-4">
-            <i class="fas fa-flask" style="font-size: 2.5rem; color: var(--dark-blue);"></i>
-            <h3 class="mt-3" style="color: var(--dark-blue); font-weight: 700;">Researcher Login</h3>
+            <i class="fas fa-flask" style="font-size: 2.5rem; color: var(--primary);"></i>
+            <h3 class="mt-3" style="color: var(--text-primary); font-weight: 800;">Researcher Login</h3>
             <p class="text-muted">Access restricted to authorized researchers.</p>
         </div>
 
@@ -20,24 +20,23 @@
         <form method="post">
             {% csrf_token %}
             <div class="mb-3">
-                <label for="id_username" class="form-label">Username</label>
+                <label for="id_username" class="form-label fw-semibold">Username</label>
                 <input type="text" name="username" id="id_username"
                        class="form-control" autofocus required>
             </div>
             <div class="mb-3">
-                <label for="id_password" class="form-label">Password</label>
+                <label for="id_password" class="form-label fw-semibold">Password</label>
                 <input type="password" name="password" id="id_password"
                        class="form-control" required>
             </div>
             <input type="hidden" name="next" value="{{ next }}">
-            <button type="submit" class="btn btn-primary w-100 mt-2"
-                    style="background-color: var(--dark-blue); border-color: var(--dark-blue); font-weight: 600;">
+            <button type="submit" class="btn btn-primary-custom w-100 mt-2 btn-lg">
                 Sign In
             </button>
         </form>
 
         <p class="text-center text-muted mt-4 mb-0" style="font-size: 0.85rem;">
-            <a href="{% url 'home' %}" style="color: var(--primary-blue);">Back to Home</a>
+            <a href="{% url 'home' %}">Back to Home</a>
         </p>
     </div>
 </div>

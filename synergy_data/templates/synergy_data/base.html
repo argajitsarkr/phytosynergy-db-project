@@ -6,23 +6,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}PhytoSynergyDB{% endblock %}</title>
+    <meta name="description" content="PhytoSynergyDB - A curated database of phytochemical-antibiotic synergies against ESKAPE pathogens for antimicrobial resistance research.">
 
     <!-- 1. Main Framework CSS -->
     {% bootstrap_css %}
 
     <!-- 2. External Library CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <!-- 3. Your Custom Override CSS (loads last) -->
+    <!-- 3. Custom Override CSS -->
     <link rel="stylesheet" href="{% static 'synergy_data/css/custom.css' %}">
 
-    <!-- ============ FAVICON LINKS ============ -->
+    <!-- Favicon Links -->
     <link rel="icon" type="image/png" href="{% static 'synergy_data/icons/favicon-96x96.png' %}" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="{% static 'synergy_data/icons/favicon.svg' %}" />
     <link rel="shortcut icon" href="{% static 'synergy_data/icons/favicon.ico' %}" />
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'synergy_data/icons/apple-touch-icon.png' %}" />
     <link rel="manifest" href="{% static 'synergy_data/icons/site.webmanifest' %}" />
-    <!-- ============ END FAVICON LINKS ============ -->
 
     {% bootstrap_javascript %}
 </head>
@@ -32,7 +32,7 @@
     <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container">
             <a class="navbar-brand" href="{% url 'home' %}">
-                <img src="{% static 'synergy_data/images/logo.png' %}" alt="PhytoSynergyDB Logo" height="30">
+                <img src="{% static 'synergy_data/images/logo.png' %}" alt="PhytoSynergyDB Logo" height="28">
                 PhytoSynergyDB
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
@@ -40,20 +40,48 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'database_search' %}">Explore Data</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">About</a></li>
+                <!-- Left-side nav links -->
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Explore
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'database_search' %}"><i class="fas fa-search me-2 text-muted"></i>Search Database</a></li>
+                            <li><a class="dropdown-item" href="{% url 'database_search' %}?query="><i class="fas fa-list me-2 text-muted"></i>Browse All Entries</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'database_search' %}?interpretation=Synergy"><i class="fas fa-check-circle me-2 text-muted"></i>Synergistic Pairs</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'about' %}">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'download_data' %}"><i class="fas fa-download me-1"></i>Download</a>
+                    </li>
+                </ul>
+
+                <!-- Right-side nav buttons -->
+                <ul class="navbar-nav mb-2 mb-lg-0 align-items-lg-center gap-2">
                     {% if user.is_authenticated %}
-                    <li class="nav-item"><a class="nav-link" href="{% url 'data_entry' %}"><i class="fas fa-plus-circle me-1"></i>Data Entry</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Logout</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'data_entry' %}"><i class="fas fa-plus-circle me-1"></i>Data Entry</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-btn-login" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-1"></i>Logout</a>
+                    </li>
                     {% else %}
-                    <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-btn-login" href="{% url 'login' %}"><i class="fas fa-user me-1"></i>Log In</a>
+                    </li>
                     {% endif %}
                 </ul>
             </div>
         </div>
     </nav>
+
+    <!-- Global Search Banner (shown on pages that want it) -->
+    {% block search_banner %}{% endblock %}
 
     <!-- Django Messages -->
     {% if messages %}
@@ -72,20 +100,77 @@
     {% endblock %}
 
     <!-- Footer -->
-    <footer class="container mt-5 mb-3 text-muted">
-        <hr>
-        <div class="d-flex justify-content-between align-items-center">
-            <p class="mb-0">&copy; {% now "Y" %} PhytoSynergyDB Project. All Rights Reserved.</p>
-            <!-- View Counter -->
-            <div class="d-flex align-items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill me-2" viewBox="0 0 16 16">
-                    <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/>
-                    <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/>
-                </svg>
-                <span>Total Views: {{ total_views }}</span>
+    <footer class="site-footer">
+        <div class="container">
+            <div class="row">
+                <!-- Brand Column -->
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <div class="footer-brand">PhytoSynergyDB</div>
+                    <p class="footer-desc">
+                        A curated database dedicated to phytochemical-antibiotic synergies against ESKAPE pathogens.
+                        Accelerating antimicrobial resistance research.
+                    </p>
+                </div>
+                <!-- Quick Links -->
+                <div class="col-6 col-lg-2">
+                    <div class="footer-heading">Database</div>
+                    <ul class="footer-links">
+                        <li><a href="{% url 'database_search' %}">Search</a></li>
+                        <li><a href="{% url 'database_search' %}?query=">Browse All</a></li>
+                        <li><a href="{% url 'download_data' %}">Download</a></li>
+                    </ul>
+                </div>
+                <!-- Resources -->
+                <div class="col-6 col-lg-2">
+                    <div class="footer-heading">Resources</div>
+                    <ul class="footer-links">
+                        <li><a href="{% url 'about' %}">About</a></li>
+                        <li><a href="{% url 'about' %}#methodology">Methodology</a></li>
+                        <li><a href="{% url 'about' %}#citation">How to Cite</a></li>
+                    </ul>
+                </div>
+                <!-- For Researchers -->
+                <div class="col-6 col-lg-2">
+                    <div class="footer-heading">For Researchers</div>
+                    <ul class="footer-links">
+                        <li><a href="{% url 'api_docs' %}">API Access</a></li>
+                        <li><a href="{% url 'data_entry' %}">Contribute Data</a></li>
+                        <li><a href="{% url 'about' %}#contact">Contact</a></li>
+                    </ul>
+                </div>
+                <!-- Stats -->
+                <div class="col-6 col-lg-2">
+                    <div class="footer-heading">Statistics</div>
+                    <ul class="footer-links">
+                        <li><span class="text-muted"><i class="fas fa-flask me-1"></i>{{ total_experiments|default:"0" }} Experiments</span></li>
+                        <li><span class="text-muted"><i class="fas fa-leaf me-1"></i>{{ total_phytochemicals|default:"0" }} Phytochemicals</span></li>
+                        <li><span class="text-muted"><i class="fas fa-capsules me-1"></i>{{ total_antibiotics|default:"0" }} Antibiotics</span></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Bottom bar -->
+            <div class="footer-bottom d-flex flex-column flex-md-row justify-content-between align-items-center">
+                <p>&copy; {% now "Y" %} PhytoSynergyDB Project. All Rights Reserved.</p>
+                <div class="footer-view-counter">
+                    <i class="fas fa-eye"></i>
+                    <span>{{ total_views|default:"0" }} views</span>
+                </div>
             </div>
         </div>
     </footer>
+
+    <!-- Scroll shadow for navbar -->
+    <script>
+    window.addEventListener('scroll', function() {
+        const navbar = document.querySelector('.navbar-custom');
+        if (window.scrollY > 10) {
+            navbar.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
+        }
+    });
+    </script>
 
 </body>
 </html>

@@ -1,0 +1,76 @@
+{% extends 'synergy_data/base.html' %}
+
+{% block title %}Download Data - PhytoSynergyDB{% endblock %}
+
+{% block content %}
+
+<div class="about-page-header">
+    <div class="container">
+        <h1>Download Data</h1>
+        <p>Export PhytoSynergyDB data in structured, machine-readable formats for your research.</p>
+    </div>
+</div>
+
+<div class="about-content-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+
+                <h3>Full Database Export</h3>
+                <p>
+                    Download the complete PhytoSynergyDB dataset as a CSV file. The export includes all
+                    synergy experiment records with phytochemical identifiers (PubChem CID, InChI Key, SMILES),
+                    antibiotic details (DrugBank ID, class), pathogen information (genus, species, strain, Gram stain),
+                    MIC values, FIC indices, synergy interpretations, mechanisms of action, and publication metadata.
+                </p>
+
+                <div class="row g-4 mb-5">
+                    <div class="col-md-6">
+                        <div class="method-card text-center">
+                            <div class="method-icon mx-auto"><i class="fas fa-file-csv"></i></div>
+                            <h5>CSV Format</h5>
+                            <p class="mb-3">Complete dataset with all fields. Compatible with Excel, R, Python, and any data analysis tool.</p>
+                            <p class="text-muted mb-3" style="font-size: 0.85rem;">
+                                <strong>{{ total_experiments }}</strong> experiments &middot;
+                                <strong>{{ total_synergies }}</strong> confirmed synergies
+                            </p>
+                            <a href="{% url 'download_data' %}?export=csv" class="btn btn-primary-custom">
+                                <i class="fas fa-download me-2"></i>Download CSV
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="method-card text-center">
+                            <div class="method-icon mx-auto"><i class="fas fa-code"></i></div>
+                            <h5>JSON API</h5>
+                            <p class="mb-3">Programmatic access via REST API with filtering, pagination, and structured JSON responses.</p>
+                            <p class="text-muted mb-3" style="font-size: 0.85rem;">
+                                Endpoints for experiments &amp; statistics
+                            </p>
+                            <a href="{% url 'api_docs' %}" class="btn btn-outline-custom">
+                                <i class="fas fa-book me-2"></i>API Documentation
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Data License</h3>
+                <p>
+                    PhytoSynergyDB data is provided for academic and research purposes. If you use this data
+                    in your research, please cite PhytoSynergyDB. See the
+                    <a href="{% url 'about' %}#citation">citation guidelines</a> for details.
+                </p>
+
+                <h3 class="mt-5">Filtered Export</h3>
+                <p>
+                    Need a subset of the data? Use the <a href="{% url 'database_search' %}">search page</a>
+                    to filter by pathogen, antibiotic, interpretation, or mechanism of action, then click
+                    "Export CSV" to download only the matching records.
+                </p>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

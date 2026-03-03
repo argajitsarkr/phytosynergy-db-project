@@ -1,10 +1,12 @@
+import csv
+import json
 from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 
 from .forms import SynergyEntryForm
@@ -84,6 +86,41 @@ def get_or_create_case_insensitive(model, field_name, value):
             return model.objects.get(**lookup)
 
 
+def _apply_search_filters(results, request):
+    """Apply all search/filter parameters from the request to the queryset."""
+    query = request.GET.get('query')
+    pathogen_id = request.GET.get('pathogen')
+    antibiotic_id = request.GET.get('antibiotic')
+    mechanism = request.GET.get('mechanism')
+    interpretation = request.GET.get('interpretation')
+    eskape = request.GET.get('eskape')
+
+    if query:
+        results = results.filter(
+            Q(phytochemical__compound_name__icontains=query) |
+            Q(antibiotic__antibiotic_name__icontains=query) |
+            Q(pathogen__genus__icontains=query) |
+            Q(pathogen__species__icontains=query)
+        )
+
+    if pathogen_id:
+        results = results.filter(pathogen_id=pathogen_id)
+
+    if antibiotic_id:
+        results = results.filter(antibiotic_id=antibiotic_id)
+
+    if mechanism:
+        results = results.filter(moa_observed__icontains=mechanism)
+
+    if interpretation:
+        results = results.filter(interpretation=interpretation)
+
+    if eskape:
+        results = results.filter(pathogen__genus__iexact=eskape)
+
+    return results
+
+
 # ==============================================================================
 # HOME PAGE
 # ==============================================================================
@@ -145,27 +182,7 @@ def database_search_page(request):
         'phytochemical', 'antibiotic', 'pathogen', 'source'
     ).all()
 
-    query = request.GET.get('query')
-    pathogen_id = request.GET.get('pathogen')
-    antibiotic_id = request.GET.get('antibiotic')
-    mechanism = request.GET.get('mechanism')
-
-    if query:
-        results = results.filter(
-            Q(phytochemical__compound_name__icontains=query) |
-            Q(antibiotic__antibiotic_name__icontains=query) |
-            Q(pathogen__genus__icontains=query) |
-            Q(pathogen__species__icontains=query)
-        )
-
-    if pathogen_id:
-        results = results.filter(pathogen_id=pathogen_id)
-
-    if antibiotic_id:
-        results = results.filter(antibiotic_id=antibiotic_id)
-
-    if mechanism:
-        results = results.filter(moa_observed__icontains=mechanism)
+    results = _apply_search_filters(results, request)
 
     context = {
         'results': results,
@@ -174,10 +191,12 @@ def database_search_page(request):
         'mechanisms': SynergyExperiment.objects.values_list(
             'moa_observed', flat=True
         ).distinct().exclude(moa_observed__isnull=True).exclude(moa_observed__exact=''),
-        'search_query': query or "",
-        'selected_pathogen': pathogen_id,
-        'selected_antibiotic': antibiotic_id,
-        'selected_mechanism': mechanism,
+        'search_query': request.GET.get('query', ''),
+        'selected_pathogen': request.GET.get('pathogen'),
+        'selected_antibiotic': request.GET.get('antibiotic'),
+        'selected_mechanism': request.GET.get('mechanism'),
+        'selected_interpretation': request.GET.get('interpretation'),
+        'selected_eskape': request.GET.get('eskape'),
     }
     return render(request, 'synergy_data/database_search.html', context)
 
@@ -265,11 +284,174 @@ def data_entry_view(request):
 
 
 # ==============================================================================
-# DATA DOWNLOAD (placeholder)
+# DATA DOWNLOAD (CSV Export)
 # ==============================================================================
 
 def download_data(request):
-    pass
+    """Export synergy experiment data as CSV."""
+    if request.method == 'GET' and 'export' in request.GET:
+        # Build queryset with filters
+        results = SynergyExperiment.objects.select_related(
+            'phytochemical', 'antibiotic', 'pathogen', 'source'
+        ).all()
+        results = _apply_search_filters(results, request)
+
+        # Create CSV response
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="phytosynergydb_export.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow([
+            'Phytochemical', 'PubChem_CID', 'InChI_Key', 'SMILES',
+            'Antibiotic', 'DrugBank_ID', 'Antibiotic_Class',
+            'Pathogen_Genus', 'Pathogen_Species', 'Pathogen_Strain', 'Gram_Stain',
+            'MIC_Phyto_Alone', 'MIC_Abx_Alone', 'MIC_Phyto_Combo', 'MIC_Abx_Combo', 'MIC_Units',
+            'FIC_Index', 'Interpretation',
+            'Mechanism_of_Action', 'Notes',
+            'DOI', 'PMID', 'Journal', 'Publication_Year',
+        ])
+
+        for exp in results:
+            writer.writerow([
+                exp.phytochemical.compound_name,
+                exp.phytochemical.pubchem_cid or '',
+                exp.phytochemical.inchi_key or '',
+                exp.phytochemical.canonical_smiles or '',
+                exp.antibiotic.antibiotic_name,
+                exp.antibiotic.drugbank_id or '',
+                exp.antibiotic.antibiotic_class.class_name if exp.antibiotic.antibiotic_class else '',
+                exp.pathogen.genus,
+                exp.pathogen.species,
+                exp.pathogen.strain or '',
+                exp.pathogen.gram_stain or '',
+                exp.mic_phyto_alone or '',
+                exp.mic_abx_alone or '',
+                exp.mic_phyto_in_combo or '',
+                exp.mic_abx_in_combo or '',
+                exp.mic_units,
+                exp.fic_index or '',
+                exp.interpretation or '',
+                exp.moa_observed or '',
+                exp.notes or '',
+                exp.source.doi or '',
+                exp.source.pmid or '',
+                exp.source.journal or '',
+                exp.source.publication_year or '',
+            ])
+
+        return response
+
+    # Show download page
+    total_experiments = SynergyExperiment.objects.count()
+    total_synergies = SynergyExperiment.objects.filter(interpretation='Synergy').count()
+    return render(request, 'synergy_data/download.html', {
+        'total_experiments': total_experiments,
+        'total_synergies': total_synergies,
+    })
+
+
+# ==============================================================================
+# REST API ENDPOINTS
+# ==============================================================================
+
+def api_experiments(request):
+    """JSON API endpoint for synergy experiments."""
+    results = SynergyExperiment.objects.select_related(
+        'phytochemical', 'antibiotic', 'pathogen', 'source'
+    ).all()
+
+    results = _apply_search_filters(results, request)
+
+    # Pagination
+    try:
+        limit = min(int(request.GET.get('limit', 100)), 500)
+    except (ValueError, TypeError):
+        limit = 100
+    try:
+        offset = max(int(request.GET.get('offset', 0)), 0)
+    except (ValueError, TypeError):
+        offset = 0
+
+    total_count = results.count()
+    page_results = results[offset:offset + limit]
+
+    data = []
+    for exp in page_results:
+        data.append({
+            'id': exp.id,
+            'phytochemical': {
+                'name': exp.phytochemical.compound_name,
+                'pubchem_cid': exp.phytochemical.pubchem_cid,
+                'inchi_key': exp.phytochemical.inchi_key,
+                'smiles': exp.phytochemical.canonical_smiles,
+                'molecular_weight': str(exp.phytochemical.molecular_weight) if exp.phytochemical.molecular_weight else None,
+            },
+            'antibiotic': {
+                'name': exp.antibiotic.antibiotic_name,
+                'drugbank_id': exp.antibiotic.drugbank_id,
+                'class': exp.antibiotic.antibiotic_class.class_name if exp.antibiotic.antibiotic_class else None,
+            },
+            'pathogen': {
+                'genus': exp.pathogen.genus,
+                'species': exp.pathogen.species,
+                'strain': exp.pathogen.strain,
+                'gram_stain': exp.pathogen.gram_stain,
+            },
+            'mic_phyto_alone': str(exp.mic_phyto_alone) if exp.mic_phyto_alone else None,
+            'mic_abx_alone': str(exp.mic_abx_alone) if exp.mic_abx_alone else None,
+            'mic_phyto_in_combo': str(exp.mic_phyto_in_combo) if exp.mic_phyto_in_combo else None,
+            'mic_abx_in_combo': str(exp.mic_abx_in_combo) if exp.mic_abx_in_combo else None,
+            'mic_units': exp.mic_units,
+            'fic_index': str(exp.fic_index) if exp.fic_index else None,
+            'interpretation': exp.interpretation,
+            'mechanism_of_action': exp.moa_observed,
+            'source': {
+                'doi': exp.source.doi,
+                'pmid': exp.source.pmid,
+                'journal': exp.source.journal,
+                'year': exp.source.publication_year,
+                'title': exp.source.article_title,
+            },
+        })
+
+    return JsonResponse({
+        'count': total_count,
+        'limit': limit,
+        'offset': offset,
+        'results': data,
+    })
+
+
+def api_statistics(request):
+    """JSON API endpoint for database statistics."""
+    synergy_count = SynergyExperiment.objects.filter(interpretation='Synergy').count()
+    additive_count = SynergyExperiment.objects.filter(interpretation='Additive').count()
+    indifference_count = SynergyExperiment.objects.filter(interpretation='Indifference').count()
+    antagonism_count = SynergyExperiment.objects.filter(interpretation='Antagonism').count()
+
+    eskape_stats = {}
+    for genus in ['Enterococcus', 'Staphylococcus', 'Klebsiella', 'Acinetobacter', 'Pseudomonas', 'Enterobacter']:
+        eskape_stats[genus] = SynergyExperiment.objects.filter(pathogen__genus=genus).count()
+
+    return JsonResponse({
+        'total_experiments': SynergyExperiment.objects.count(),
+        'total_phytochemicals': Phytochemical.objects.count(),
+        'total_antibiotics': Antibiotic.objects.count(),
+        'total_sources': Source.objects.count(),
+        'total_pathogens': Pathogen.objects.count(),
+        'interpretations': {
+            'synergy': synergy_count,
+            'additive': additive_count,
+            'indifference': indifference_count,
+            'antagonism': antagonism_count,
+        },
+        'eskape_counts': eskape_stats,
+    })
+
+
+def api_docs(request):
+    """API documentation page."""
+    return render(request, 'synergy_data/api_docs.html')
 
 
 # ==============================================================================

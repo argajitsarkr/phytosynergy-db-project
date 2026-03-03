@@ -3,54 +3,157 @@
 {% block title %}About - PhytoSynergyDB{% endblock %}
 
 {% block content %}
-<section class="section">
+
+<!-- About Page Header -->
+<div class="about-page-header">
+    <div class="container">
+        <h1>About PhytoSynergyDB</h1>
+        <p>The first curated database dedicated to phytochemical-antibiotic synergies against ESKAPE pathogens.</p>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="about-content-section">
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <h1 class="section-title">About PhytoSynergyDB</h1>
+            <div class="col-lg-10">
 
-                <p class="lead text-muted text-center mb-5">
-                    The first curated database dedicated to phytochemical-antibiotic synergies against ESKAPE pathogens.
-                </p>
-
-                <h3 style="color: var(--dark-blue); font-weight: 700;">The Problem</h3>
+                <!-- The Problem -->
+                <h3 id="problem">The Problem</h3>
                 <p>
-                    Antimicrobial resistance (AMR) is a growing global health crisis. The ESKAPE pathogens
+                    Antimicrobial resistance (AMR) is a growing global health crisis. The World Health Organization
+                    has declared AMR one of the top ten threats to global public health. The ESKAPE pathogens
                     &mdash; <em>Enterococcus faecium</em>, <em>Staphylococcus aureus</em>,
                     <em>Klebsiella pneumoniae</em>, <em>Acinetobacter baumannii</em>,
                     <em>Pseudomonas aeruginosa</em>, and <em>Enterobacter</em> spp. &mdash;
                     are responsible for the majority of hospital-acquired infections and are increasingly
-                    resistant to conventional antibiotics.
+                    resistant to conventional antibiotics. New therapeutic strategies are urgently needed.
                 </p>
 
-                <h3 class="mt-5" style="color: var(--dark-blue); font-weight: 700;">Our Approach</h3>
+                <!-- Our Approach -->
+                <h3 class="mt-5" id="approach">Our Approach</h3>
                 <p>
-                    PhytoSynergyDB systematically curates data from peer-reviewed scientific literature on
-                    synergistic interactions between plant-derived phytochemicals and conventional antibiotics.
-                    Each entry includes Minimum Inhibitory Concentration (MIC) values, Fractional Inhibitory
-                    Concentration (FIC) indices, synergy interpretations, and observed mechanisms of action.
+                    PhytoSynergyDB addresses this challenge by systematically curating data from peer-reviewed
+                    scientific literature on synergistic interactions between plant-derived phytochemicals and
+                    conventional antibiotics. Combination therapy &mdash; using a phytochemical to potentiate
+                    the activity of an existing antibiotic &mdash; represents a promising strategy to overcome
+                    resistance. Our database provides a centralized, structured resource to accelerate this research.
                 </p>
 
-                <h3 class="mt-5" style="color: var(--dark-blue); font-weight: 700;">Data Standards</h3>
+                <!-- Methodology Cards -->
+                <h3 class="mt-5" id="methodology">Methodology & Data Standards</h3>
+                <p class="mb-4">
+                    All data in PhytoSynergyDB is manually extracted from peer-reviewed publications through a
+                    rigorous curation process.
+                </p>
+                <div class="row g-4 mb-5">
+                    <div class="col-md-6">
+                        <div class="method-card">
+                            <div class="method-icon"><i class="fas fa-search"></i></div>
+                            <h5>Literature Search</h5>
+                            <p>Systematic search of PubMed, Scopus, and Web of Science for studies reporting
+                            phytochemical-antibiotic combination effects against ESKAPE pathogens using
+                            checkerboard assays or similar quantitative methods.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="method-card">
+                            <div class="method-icon"><i class="fas fa-clipboard-check"></i></div>
+                            <h5>Data Extraction</h5>
+                            <p>Manual extraction of MIC values (alone and in combination), FIC indices,
+                            synergy interpretations, pathogen strain details, and observed mechanisms
+                            of action from each qualifying publication.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="method-card">
+                            <div class="method-icon"><i class="fas fa-calculator"></i></div>
+                            <h5>FIC Calculation</h5>
+                            <p>Fractional Inhibitory Concentration (FIC) index is calculated as:
+                            FIC = (MIC<sub>phyto,combo</sub> / MIC<sub>phyto,alone</sub>) +
+                            (MIC<sub>abx,combo</sub> / MIC<sub>abx,alone</sub>).
+                            Interpretation follows standard thresholds.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="method-card">
+                            <div class="method-icon"><i class="fas fa-shield-alt"></i></div>
+                            <h5>Quality Control</h5>
+                            <p>Each record links to its original source via DOI, ensuring full traceability
+                            and reproducibility. Data undergoes validation before inclusion. Chemical
+                            identifiers (PubChem CID, InChI Key, SMILES) ensure compound disambiguation.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interpretation Standards -->
+                <h3 class="mt-5">Synergy Interpretation Standards</h3>
+                <div class="table-responsive mb-5">
+                    <table class="recent-entries-table">
+                        <thead>
+                            <tr>
+                                <th>FIC Index Range</th>
+                                <th>Interpretation</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>FIC &le; 0.5</strong></td>
+                                <td><span class="badge synergy-badge">Synergy</span></td>
+                                <td>The combination is significantly more effective than either agent alone</td>
+                            </tr>
+                            <tr>
+                                <td><strong>0.5 &lt; FIC &le; 1.0</strong></td>
+                                <td><span class="badge additive-badge">Additive</span></td>
+                                <td>The combination effect equals the sum of individual effects</td>
+                            </tr>
+                            <tr>
+                                <td><strong>1.0 &lt; FIC &le; 4.0</strong></td>
+                                <td><span class="badge other-badge">Indifference</span></td>
+                                <td>The combination has no significant interaction effect</td>
+                            </tr>
+                            <tr>
+                                <td><strong>FIC &gt; 4.0</strong></td>
+                                <td><span class="badge antagonism-badge">Antagonism</span></td>
+                                <td>The combination is less effective than individual agents</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- How to Cite -->
+                <h3 class="mt-5" id="citation">How to Cite</h3>
+                <p>If you use PhytoSynergyDB in your research, please cite:</p>
+                <div class="citation-box">
+                    <strong>Suggested citation:</strong>
+                    <code>PhytoSynergyDB: A Curated Database of Phytochemical-Antibiotic Synergies Against
+ESKAPE Pathogens. Available at: [URL]. Accessed: [Date].</code>
+                </div>
+
+                <!-- API Access -->
+                <h3 class="mt-5" id="api">Programmatic Access</h3>
                 <p>
-                    All data in PhytoSynergyDB is manually extracted from peer-reviewed publications and
-                    undergoes quality validation. Each record links to its original source via DOI,
-                    ensuring full traceability and reproducibility.
+                    PhytoSynergyDB provides a REST API for programmatic access to the data. This enables
+                    integration into computational pipelines, meta-analyses, and automated screening workflows.
+                    See the <a href="{% url 'api_docs' %}">API documentation</a> for endpoints and usage.
                 </p>
 
-                <h3 class="mt-5" style="color: var(--dark-blue); font-weight: 700;">Contact</h3>
+                <!-- Contact -->
+                <h3 class="mt-5" id="contact">Contact</h3>
                 <p>
-                    For questions, collaborations, or data contributions, please reach out to the PhytoSynergyDB team.
+                    For questions, collaborations, data corrections, or contributions, please reach out to the
+                    PhytoSynergyDB team. We welcome contributions from the scientific community.
                 </p>
 
                 <div class="text-center mt-5">
-                    <a href="{% url 'database_search' %}" class="btn btn-primary"
-                       style="background-color: var(--dark-blue); border-color: var(--dark-blue); font-weight: 600;">
+                    <a href="{% url 'database_search' %}" class="btn btn-primary-custom btn-lg">
                         Explore the Database <i class="fas fa-arrow-right ms-1"></i>
                     </a>
                 </div>
             </div>
         </div>
     </div>
-</section>
+</div>
+
 {% endblock %}

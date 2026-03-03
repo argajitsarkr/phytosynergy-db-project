@@ -3,127 +3,230 @@
 
 {% block title %}Explore Data - PhytoSynergyDB{% endblock %}
 
+{% block search_banner %}
+<!-- Global Search Banner -->
+<div class="global-search-banner">
+    <div class="container">
+        <p class="search-label">Search our database of phytochemical-antibiotic synergies:</p>
+        <form action="{% url 'database_search' %}" method="get">
+            <div class="search-bar-wrapper">
+                <div class="search-category-btn">
+                    <i class="fas fa-leaf"></i> All Categories <i class="fas fa-caret-down"></i>
+                </div>
+                <input type="text" name="query" value="{{ search_query }}" placeholder="Search by phytochemical, antibiotic, or pathogen...">
+                <button type="submit"><i class="fas fa-search"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
 {% block content %}
 <div class="search-page-container">
-    
-    <!-- Search Panel Card -->
-    <div class="card search-panel-card mb-5">
-        <form method="GET" action="{% url 'database_search' %}" class="p-4">
-            <div class="row g-3 align-items-center">
-                <div class="col-lg-12">
-                    <input type="text" name="query" class="form-control form-control-lg" placeholder="Search by name, pathogen, etc..." value="{{ search_query }}">
+
+    <!-- DrugBank-style Filter Sections -->
+    <form method="GET" action="{% url 'database_search' %}" id="filterForm">
+        <!-- Preserve search query -->
+        <input type="hidden" name="query" value="{{ search_query }}">
+
+        <div class="filter-section">
+            <div class="row">
+                <!-- Filter by Interpretation -->
+                <div class="col-lg-6 mb-3 mb-lg-0">
+                    <div class="filter-section-label">Filter by Interpretation</div>
+                    <div class="filter-pills">
+                        <label class="filter-pill {% if selected_interpretation == 'Synergy' %}active{% endif %}">
+                            <input type="radio" name="interpretation" value="Synergy" hidden {% if selected_interpretation == 'Synergy' %}checked{% endif %} onchange="this.form.submit()">
+                            Synergy
+                        </label>
+                        <label class="filter-pill {% if selected_interpretation == 'Additive' %}active{% endif %}">
+                            <input type="radio" name="interpretation" value="Additive" hidden {% if selected_interpretation == 'Additive' %}checked{% endif %} onchange="this.form.submit()">
+                            Additive
+                        </label>
+                        <label class="filter-pill {% if selected_interpretation == 'Indifference' %}active{% endif %}">
+                            <input type="radio" name="interpretation" value="Indifference" hidden {% if selected_interpretation == 'Indifference' %}checked{% endif %} onchange="this.form.submit()">
+                            Indifference
+                        </label>
+                        <label class="filter-pill {% if selected_interpretation == 'Antagonism' %}active{% endif %}">
+                            <input type="radio" name="interpretation" value="Antagonism" hidden {% if selected_interpretation == 'Antagonism' %}checked{% endif %} onchange="this.form.submit()">
+                            Antagonism
+                        </label>
+                    </div>
                 </div>
-                <div class="col-md-3">
-                    <select name="pathogen" class="form-select">
-                        <option value="">Any Pathogen</option>
+
+                <!-- Filter by ESKAPE Pathogen -->
+                <div class="col-lg-6">
+                    <div class="filter-section-label">Filter by ESKAPE Pathogen</div>
+                    <div class="filter-pills">
+                        <label class="filter-pill {% if selected_eskape == 'Enterococcus' %}active{% endif %}">
+                            <input type="radio" name="eskape" value="Enterococcus" hidden {% if selected_eskape == 'Enterococcus' %}checked{% endif %} onchange="this.form.submit()">
+                            E. faecium
+                        </label>
+                        <label class="filter-pill {% if selected_eskape == 'Staphylococcus' %}active{% endif %}">
+                            <input type="radio" name="eskape" value="Staphylococcus" hidden {% if selected_eskape == 'Staphylococcus' %}checked{% endif %} onchange="this.form.submit()">
+                            S. aureus
+                        </label>
+                        <label class="filter-pill {% if selected_eskape == 'Klebsiella' %}active{% endif %}">
+                            <input type="radio" name="eskape" value="Klebsiella" hidden {% if selected_eskape == 'Klebsiella' %}checked{% endif %} onchange="this.form.submit()">
+                            K. pneumoniae
+                        </label>
+                        <label class="filter-pill {% if selected_eskape == 'Acinetobacter' %}active{% endif %}">
+                            <input type="radio" name="eskape" value="Acinetobacter" hidden {% if selected_eskape == 'Acinetobacter' %}checked{% endif %} onchange="this.form.submit()">
+                            A. baumannii
+                        </label>
+                        <label class="filter-pill {% if selected_eskape == 'Pseudomonas' %}active{% endif %}">
+                            <input type="radio" name="eskape" value="Pseudomonas" hidden {% if selected_eskape == 'Pseudomonas' %}checked{% endif %} onchange="this.form.submit()">
+                            P. aeruginosa
+                        </label>
+                        <label class="filter-pill {% if selected_eskape == 'Enterobacter' %}active{% endif %}">
+                            <input type="radio" name="eskape" value="Enterobacter" hidden {% if selected_eskape == 'Enterobacter' %}checked{% endif %} onchange="this.form.submit()">
+                            Enterobacter
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Filters Row -->
+            <div class="row mt-3">
+                <div class="col-md-4">
+                    <select name="pathogen" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">Any Pathogen (with strain)</option>
                         {% for p in pathogens %}
                             <option value="{{ p.id }}" {% if p.id|stringformat:"s" == selected_pathogen %}selected{% endif %}>{{ p }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <select name="antibiotic" class="form-select">
+                <div class="col-md-4">
+                    <select name="antibiotic" class="form-select form-select-sm" onchange="this.form.submit()">
                         <option value="">Any Antibiotic</option>
                         {% for a in antibiotics %}
                             <option value="{{ a.id }}" {% if a.id|stringformat:"s" == selected_antibiotic %}selected{% endif %}>{{ a.antibiotic_name }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <select name="mechanism" class="form-select">
+                <div class="col-md-4">
+                    <select name="mechanism" class="form-select form-select-sm" onchange="this.form.submit()">
                         <option value="">Any Mechanism</option>
                         {% for m in mechanisms %}
                              <option value="{{ m }}" {% if m == selected_mechanism %}selected{% endif %}>{{ m }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-3 d-grid">
-                    <button type="submit" class="btn btn-primary btn-lg">Search Database</button>
-                </div>
             </div>
-        </form>
-    </div>
 
-  <!-- ================================== Search Results Section ================================== -->
-    <div class="results-header d-flex justify-content-between align-items-center mb-3">
-        <h4>Search Results</h4>
+            <!-- Filter Actions -->
+            <div class="filter-actions">
+                <a href="{% url 'database_search' %}" class="btn-filter-clear">Clear</a>
+                <button type="submit" class="btn-filter-apply">Apply Filter</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Results Header -->
+    <div class="results-header d-flex justify-content-between align-items-center mb-3 mt-4">
+        <div>
+            {% if search_query %}
+                <h4>Results for "{{ search_query }}"</h4>
+            {% else %}
+                <h4>Search Results</h4>
+            {% endif %}
+            {% if results %}
+                <p class="text-muted mb-0" style="font-size: 0.88rem;">Displaying <strong>all {{ results.count }}</strong> synergistic pairs found</p>
+            {% endif %}
+        </div>
         {% if results %}
-            <span class="badge bg-success rounded-pill">{{ results.count }} synergistic pairs found</span>
+            <div class="d-flex gap-2">
+                <span class="badge results-count-badge synergy-badge">{{ results.count }} results</span>
+                <a href="{% url 'download_data' %}{% if search_query %}?query={{ search_query }}{% endif %}" class="btn btn-sm btn-outline-custom">
+                    <i class="fas fa-download me-1"></i>Export CSV
+                </a>
+            </div>
         {% endif %}
     </div>
 
+    <!-- Results List -->
     <div class="results-list">
         {% for experiment in results %}
-            <!-- START: SINGLE RESULT CARD -->
             <div class="result-card">
                 <!-- Main Title Area -->
                 <div class="rc-main">
-                    <div class="rc-icon-logo">
-                        <img src="{% static 'synergy_data/images/molecule-icon.svg' %}" alt="Molecule"/>
-                    </div>
-                    <div>
-                        <h5 class="rc-title">{{ experiment.phytochemical.compound_name }}</h5>
-                        <span class="rc-subtitle">{{ experiment.phytochemical.inchi_key|slice:":14" }}</span> {# Using first 14 chars of InChIKey as a unique ID #}
-                    </div>
+                    <h5 class="rc-title">{{ experiment.phytochemical.compound_name }}</h5>
+                    <span class="rc-subtitle">
+                        + {{ experiment.antibiotic.antibiotic_name }} vs <em>{{ experiment.pathogen }}</em>
+                    </span>
                 </div>
 
                 <!-- FIC Index -->
                 <div class="rc-data-point">
-                    <span class="rc-value">{{ experiment.fic_index|floatformat:2 }}</span>
+                    <span class="rc-value">{% if experiment.fic_index %}{{ experiment.fic_index|floatformat:2 }}{% else %}N/A{% endif %}</span>
                     <span class="rc-label">FIC Index</span>
                 </div>
 
-                <!-- MIC Antibiotic (in combination) -->
+                <!-- MIC Antibiotic -->
                 <div class="rc-data-point">
-                    <span class="rc-value">{{ experiment.mic_abx_in_combo|floatformat:2 }} µg/mL</span>
-                    <span class="rc-label">MIC (Antibiotic)</span>
+                    <span class="rc-value">{% if experiment.mic_abx_in_combo %}{{ experiment.mic_abx_in_combo|floatformat:2 }}{% else %}—{% endif %}</span>
+                    <span class="rc-label">MIC Abx Combo</span>
                 </div>
 
-                <!-- MIC Phytochemical (in combination) -->
+                <!-- MIC Phytochemical -->
                 <div class="rc-data-point">
-                    <span class="rc-value">{{ experiment.mic_phyto_in_combo|floatformat:2 }} µg/mL</span>
-                    <span class="rc-label">MIC (Combination)</span>
+                    <span class="rc-value">{% if experiment.mic_phyto_in_combo %}{{ experiment.mic_phyto_in_combo|floatformat:2 }}{% else %}—{% endif %}</span>
+                    <span class="rc-label">MIC Phyto Combo</span>
                 </div>
 
                 <!-- Publication Year -->
                 <div class="rc-data-point">
-                    <span class="rc-value">{{ experiment.source.publication_year }}</span>
-                    <span class="rc-label">Publication Year</span>
+                    <span class="rc-value">{% if experiment.source.publication_year %}{{ experiment.source.publication_year }}{% else %}—{% endif %}</span>
+                    <span class="rc-label">Year</span>
                 </div>
 
                 <!-- Synergy Badge -->
                 <div class="rc-badge">
-    {% if experiment.interpretation == 'Synergy' %}
-        <span class="badge rounded-pill synergy-badge">Strong Synergy</span>
-    {% else %}
-        <span class="badge rounded-pill other-badge">{{ experiment.interpretation }}</span>
-    {% endif %}
-</div>
+                    {% if experiment.interpretation == 'Synergy' %}
+                        <span class="badge rounded-pill synergy-badge">Synergy</span>
+                    {% elif experiment.interpretation == 'Additive' %}
+                        <span class="badge rounded-pill additive-badge">Additive</span>
+                    {% elif experiment.interpretation == 'Antagonism' %}
+                        <span class="badge rounded-pill antagonism-badge">Antagonism</span>
+                    {% elif experiment.interpretation %}
+                        <span class="badge rounded-pill other-badge">{{ experiment.interpretation }}</span>
+                    {% endif %}
+                </div>
 
-                <!-- Footer with MoA and PubChem -->
+                <!-- Footer with MoA and identifiers -->
                 <div class="rc-footer">
+                    {% if experiment.moa_observed %}
                     <div class="rc-footer-item">
-                        <i class="fas fa-atom"></i> {# Using FontAwesome Icon #}
-                        {{ experiment.moa_observed }}
+                        <i class="fas fa-atom"></i>
+                        {{ experiment.moa_observed|truncatechars:80 }}
                     </div>
+                    {% endif %}
+                    {% if experiment.phytochemical.pubchem_cid %}
                     <div class="rc-footer-item">
                         <i class="fas fa-link"></i>
                         PubChem: {{ experiment.phytochemical.pubchem_cid }}
                     </div>
+                    {% endif %}
                 </div>
 
                 <!-- Action Buttons -->
                 <div class="rc-actions">
-                    <a href="#" class="btn btn-sm btn-outline-secondary">3D Structure</a>
+                    {% if experiment.phytochemical.pubchem_cid %}
+                    <a href="https://pubchem.ncbi.nlm.nih.gov/compound/{{ experiment.phytochemical.pubchem_cid }}#section=3D-Conformer" target="_blank" class="btn btn-sm btn-outline-secondary">3D Structure</a>
+                    {% endif %}
+                    {% if experiment.source.doi %}
                     <a href="https://doi.org/{{ experiment.source.doi }}" target="_blank" class="btn btn-sm btn-primary">Source Paper</a>
+                    {% endif %}
                 </div>
             </div>
-            <!-- END: SINGLE RESULT CARD -->
         {% empty %}
-            <div class="text-center p-5 bg-light rounded border">
-                <h4 class="text-muted">No Results Found</h4>
-                <p>Your search did not match any synergistic experiments. Please try a different query.</p>
+            <div class="text-center p-5 rounded" style="background: var(--bg-section); border: 1px solid var(--border-light);">
+                <i class="fas fa-search" style="font-size: 2.5rem; color: var(--text-muted); margin-bottom: 1rem; display: block;"></i>
+                <h4 style="color: var(--text-secondary);">No Results Found</h4>
+                <p class="text-muted">Your search did not match any synergistic experiments. Try a different query or adjust filters.</p>
+                <a href="{% url 'database_search' %}" class="btn btn-primary-custom mt-2">Browse All Entries</a>
             </div>
         {% endfor %}
     </div>
+</div>
 {% endblock %}
