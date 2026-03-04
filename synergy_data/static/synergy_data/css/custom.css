@@ -243,7 +243,8 @@ a:hover { color: var(--accent); }
    5. HERO SECTION
    ============================================================ */
 .hero-section {
-    background: var(--dark);
+    background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+                url('C:\Users\Arghya\Downloads\Projects\.claude\worktrees\peaceful-hoover\synergy_data\static\synergy_data\images\hero_background-green.jpg') center/cover no-repeat;
     text-align: center;
     padding: 70px 0 55px;
 }
