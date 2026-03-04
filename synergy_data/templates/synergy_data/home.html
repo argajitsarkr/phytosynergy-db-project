@@ -3,73 +3,35 @@
 
 {% block title %}PhytoSynergyDB - Phytochemical-Antibiotic Synergy Database{% endblock %}
 
-{% block search_banner %}
-<!-- Global Search Banner (DrugBank-style) -->
-<div class="global-search-banner">
-    <div class="container">
-        <p class="search-label">Search our database of phytochemical-antibiotic synergies:</p>
-        <form action="{% url 'database_search' %}" method="get">
-            <div class="search-bar-wrapper">
-                <div class="search-category-btn">
-                    <i class="fas fa-leaf"></i> All Categories <i class="fas fa-caret-down"></i>
-                </div>
-                <input type="text" name="query" placeholder="Search by phytochemical, antibiotic, or pathogen...">
-                <button type="submit"><i class="fas fa-search"></i></button>
-            </div>
-        </form>
-    </div>
-</div>
-{% endblock %}
-
 {% block content %}
 
 <!-- Section 1: Hero Section -->
 <section class="hero-section">
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-lg-7">
-                <!-- Hero Tabs (DrugBank-style) -->
-                <div class="hero-tabs">
-                    <a href="#" class="hero-tab active">Synergy Database</a>
-                    <a href="{% url 'about' %}#methodology" class="hero-tab">Research Tools</a>
-                    <a href="{% url 'about' %}" class="hero-tab">Academic Research</a>
-                </div>
-
-                <h1>Phytochemical intelligence<br>powered by data</h1>
+            <div class="col-lg-10 text-center">
+                <h1>Phytochemical-Antibiotic<br>Synergy Database</h1>
                 <p class="tagline">
-                    The curated knowledgebase built to accelerate discovery of phytochemical-antibiotic
-                    synergies against ESKAPE pathogens and combat antimicrobial resistance.
+                    A curated knowledgebase for phytochemical-antibiotic synergy data against
+                    ESKAPE pathogens — accelerating antimicrobial resistance research.
                 </p>
 
-                <div class="d-flex justify-content-center gap-3 mb-3">
-                    <a href="{% url 'database_search' %}" class="btn btn-cta-primary btn-lg">
-                        <i class="fas fa-search me-2"></i>Explore Database
+                <!-- Integrated Search Bar -->
+                <form action="{% url 'database_search' %}" method="get" class="hero-search-form">
+                    <div class="hero-search-wrapper">
+                        <i class="fas fa-search hero-search-icon"></i>
+                        <input type="text" name="query" class="hero-search-input" placeholder="Search by phytochemical, antibiotic, or pathogen...">
+                        <button type="submit" class="hero-search-btn">Search</button>
+                    </div>
+                </form>
+
+                <div class="d-flex justify-content-center gap-3 mt-4">
+                    <a href="{% url 'database_search' %}?query=" class="btn btn-cta-primary btn-lg">
+                        <i class="fas fa-database me-2"></i>Browse All Entries
                     </a>
                     <a href="{% url 'about' %}" class="btn btn-cta-outline btn-lg">
                         Learn More
                     </a>
-                </div>
-
-                <div class="hero-quick-links mt-3">
-                    <a href="{% url 'database_search' %}?query=" class="btn btn-sm me-1">Browse All Entries</a>
-                    <a href="#eskape-section" class="btn btn-sm me-1">View by Pathogen</a>
-                    <a href="#recent-section" class="btn btn-sm">Recent Additions</a>
-                </div>
-            </div>
-
-            <!-- AI Question Box (DrugBank-inspired) -->
-            <div class="col-lg-5 d-none d-lg-block">
-                <div class="ai-question-box">
-                    <div class="ai-label">
-                        <i class="fas fa-bolt"></i> EXPLORE
-                    </div>
-                    <div class="question-text" id="explore-question">
-                        Which phytochemicals show synergy with beta-lactam antibiotics against <em>S. aureus</em>?
-                    </div>
-                    <button class="next-question-btn" onclick="nextQuestion()">
-                        <i class="fas fa-shuffle"></i> Next Question
-                    </button>
-                    <div style="clear:both;"></div>
                 </div>
             </div>
         </div>
@@ -319,22 +281,5 @@
         </div>
     </div>
 </section>
-
-<!-- Explore Question Rotation Script -->
-<script>
-var questions = [
-    'Which phytochemicals show synergy with beta-lactam antibiotics against <em>S. aureus</em>?',
-    'What is the FIC index of quercetin combined with ciprofloxacin against <em>P. aeruginosa</em>?',
-    'Which plant compounds inhibit efflux pumps in ESKAPE pathogens?',
-    'What synergistic combinations have been reported against <em>A. baumannii</em>?',
-    'Which phytochemicals reduce MIC values of aminoglycosides by &gt;4-fold?',
-    'What mechanisms drive phytochemical-antibiotic synergy against Gram-negative bacteria?'
-];
-var currentQ = 0;
-function nextQuestion() {
-    currentQ = (currentQ + 1) % questions.length;
-    document.getElementById('explore-question').innerHTML = questions[currentQ];
-}
-</script>
 
 {% endblock %}
