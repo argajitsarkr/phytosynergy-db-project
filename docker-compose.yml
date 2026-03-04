@@ -23,8 +23,8 @@ services:
       - DATABASE_URL=postgres://postgres:E6fgO4KM7xDkXbysGVLhFEflgZuEZu14xKoBxh5G7FA@db:5432/phytosynergy_db
       - DJANGO_SECRET_KEY=aky@!o6_4fyp%ox59q^xfe0*#^6n83(dz)rjs!c34j-+ul3%u^
       - DEBUG=0 # Set to 0 for production
-      - ALLOWED_HOSTS=192.168.1.35,localhost,.ngrok-free.app
-      - CSRF_TRUSTED_ORIGINS=https://*.ngrok-free.app
+      - ALLOWED_HOSTS=192.168.1.35,localhost,.ngrok-free.dev
+      - CSRF_TRUSTED_ORIGINS=https://*.ngrok-free.dev
     restart: always
 
   nginx:
