@@ -20,12 +20,18 @@ DEBUG = os.environ.get('DEBUG', '1') == '1' # Defaults to True for development
 # --- CORRECTED ALLOWED_HOSTS AND CSRF LOGIC ---
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
+# CSRF trusted origins — needed for Cloudflare Tunnel, Railway, or any reverse proxy
+CSRF_TRUSTED_ORIGINS = []
+
+csrf_env = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
+if csrf_env:
+    CSRF_TRUSTED_ORIGINS.extend([o.strip() for o in csrf_env.split(',') if o.strip()])
+
 # Get the production hostname from Railway's official environment variable.
 RAILWAY_PUBLIC_DOMAIN = os.environ.get('RAILWAY_PUBLIC_DOMAIN')
 if RAILWAY_PUBLIC_DOMAIN:
     ALLOWED_HOSTS.append(RAILWAY_PUBLIC_DOMAIN)
-    # This also tells Django to trust requests from your production site for secure forms.
-    CSRF_TRUSTED_ORIGINS = ['https://' + RAILWAY_PUBLIC_DOMAIN]
+    CSRF_TRUSTED_ORIGINS.append('https://' + RAILWAY_PUBLIC_DOMAIN)
 
 
 # ==============================================================================
