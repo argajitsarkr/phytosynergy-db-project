@@ -23,14 +23,14 @@ services:
       - DATABASE_URL=postgres://postgres:E6fgO4KM7xDkXbysGVLhFEflgZuEZu14xKoBxh5G7FA@db:5432/phytosynergy_db
       - DJANGO_SECRET_KEY=aky@!o6_4fyp%ox59q^xfe0*#^6n83(dz)rjs!c34j-+ul3%u^
       - DEBUG=0 # Set to 0 for production
-      - ALLOWED_HOSTS=192.168.1.35,localhost,.trycloudflare.com
-      - CSRF_TRUSTED_ORIGINS=https://*.trycloudflare.com
+      - ALLOWED_HOSTS=192.168.1.35,localhost,.ngrok-free.app
+      - CSRF_TRUSTED_ORIGINS=https://*.ngrok-free.app
     restart: always
 
   nginx:
     image: nginx:latest
     ports:
-      - "80:80" # Maps port 80 on the server to port 80 in the container
+      - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
       - static_volume:/app/staticfiles
@@ -39,8 +39,8 @@ services:
     restart: always
 
   tunnel:
-    image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate --url http://nginx:80
+    image: ngrok/ngrok:latest
+    command: http http://nginx:80 --authtoken 3AUvwzWxeI6MbFALgawzcamAZaG_KkEZkQESdjaCYpwr1AM2
     depends_on:
       - nginx
     restart: always
