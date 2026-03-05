@@ -211,7 +211,15 @@
 
                 <!-- Action Buttons -->
                 <div class="rc-actions">
-                    {% if experiment.phytochemical.pubchem_cid %}
+                    {% if experiment.phytochemical.canonical_smiles %}
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-view3d"
+                            data-smiles="{{ experiment.phytochemical.canonical_smiles }}"
+                            data-compound="{{ experiment.phytochemical.compound_name }}"
+                            data-cid="{{ experiment.phytochemical.pubchem_cid|default:'' }}"
+                            data-mw="{{ experiment.phytochemical.molecular_weight|default:'' }}">
+                        <i class="fas fa-cube me-1"></i>3D
+                    </button>
+                    {% elif experiment.phytochemical.pubchem_cid %}
                     <a href="https://pubchem.ncbi.nlm.nih.gov/compound/{{ experiment.phytochemical.pubchem_cid }}#section=3D-Conformer" target="_blank" class="btn btn-sm btn-outline-secondary">3D Structure</a>
                     {% endif %}
                     {% if experiment.source.doi %}
@@ -229,4 +237,99 @@
         {% endfor %}
     </div>
 </div>
+
+<!-- 3D Molecular Viewer Modal -->
+<div class="modal fade" id="molViewerModal" tabindex="-1" aria-labelledby="molViewerLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content mol-viewer-modal">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="molViewerLabel">3D Molecular Structure</h5>
+                    <small class="text-muted" id="molViewerSubtitle"></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="mol-viewer-container" class="mol-viewer-container"></div>
+                <div class="mol-viewer-info" id="molViewerInfo"></div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" id="molViewerPubchemLink" target="_blank" class="btn btn-sm btn-outline-custom">
+                    <i class="fas fa-external-link-alt me-1"></i>View on PubChem
+                </a>
+                <button type="button" class="btn btn-sm btn-primary-custom" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    var viewer = null;
+
+    document.querySelectorAll('.btn-view3d').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var smiles = this.getAttribute('data-smiles');
+            var compound = this.getAttribute('data-compound');
+            var cid = this.getAttribute('data-cid');
+            var mw = this.getAttribute('data-mw');
+
+            document.getElementById('molViewerLabel').textContent = compound;
+            var subtitle = '';
+            if (cid) subtitle += 'PubChem CID: ' + cid;
+            if (mw) subtitle += (subtitle ? ' \u00b7 ' : '') + 'MW: ' + mw;
+            document.getElementById('molViewerSubtitle').textContent = subtitle;
+
+            var pubchemLink = document.getElementById('molViewerPubchemLink');
+            if (cid) {
+                pubchemLink.href = 'https://pubchem.ncbi.nlm.nih.gov/compound/' + cid + '#section=3D-Conformer';
+                pubchemLink.style.display = '';
+            } else {
+                pubchemLink.style.display = 'none';
+            }
+
+            var infoHtml = '<span><i class="fas fa-flask me-1"></i>SMILES: <code>' + smiles.substring(0, 60) + (smiles.length > 60 ? '...' : '') + '</code></span>';
+            document.getElementById('molViewerInfo').innerHTML = infoHtml;
+
+            document.getElementById('mol-viewer-container').setAttribute('data-smiles', smiles);
+
+            var modal = new bootstrap.Modal(document.getElementById('molViewerModal'));
+            modal.show();
+        });
+    });
+
+    document.getElementById('molViewerModal').addEventListener('shown.bs.modal', function() {
+        var container = document.getElementById('mol-viewer-container');
+        var smiles = container.getAttribute('data-smiles');
+
+        container.innerHTML = '';
+
+        viewer = $3Dmol.createViewer(container, {
+            backgroundColor: '#f8f9fa',
+            antialias: true
+        });
+
+        try {
+            viewer.addModel(smiles, 'smi');
+            viewer.setStyle({}, {stick: {radius: 0.15, colorscheme: 'Jmol'}, sphere: {scale: 0.25, colorscheme: 'Jmol'}});
+            viewer.zoomTo();
+            viewer.spin('y', 1);
+            viewer.render();
+        } catch(e) {
+            container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#6b6963;"><div class="text-center"><i class="fas fa-exclamation-triangle" style="font-size:2rem;margin-bottom:0.5rem;display:block;"></i>Could not render this molecule.<br><small>Try viewing on PubChem instead.</small></div></div>';
+        }
+    });
+
+    document.getElementById('molViewerModal').addEventListener('hidden.bs.modal', function() {
+        if (viewer) {
+            viewer.clear();
+            viewer = null;
+        }
+        document.getElementById('mol-viewer-container').innerHTML = '';
+    });
+})();
+</script>
 {% endblock %}
