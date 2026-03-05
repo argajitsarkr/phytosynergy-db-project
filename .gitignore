@@ -20,4 +20,5 @@ db_preview.sqlite3
 .claude/
 
 # Other
-.DS_Store
+.DS_Store.tmp.driveupload*
+.claude/
