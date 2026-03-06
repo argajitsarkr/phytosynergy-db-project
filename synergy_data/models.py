@@ -19,6 +19,35 @@ class Phytochemical(models.Model):
     inchi_key = models.CharField(max_length=27, unique=True, null=True, blank=True, verbose_name="InChI Key")
     molecular_weight = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
 
+    # Lipinski / Physicochemical properties (auto-fetched from PubChem)
+    molecular_formula = models.CharField(max_length=100, null=True, blank=True, verbose_name="Molecular Formula")
+    xlogp = models.FloatField(null=True, blank=True, verbose_name="XLogP")
+    hbd = models.IntegerField(null=True, blank=True, verbose_name="H-Bond Donors")
+    hba = models.IntegerField(null=True, blank=True, verbose_name="H-Bond Acceptors")
+    tpsa = models.FloatField(null=True, blank=True, verbose_name="TPSA (Å²)")
+    rotatable_bonds = models.IntegerField(null=True, blank=True, verbose_name="Rotatable Bonds")
+
+    # Chemical Taxonomy (auto-fetched from ClassyFire)
+    chemical_superclass = models.CharField(max_length=200, null=True, blank=True, verbose_name="Chemical Superclass")
+    chemical_class = models.CharField(max_length=200, null=True, blank=True, verbose_name="Chemical Class")
+    chemical_subclass = models.CharField(max_length=200, null=True, blank=True, verbose_name="Chemical Subclass")
+
+    @property
+    def passes_lipinski(self):
+        """Check Lipinski's Rule of Five: MW < 500, LogP < 5, HBD ≤ 5, HBA ≤ 10."""
+        if any(v is None for v in [self.molecular_weight, self.xlogp, self.hbd, self.hba]):
+            return None  # Cannot determine
+        violations = 0
+        if self.molecular_weight and float(self.molecular_weight) > 500:
+            violations += 1
+        if self.xlogp is not None and self.xlogp > 5:
+            violations += 1
+        if self.hbd is not None and self.hbd > 5:
+            violations += 1
+        if self.hba is not None and self.hba > 10:
+            violations += 1
+        return violations <= 1  # Passes if at most 1 violation
+
     def __str__(self):
         return self.compound_name
 

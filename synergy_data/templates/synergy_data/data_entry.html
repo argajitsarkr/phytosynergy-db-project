@@ -61,6 +61,10 @@
                             {{ form.phytochemical_name.label }} <span class="text-danger">*</span>
                         </label>
                         {{ form.phytochemical_name }}
+                        <div class="form-text">
+                            <i class="fas fa-magic me-1" style="color: var(--accent);"></i>
+                            SMILES, CID, molecular properties & chemical class will be auto-fetched from PubChem & ClassyFire
+                        </div>
                         {% if form.phytochemical_name.errors %}
                         <div class="text-danger small mt-1">{{ form.phytochemical_name.errors.0 }}</div>
                         {% endif %}
