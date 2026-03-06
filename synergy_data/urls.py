@@ -17,6 +17,7 @@ urlpatterns = [
 
     # Data entry (login-protected)
     path('data-entry/', views.data_entry_view, name='data_entry'),
+    path('data-entry/edit/<int:pk>/', views.edit_entry_view, name='edit_entry'),
 
     # API endpoints
     path('api/v1/experiments/', views.api_experiments, name='api_experiments'),

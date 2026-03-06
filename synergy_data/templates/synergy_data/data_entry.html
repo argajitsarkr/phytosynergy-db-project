@@ -1,21 +1,25 @@
 {% extends 'synergy_data/base.html' %}
 
-{% block title %}Data Entry - PhytoSynergyDB{% endblock %}
+{% block title %}{% if editing %}Edit Entry{% else %}Data Entry{% endif %} - PhytoSynergyDB{% endblock %}
 
 {% block content %}
 <div class="data-entry-container">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 style="color: var(--text-primary); font-weight: 800; margin-bottom: 0.25rem;">Data Entry</h2>
-            <p class="text-muted mb-0">Add a new synergy experiment record to the database.</p>
+            <h2 style="color: var(--text-primary); font-weight: 800; margin-bottom: 0.25rem;">
+                {% if editing %}Edit Entry{% else %}Data Entry{% endif %}
+            </h2>
+            <p class="text-muted mb-0">
+                {% if editing %}Modify an existing synergy experiment record.{% else %}Add a new synergy experiment record to the database.{% endif %}
+            </p>
         </div>
         <a href="{% url 'database_search' %}" class="btn btn-outline-custom btn-sm">
             <i class="fas fa-arrow-left me-1"></i> Back to Database
         </a>
     </div>
 
-    <form method="post" novalidate>
+    <form method="post" {% if editing %}action="{% url 'edit_entry' experiment_id %}"{% endif %} novalidate>
         {% csrf_token %}
 
         <!-- Section 1: Source & Entities -->
@@ -35,6 +39,21 @@
                     {% if form.source_doi.errors %}
                     <div class="text-danger small mt-1">{{ form.source_doi.errors.0 }}</div>
                     {% endif %}
+                </div>
+
+                <div class="row">
+                    <div class="col-md-2 mb-3">
+                        <label for="{{ form.publication_year.id_for_label }}" class="form-label">{{ form.publication_year.label }}</label>
+                        {{ form.publication_year }}
+                    </div>
+                    <div class="col-md-5 mb-3">
+                        <label for="{{ form.article_title.id_for_label }}" class="form-label">{{ form.article_title.label }}</label>
+                        {{ form.article_title }}
+                    </div>
+                    <div class="col-md-5 mb-3">
+                        <label for="{{ form.journal.id_for_label }}" class="form-label">{{ form.journal.label }}</label>
+                        {{ form.journal }}
+                    </div>
                 </div>
 
                 <div class="mb-3">
@@ -169,12 +188,21 @@
 
         <!-- Action Buttons -->
         <div class="d-flex gap-3 mb-5">
+            {% if editing %}
+            <button type="submit" name="save_and_return" class="btn btn-primary-custom btn-lg">
+                <i class="fas fa-save me-2"></i> Save Changes
+            </button>
+            <a href="{% url 'database_search' %}" class="btn btn-outline-custom btn-lg">
+                <i class="fas fa-times me-2"></i> Cancel
+            </a>
+            {% else %}
             <button type="submit" name="save_and_another" class="btn btn-primary-custom btn-lg">
                 <i class="fas fa-plus me-2"></i> Save & Add Another
             </button>
             <button type="submit" name="save_and_return" class="btn btn-outline-custom btn-lg">
                 <i class="fas fa-check me-2"></i> Save & Return to Database
             </button>
+            {% endif %}
         </div>
 
     </form>

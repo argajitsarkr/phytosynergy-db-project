@@ -281,6 +281,11 @@
                     {% if experiment.source.doi %}
                     <a href="https://doi.org/{{ experiment.source.doi }}" target="_blank" class="btn btn-sm btn-primary">Source Paper</a>
                     {% endif %}
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'edit_entry' experiment.pk %}" class="btn btn-sm btn-outline-warning" title="Edit this entry">
+                        <i class="fas fa-pencil-alt me-1"></i>Edit
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         {% empty %}
