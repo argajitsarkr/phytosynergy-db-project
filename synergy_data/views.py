@@ -17,6 +17,7 @@ from .models import (
     Source,
     SynergyExperiment,
 )
+from .pubchem_utils import enrich_phytochemical
 
 
 # ==============================================================================
@@ -94,6 +95,7 @@ def _apply_search_filters(results, request):
     mechanism = request.GET.get('mechanism')
     interpretation = request.GET.get('interpretation')
     eskape = request.GET.get('eskape')
+    chemical_class = request.GET.get('chemical_class')
 
     if query:
         results = results.filter(
@@ -117,6 +119,9 @@ def _apply_search_filters(results, request):
 
     if eskape:
         results = results.filter(pathogen__genus__iexact=eskape)
+
+    if chemical_class:
+        results = results.filter(phytochemical__chemical_class__iexact=chemical_class)
 
     return results
 
@@ -184,6 +189,15 @@ def database_search_page(request):
 
     results = _apply_search_filters(results, request)
 
+    # Get distinct chemical classes for filter dropdown
+    chemical_classes = (
+        Phytochemical.objects.values_list('chemical_class', flat=True)
+        .exclude(chemical_class__isnull=True)
+        .exclude(chemical_class__exact='')
+        .distinct()
+        .order_by('chemical_class')
+    )
+
     context = {
         'results': results,
         'pathogens': Pathogen.objects.order_by('genus', 'species').all(),
@@ -191,12 +205,14 @@ def database_search_page(request):
         'mechanisms': SynergyExperiment.objects.values_list(
             'moa_observed', flat=True
         ).distinct().exclude(moa_observed__isnull=True).exclude(moa_observed__exact=''),
+        'chemical_classes': chemical_classes,
         'search_query': request.GET.get('query', ''),
         'selected_pathogen': request.GET.get('pathogen'),
         'selected_antibiotic': request.GET.get('antibiotic'),
         'selected_mechanism': request.GET.get('mechanism'),
         'selected_interpretation': request.GET.get('interpretation'),
         'selected_eskape': request.GET.get('eskape'),
+        'selected_chemical_class': request.GET.get('chemical_class'),
     }
     return render(request, 'synergy_data/database_search.html', context)
 
@@ -226,6 +242,9 @@ def data_entry_view(request):
             phytochemical = get_or_create_case_insensitive(
                 Phytochemical, 'compound_name', cd['phytochemical_name'].strip()
             )
+
+            # 3b. Auto-enrich phytochemical with PubChem + ClassyFire data
+            enrichment_status = enrich_phytochemical(phytochemical)
 
             # 4. Resolve Antibiotic (case-insensitive)
             antibiotic = get_or_create_case_insensitive(
@@ -263,10 +282,16 @@ def data_entry_view(request):
             )
 
             fic_display = f"{fic_index:.4f}" if fic_index else "N/A"
+            enrichment_parts = []
+            if enrichment_status.get("pubchem"):
+                enrichment_parts.append("\u2713 PubChem enriched")
+            if enrichment_status.get("classyfire"):
+                enrichment_parts.append("\u2713 ClassyFire classified")
+            enrichment_msg = (" | " + " | ".join(enrichment_parts)) if enrichment_parts else ""
             messages.success(
                 request,
                 f"Entry saved: {experiment}. FIC={fic_display}, "
-                f"Interpretation={interpretation or 'N/A'}"
+                f"Interpretation={interpretation or 'N/A'}{enrichment_msg}"
             )
 
             # "Save & Add Another" pre-fills DOI and MIC units for convenience
@@ -303,6 +328,9 @@ def download_data(request):
         writer = csv.writer(response)
         writer.writerow([
             'Phytochemical', 'PubChem_CID', 'InChI_Key', 'SMILES',
+            'Molecular_Formula', 'Molecular_Weight', 'XLogP',
+            'HBond_Donors', 'HBond_Acceptors', 'TPSA', 'Rotatable_Bonds',
+            'Lipinski_Pass', 'Chemical_Superclass', 'Chemical_Class', 'Chemical_Subclass',
             'Antibiotic', 'DrugBank_ID', 'Antibiotic_Class',
             'Pathogen_Genus', 'Pathogen_Species', 'Pathogen_Strain', 'Gram_Stain',
             'MIC_Phyto_Alone', 'MIC_Abx_Alone', 'MIC_Phyto_Combo', 'MIC_Abx_Combo', 'MIC_Units',
@@ -312,11 +340,29 @@ def download_data(request):
         ])
 
         for exp in results:
+            lipinski = exp.phytochemical.passes_lipinski
+            lipinski_str = ''
+            if lipinski is True:
+                lipinski_str = 'Yes'
+            elif lipinski is False:
+                lipinski_str = 'No'
+
             writer.writerow([
                 exp.phytochemical.compound_name,
                 exp.phytochemical.pubchem_cid or '',
                 exp.phytochemical.inchi_key or '',
                 exp.phytochemical.canonical_smiles or '',
+                exp.phytochemical.molecular_formula or '',
+                exp.phytochemical.molecular_weight or '',
+                exp.phytochemical.xlogp if exp.phytochemical.xlogp is not None else '',
+                exp.phytochemical.hbd if exp.phytochemical.hbd is not None else '',
+                exp.phytochemical.hba if exp.phytochemical.hba is not None else '',
+                exp.phytochemical.tpsa if exp.phytochemical.tpsa is not None else '',
+                exp.phytochemical.rotatable_bonds if exp.phytochemical.rotatable_bonds is not None else '',
+                lipinski_str,
+                exp.phytochemical.chemical_superclass or '',
+                exp.phytochemical.chemical_class or '',
+                exp.phytochemical.chemical_subclass or '',
                 exp.antibiotic.antibiotic_name,
                 exp.antibiotic.drugbank_id or '',
                 exp.antibiotic.antibiotic_class.class_name if exp.antibiotic.antibiotic_class else '',
@@ -385,6 +431,16 @@ def api_experiments(request):
                 'inchi_key': exp.phytochemical.inchi_key,
                 'smiles': exp.phytochemical.canonical_smiles,
                 'molecular_weight': str(exp.phytochemical.molecular_weight) if exp.phytochemical.molecular_weight else None,
+                'molecular_formula': exp.phytochemical.molecular_formula,
+                'xlogp': exp.phytochemical.xlogp,
+                'hbd': exp.phytochemical.hbd,
+                'hba': exp.phytochemical.hba,
+                'tpsa': exp.phytochemical.tpsa,
+                'rotatable_bonds': exp.phytochemical.rotatable_bonds,
+                'passes_lipinski': exp.phytochemical.passes_lipinski,
+                'chemical_superclass': exp.phytochemical.chemical_superclass,
+                'chemical_class': exp.phytochemical.chemical_class,
+                'chemical_subclass': exp.phytochemical.chemical_subclass,
             },
             'antibiotic': {
                 'name': exp.antibiotic.antibiotic_name,

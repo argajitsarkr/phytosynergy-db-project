@@ -88,7 +88,7 @@
 
             <!-- Advanced Filters Row -->
             <div class="row mt-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <select name="pathogen" class="form-select form-select-sm" onchange="this.form.submit()">
                         <option value="">Any Pathogen (with strain)</option>
                         {% for p in pathogens %}
@@ -96,7 +96,7 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <select name="antibiotic" class="form-select form-select-sm" onchange="this.form.submit()">
                         <option value="">Any Antibiotic</option>
                         {% for a in antibiotics %}
@@ -104,11 +104,19 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <select name="mechanism" class="form-select form-select-sm" onchange="this.form.submit()">
                         <option value="">Any Mechanism</option>
                         {% for m in mechanisms %}
                              <option value="{{ m }}" {% if m == selected_mechanism %}selected{% endif %}>{{ m }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="chemical_class" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">Any Chemical Class</option>
+                        {% for cc in chemical_classes %}
+                            <option value="{{ cc }}" {% if cc == selected_chemical_class %}selected{% endif %}>{{ cc }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -208,6 +216,54 @@
                     </div>
                     {% endif %}
                 </div>
+
+                <!-- Lipinski Properties & Chemical Class -->
+                {% if experiment.phytochemical.molecular_weight or experiment.phytochemical.chemical_class %}
+                <div class="lipinski-bar">
+                    {% if experiment.phytochemical.molecular_weight %}
+                    <span class="lipinski-prop" title="Molecular Weight">
+                        <strong>MW</strong> {{ experiment.phytochemical.molecular_weight|floatformat:2 }}
+                    </span>
+                    {% endif %}
+                    {% if experiment.phytochemical.xlogp != None %}
+                    <span class="lipinski-prop" title="Partition Coefficient (LogP)">
+                        <strong>LogP</strong> {{ experiment.phytochemical.xlogp }}
+                    </span>
+                    {% endif %}
+                    {% if experiment.phytochemical.hbd != None %}
+                    <span class="lipinski-prop" title="Hydrogen Bond Donors">
+                        <strong>HBD</strong> {{ experiment.phytochemical.hbd }}
+                    </span>
+                    {% endif %}
+                    {% if experiment.phytochemical.hba != None %}
+                    <span class="lipinski-prop" title="Hydrogen Bond Acceptors">
+                        <strong>HBA</strong> {{ experiment.phytochemical.hba }}
+                    </span>
+                    {% endif %}
+                    {% if experiment.phytochemical.tpsa != None %}
+                    <span class="lipinski-prop" title="Topological Polar Surface Area">
+                        <strong>TPSA</strong> {{ experiment.phytochemical.tpsa|floatformat:1 }}
+                    </span>
+                    {% endif %}
+                    {% if experiment.phytochemical.molecular_formula %}
+                    <span class="lipinski-prop" title="Molecular Formula">
+                        <strong>Formula</strong> {{ experiment.phytochemical.molecular_formula }}
+                    </span>
+                    {% endif %}
+                    {% with lipinski=experiment.phytochemical.passes_lipinski %}
+                    {% if lipinski != None %}
+                    <span class="lipinski-verdict {% if lipinski %}lipinski-pass{% else %}lipinski-fail{% endif %}" title="Lipinski's Rule of Five: MW<500, LogP<5, HBD{% templatetag openvariable %}5, HBA{% templatetag openvariable %}10">
+                        {% if lipinski %}<i class="fas fa-check-circle"></i> Drug-like{% else %}<i class="fas fa-times-circle"></i> Ro5 Violation{% endif %}
+                    </span>
+                    {% endif %}
+                    {% endwith %}
+                    {% if experiment.phytochemical.chemical_class %}
+                    <span class="chem-class-badge" title="ClassyFire: {{ experiment.phytochemical.chemical_superclass|default:'' }} > {{ experiment.phytochemical.chemical_class }} > {{ experiment.phytochemical.chemical_subclass|default:'' }}">
+                        <i class="fas fa-tag me-1"></i>{{ experiment.phytochemical.chemical_class }}
+                    </span>
+                    {% endif %}
+                </div>
+                {% endif %}
 
                 <!-- Action Buttons -->
                 <div class="rc-actions">
