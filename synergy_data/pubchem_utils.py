@@ -23,9 +23,11 @@ logger = logging.getLogger(__name__)
 
 PUBCHEM_BASE_URL = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound"
 PUBCHEM_PROPERTIES = (
-    "CID,CanonicalSMILES,InChIKey,MolecularWeight,MolecularFormula,"
+    "CanonicalSMILES,InChIKey,MolecularWeight,MolecularFormula,"
     "XLogP,HBondDonorCount,HBondAcceptorCount,TPSA,RotatableBondCount"
 )
+# Note: CID is NOT a valid property name for PUG REST but IS returned
+# automatically in every property response, so we don't need to list it.
 PUBCHEM_TIMEOUT = 5  # seconds
 
 CLASSYFIRE_BASE_URL = "http://classyfire.wishartlab.com/entities"
