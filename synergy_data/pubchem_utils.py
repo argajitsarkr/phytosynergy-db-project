@@ -37,9 +37,92 @@ CLASSYFIRE_TIMEOUT = 8  # seconds (ClassyFire can be slow)
 # PUBCHEM API
 # ==============================================================================
 
+def _get_properties_by_cid(cid):
+    """Fetch properties for a known PubChem CID. Returns dict or None."""
+    try:
+        url = f"{PUBCHEM_BASE_URL}/cid/{cid}/property/{PUBCHEM_PROPERTIES}/JSON"
+        response = requests.get(url, timeout=PUBCHEM_TIMEOUT)
+        response.raise_for_status()
+        data = response.json()
+        props = data.get("PropertyTable", {}).get("Properties", [])
+        if props:
+            return props[0]
+    except Exception as e:
+        logger.warning("PubChem CID lookup failed for CID %s: %s", cid, e)
+    return None
+
+
+def _resolve_name_to_cid(compound_name):
+    """
+    Try multiple strategies to resolve a compound name to a PubChem CID.
+
+    Strategy 1: Direct name lookup via PUG REST
+    Strategy 2: POST-based name lookup (avoids URL-encoding issues with commas)
+    Strategy 3: Try alternative name formats (hyphens, no commas, etc.)
+
+    Returns CID (int) or None.
+    """
+    # Strategy 1: Direct GET with URL-safe encoding
+    try:
+        url = f"{PUBCHEM_BASE_URL}/name/{requests.utils.quote(compound_name, safe='')}/cids/JSON"
+        resp = requests.get(url, timeout=PUBCHEM_TIMEOUT)
+        if resp.status_code == 200:
+            data = resp.json()
+            cids = data.get("IdentifierList", {}).get("CID", [])
+            if cids and cids[0] != 0:
+                return cids[0]
+    except Exception:
+        pass
+
+    # Strategy 2: POST-based name lookup (avoids URL encoding entirely)
+    try:
+        url = f"{PUBCHEM_BASE_URL}/name/cids/JSON"
+        resp = requests.post(url, data={"name": compound_name}, timeout=PUBCHEM_TIMEOUT)
+        if resp.status_code == 200:
+            data = resp.json()
+            cids = data.get("IdentifierList", {}).get("CID", [])
+            if cids and cids[0] != 0:
+                return cids[0]
+    except Exception:
+        pass
+
+    # Strategy 3: Try alternative name formats
+    alt_names = set()
+    # "7,8-Dihydroxyflavone" → "7,8-dihydroxyflavone"
+    alt_names.add(compound_name.lower())
+    # Replace commas: "7,8-Dihydroxyflavone" → "7 8-Dihydroxyflavone"
+    if ',' in compound_name:
+        alt_names.add(compound_name.replace(',', ' '))
+        alt_names.add(compound_name.replace(',', ''))
+    # Discard the original name (already tried)
+    alt_names.discard(compound_name)
+    alt_names.discard(compound_name.lower() if compound_name.lower() == compound_name else "")
+
+    for alt_name in alt_names:
+        try:
+            url = f"{PUBCHEM_BASE_URL}/name/cids/JSON"
+            resp = requests.post(url, data={"name": alt_name}, timeout=PUBCHEM_TIMEOUT)
+            if resp.status_code == 200:
+                data = resp.json()
+                cids = data.get("IdentifierList", {}).get("CID", [])
+                if cids and cids[0] != 0:
+                    logger.info("Resolved '%s' via alt name '%s' → CID %s",
+                                compound_name, alt_name, cids[0])
+                    return cids[0]
+        except Exception:
+            continue
+
+    return None
+
+
 def fetch_pubchem_data(compound_name):
     """
     Fetch molecular properties from PubChem PUG REST API by compound name.
+
+    Uses multiple strategies to handle tricky names (commas, hyphens, etc.):
+    1. Direct name → properties lookup
+    2. Name → CID resolution (with POST fallback), then CID → properties
+    3. Alternative name formats as last resort
 
     Args:
         compound_name: The common name of the compound (e.g., "Quercetin")
@@ -48,45 +131,50 @@ def fetch_pubchem_data(compound_name):
         dict with keys: cid, smiles, inchikey, molecular_weight, molecular_formula,
         xlogp, hbd, hba, tpsa, rotatable_bonds. Or None on failure.
     """
+    # Fast path: try direct name → properties GET
     try:
         url = (
-            f"{PUBCHEM_BASE_URL}/name/{requests.utils.quote(compound_name)}"
+            f"{PUBCHEM_BASE_URL}/name/"
+            f"{requests.utils.quote(compound_name, safe='')}"
             f"/property/{PUBCHEM_PROPERTIES}/JSON"
         )
         response = requests.get(url, timeout=PUBCHEM_TIMEOUT)
-        response.raise_for_status()
-
-        data = response.json()
-        props = data.get("PropertyTable", {}).get("Properties", [])
-        if not props:
-            logger.info("PubChem returned no properties for '%s'", compound_name)
-            return None
-
-        p = props[0]  # First (best) match
-        return {
-            "cid": p.get("CID"),
-            "smiles": p.get("CanonicalSMILES"),
-            "inchikey": p.get("InChIKey"),
-            "molecular_weight": p.get("MolecularWeight"),
-            "molecular_formula": p.get("MolecularFormula"),
-            "xlogp": p.get("XLogP"),
-            "hbd": p.get("HBondDonorCount"),
-            "hba": p.get("HBondAcceptorCount"),
-            "tpsa": p.get("TPSA"),
-            "rotatable_bonds": p.get("RotatableBondCount"),
-        }
-
-    except requests.exceptions.Timeout:
-        logger.warning("PubChem API timeout for '%s'", compound_name)
-    except requests.exceptions.HTTPError as e:
-        if e.response is not None and e.response.status_code == 404:
-            logger.info("Compound '%s' not found in PubChem", compound_name)
-        else:
-            logger.warning("PubChem HTTP error for '%s': %s", compound_name, e)
+        if response.status_code == 200:
+            data = response.json()
+            props = data.get("PropertyTable", {}).get("Properties", [])
+            if props:
+                return _format_pubchem_props(props[0])
     except Exception as e:
-        logger.warning("PubChem API error for '%s': %s", compound_name, e)
+        logger.debug("Direct PubChem name lookup failed for '%s': %s", compound_name, e)
 
+    # Slow path: resolve name → CID first, then CID → properties
+    logger.info("Trying CID resolution for '%s'...", compound_name)
+    cid = _resolve_name_to_cid(compound_name)
+    if cid:
+        props = _get_properties_by_cid(cid)
+        if props:
+            logger.info("Successfully fetched properties for '%s' via CID %s",
+                        compound_name, cid)
+            return _format_pubchem_props(props)
+
+    logger.info("Compound '%s' not found in PubChem via any strategy", compound_name)
     return None
+
+
+def _format_pubchem_props(p):
+    """Format raw PubChem property dict into our standard format."""
+    return {
+        "cid": p.get("CID"),
+        "smiles": p.get("CanonicalSMILES"),
+        "inchikey": p.get("InChIKey"),
+        "molecular_weight": p.get("MolecularWeight"),
+        "molecular_formula": p.get("MolecularFormula"),
+        "xlogp": p.get("XLogP"),
+        "hbd": p.get("HBondDonorCount"),
+        "hba": p.get("HBondAcceptorCount"),
+        "tpsa": p.get("TPSA"),
+        "rotatable_bonds": p.get("RotatableBondCount"),
+    }
 
 
 # ==============================================================================
