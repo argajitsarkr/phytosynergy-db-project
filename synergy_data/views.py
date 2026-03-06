@@ -228,9 +228,22 @@ def data_entry_view(request):
         if form.is_valid():
             cd = form.cleaned_data
 
-            # 1. Resolve Source (get_or_create by DOI)
+            # 1. Resolve Source (get_or_create by DOI, update metadata)
             doi = cd['source_doi'].strip()
             source, _ = Source.objects.get_or_create(doi=doi)
+            # Update source metadata if provided (fills blanks)
+            source_updated = False
+            if cd.get('publication_year') and not source.publication_year:
+                source.publication_year = cd['publication_year']
+                source_updated = True
+            if cd.get('article_title') and not source.article_title:
+                source.article_title = cd['article_title'].strip()
+                source_updated = True
+            if cd.get('journal') and not source.journal:
+                source.journal = cd['journal'].strip()
+                source_updated = True
+            if source_updated:
+                source.save()
 
             # 2. Resolve Pathogen (parse name, then get_or_create)
             genus, species, strain = parse_pathogen_name(cd['pathogen_full_name'])
@@ -294,10 +307,13 @@ def data_entry_view(request):
                 f"Interpretation={interpretation or 'N/A'}{enrichment_msg}"
             )
 
-            # "Save & Add Another" pre-fills DOI and MIC units for convenience
+            # "Save & Add Another" pre-fills DOI, year, journal and MIC units
             if 'save_and_another' in request.POST:
                 form = SynergyEntryForm(initial={
                     'source_doi': doi,
+                    'publication_year': cd.get('publication_year'),
+                    'article_title': cd.get('article_title'),
+                    'journal': cd.get('journal'),
                     'mic_units': cd.get('mic_units') or '\u00b5g/mL',
                 })
             else:
@@ -306,6 +322,136 @@ def data_entry_view(request):
         form = SynergyEntryForm()
 
     return render(request, 'synergy_data/data_entry.html', {'form': form})
+
+
+# ==============================================================================
+# EDIT ENTRY PAGE (login-protected)
+# ==============================================================================
+
+@login_required
+def edit_entry_view(request, pk):
+    """Edit an existing synergy experiment record."""
+    from django.shortcuts import get_object_or_404
+
+    experiment = get_object_or_404(
+        SynergyExperiment.objects.select_related(
+            'phytochemical', 'antibiotic', 'pathogen', 'source'
+        ),
+        pk=pk,
+    )
+
+    if request.method == 'POST':
+        form = SynergyEntryForm(request.POST)
+        if form.is_valid():
+            cd = form.cleaned_data
+
+            # 1. Resolve Source
+            doi = cd['source_doi'].strip()
+            source, _ = Source.objects.get_or_create(doi=doi)
+            source_updated = False
+            if cd.get('publication_year'):
+                source.publication_year = cd['publication_year']
+                source_updated = True
+            if cd.get('article_title'):
+                source.article_title = cd['article_title'].strip()
+                source_updated = True
+            if cd.get('journal'):
+                source.journal = cd['journal'].strip()
+                source_updated = True
+            if source_updated:
+                source.save()
+
+            # 2. Resolve Pathogen
+            genus, species, strain = parse_pathogen_name(cd['pathogen_full_name'])
+            pathogen, _ = Pathogen.objects.get_or_create(
+                genus=genus, species=species, strain=strain
+            )
+
+            # 3. Resolve Phytochemical
+            phytochemical = get_or_create_case_insensitive(
+                Phytochemical, 'compound_name', cd['phytochemical_name'].strip()
+            )
+
+            # 3b. Auto-enrich
+            enrichment_status = enrich_phytochemical(phytochemical)
+
+            # 4. Resolve Antibiotic
+            antibiotic = get_or_create_case_insensitive(
+                Antibiotic, 'antibiotic_name', cd['antibiotic_name'].strip()
+            )
+
+            # 5. Auto-calculate FIC if not provided
+            fic_index = cd.get('fic_index')
+            if fic_index is None:
+                fic_index = auto_calculate_fic(
+                    cd.get('mic_phyto_alone'),
+                    cd.get('mic_abx_alone'),
+                    cd.get('mic_phyto_in_combo'),
+                    cd.get('mic_abx_in_combo'),
+                )
+
+            # 6. Auto-interpret
+            interpretation = cd.get('interpretation') or auto_interpret_fic(fic_index)
+
+            # 7. Update the experiment record (not create!)
+            experiment.phytochemical = phytochemical
+            experiment.antibiotic = antibiotic
+            experiment.pathogen = pathogen
+            experiment.source = source
+            experiment.mic_phyto_alone = cd.get('mic_phyto_alone')
+            experiment.mic_abx_alone = cd.get('mic_abx_alone')
+            experiment.mic_phyto_in_combo = cd.get('mic_phyto_in_combo')
+            experiment.mic_abx_in_combo = cd.get('mic_abx_in_combo')
+            experiment.mic_units = cd.get('mic_units') or '\u00b5g/mL'
+            experiment.fic_index = fic_index
+            experiment.interpretation = interpretation
+            experiment.moa_observed = cd.get('moa_observed', '')
+            experiment.notes = cd.get('notes', '')
+            experiment.save()
+
+            fic_display = f"{fic_index:.4f}" if fic_index else "N/A"
+            enrichment_parts = []
+            if enrichment_status.get("pubchem"):
+                enrichment_parts.append("\u2713 PubChem enriched")
+            if enrichment_status.get("classyfire"):
+                enrichment_parts.append("\u2713 ClassyFire classified")
+            enrichment_msg = (" | " + " | ".join(enrichment_parts)) if enrichment_parts else ""
+            messages.success(
+                request,
+                f"Entry updated: {experiment}. FIC={fic_display}, "
+                f"Interpretation={interpretation or 'N/A'}{enrichment_msg}"
+            )
+            return redirect('database_search')
+    else:
+        # Pre-populate form with existing data
+        pathogen_str = f"{experiment.pathogen.genus} {experiment.pathogen.species}"
+        if experiment.pathogen.strain:
+            pathogen_str += f" {experiment.pathogen.strain}"
+
+        form = SynergyEntryForm(initial={
+            'source_doi': experiment.source.doi or '',
+            'publication_year': experiment.source.publication_year,
+            'article_title': experiment.source.article_title or '',
+            'journal': experiment.source.journal or '',
+            'pathogen_full_name': pathogen_str,
+            'phytochemical_name': experiment.phytochemical.compound_name,
+            'antibiotic_name': experiment.antibiotic.antibiotic_name,
+            'mic_phyto_alone': experiment.mic_phyto_alone,
+            'mic_abx_alone': experiment.mic_abx_alone,
+            'mic_phyto_in_combo': experiment.mic_phyto_in_combo,
+            'mic_abx_in_combo': experiment.mic_abx_in_combo,
+            'mic_units': experiment.mic_units or '\u00b5g/mL',
+            'fic_index': experiment.fic_index,
+            'interpretation': experiment.interpretation or '',
+            'moa_observed': experiment.moa_observed or '',
+            'notes': experiment.notes or '',
+        })
+
+    return render(request, 'synergy_data/data_entry.html', {
+        'form': form,
+        'editing': True,
+        'experiment_id': pk,
+    })
 
 
 # ==============================================================================

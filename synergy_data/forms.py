@@ -21,6 +21,37 @@ class SynergyEntryForm(forms.Form):
         }),
     )
 
+    publication_year = forms.IntegerField(
+        required=False,
+        label="Publication Year",
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'e.g., 2024',
+            'min': '1900',
+            'max': '2099',
+        }),
+    )
+
+    article_title = forms.CharField(
+        max_length=500,
+        required=False,
+        label="Article Title",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'e.g., Synergistic activity of flavonoids...',
+        }),
+    )
+
+    journal = forms.CharField(
+        max_length=255,
+        required=False,
+        label="Journal",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'e.g., Journal of Antimicrobial Chemotherapy',
+        }),
+    )
+
     # --- Entity name fields (resolved to FKs in the view) ---
     pathogen_full_name = forms.CharField(
         max_length=300,
