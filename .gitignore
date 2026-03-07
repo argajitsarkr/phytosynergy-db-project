@@ -19,6 +19,9 @@ db_preview.sqlite3
 # Claude Code workspace
 .claude/
 
+# Deployment state
+.last_good_deploy
+
 # Other
 .DS_Store.tmp.driveupload*
 .claude/
