@@ -100,11 +100,11 @@
                         </thead>
                         <tbody>
                             {% for exp in experiments %}
-                            <tr class="{% if exp._warnings and 'Missing' in exp._warnings|join:' ' %}table-warning{% endif %}">
+                            <tr class="{% if exp.warnings and 'Missing' in exp.warnings|join:' ' %}table-warning{% endif %}">
                                 <td class="px-3">
                                     <input class="form-check-input row-check" type="checkbox"
-                                           name="selected_rows" value="{{ exp._row_index }}"
-                                           {% if 'Missing DOI' not in exp._warnings|join:' ' and 'Missing phytochemical' not in exp._warnings|join:' ' and 'Missing antibiotic' not in exp._warnings|join:' ' and 'Missing pathogen' not in exp._warnings|join:' ' %}checked{% endif %}>
+                                           name="selected_rows" value="{{ exp.row_index }}"
+                                           {% if 'Missing DOI' not in exp.warnings|join:' ' and 'Missing phytochemical' not in exp.warnings|join:' ' and 'Missing antibiotic' not in exp.warnings|join:' ' and 'Missing pathogen' not in exp.warnings|join:' ' %}checked{% endif %}>
                                 </td>
                                 <td class="px-2 text-muted">{{ forloop.counter }}</td>
                                 <td class="px-2 fw-semibold" style="color: var(--primary);">{{ exp.phytochemical_name|default:"-" }}</td>
@@ -139,8 +139,8 @@
                                 </td>
                                 <td class="px-2">{{ exp.assay_method|default:"-" }}</td>
                                 <td class="px-2">
-                                    {% if exp._warnings %}
-                                    {% for w in exp._warnings %}
+                                    {% if exp.warnings %}
+                                    {% for w in exp.warnings %}
                                     <span class="badge {% if 'Missing' in w %}bg-danger{% elif 'auto-calculated' in w %}bg-info{% else %}bg-warning text-dark{% endif %}" style="font-size:0.7rem;">{{ w }}</span>
                                     {% endfor %}
                                     {% else %}
@@ -149,7 +149,7 @@
                                 </td>
                             </tr>
                             {% if exp.moa_observed or exp.notes %}
-                            <tr class="{% if exp._warnings and 'Missing' in exp._warnings|join:' ' %}table-warning{% endif %}">
+                            <tr class="{% if exp.warnings and 'Missing' in exp.warnings|join:' ' %}table-warning{% endif %}">
                                 <td></td>
                                 <td></td>
                                 <td colspan="14" class="px-2 py-1" style="font-size:0.78rem; color: var(--text-secondary);">

@@ -1091,17 +1091,17 @@ def extract_from_pdf(request):
             # Step 3: Validate and annotate each row
             for i, exp in enumerate(experiments):
                 # Flag rows with missing critical data
-                exp['_row_index'] = i
-                exp['_warnings'] = []
+                exp['row_index'] = i
+                exp['warnings'] = []
 
                 if not exp.get('source_doi'):
-                    exp['_warnings'].append('Missing DOI')
+                    exp['warnings'].append('Missing DOI')
                 if not exp.get('phytochemical_name'):
-                    exp['_warnings'].append('Missing phytochemical')
+                    exp['warnings'].append('Missing phytochemical')
                 if not exp.get('antibiotic_name'):
-                    exp['_warnings'].append('Missing antibiotic')
+                    exp['warnings'].append('Missing antibiotic')
                 if not exp.get('pathogen_name'):
-                    exp['_warnings'].append('Missing pathogen')
+                    exp['warnings'].append('Missing pathogen')
 
                 # Check MIC consistency
                 mic_vals = [exp.get('mic_phyto_alone'), exp.get('mic_abx_alone'),
@@ -1109,7 +1109,7 @@ def extract_from_pdf(request):
                 has_some_mic = any(v is not None for v in mic_vals)
                 has_all_mic = all(v is not None for v in mic_vals)
                 if has_some_mic and not has_all_mic and not exp.get('fic_index'):
-                    exp['_warnings'].append('Incomplete MIC values & no FIC')
+                    exp['warnings'].append('Incomplete MIC values & no FIC')
 
                 # Auto-calculate FIC if possible for preview
                 if not exp.get('fic_index') and has_all_mic:
@@ -1121,7 +1121,7 @@ def extract_from_pdf(request):
                         if calc_fic:
                             exp['fic_index'] = float(round(calc_fic, 4))
                             exp['interpretation'] = auto_interpret_fic(calc_fic)
-                            exp['_warnings'].append('FIC auto-calculated')
+                            exp['warnings'].append('FIC auto-calculated')
                     except Exception:
                         pass
 
