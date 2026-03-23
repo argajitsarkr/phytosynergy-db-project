@@ -139,3 +139,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'data_entry'
 LOGOUT_REDIRECT_URL = 'home'
+
+# ==============================================================================
+# GEMINI API (for AI-assisted PDF data extraction)
+# ==============================================================================
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
