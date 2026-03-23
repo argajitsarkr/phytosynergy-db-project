@@ -27,6 +27,15 @@ class Phytochemical(models.Model):
     tpsa = models.FloatField(null=True, blank=True, verbose_name="TPSA (Å²)")
     rotatable_bonds = models.IntegerField(null=True, blank=True, verbose_name="Rotatable Bonds")
 
+    # RDKit-computed physicochemical properties
+    logp = models.DecimalField(max_digits=6, decimal_places=3, blank=True, null=True, help_text="Partition coefficient (Wildman-Crippen LogP)")
+    num_rings = models.IntegerField(blank=True, null=True, help_text="Number of rings")
+    heavy_atom_count = models.IntegerField(blank=True, null=True, help_text="Number of heavy (non-hydrogen) atoms")
+
+    # Drug-likeness flags
+    lipinski_violations = models.IntegerField(blank=True, null=True, help_text="Number of Lipinski Rule of 5 violations")
+    is_drug_like = models.BooleanField(default=False, help_text="Passes Lipinski RO5 with ≤1 violation")
+
     # Chemical Taxonomy (auto-fetched from ClassyFire)
     chemical_superclass = models.CharField(max_length=200, null=True, blank=True, verbose_name="Chemical Superclass")
     chemical_class = models.CharField(max_length=200, null=True, blank=True, verbose_name="Chemical Class")
@@ -118,6 +127,21 @@ class SynergyExperiment(models.Model):
     fic_index = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True, verbose_name="FIC Index")
     interpretation = models.CharField(max_length=20, choices=InterpretationChoices.choices, blank=True, null=True)
     
+    # Experimental method
+    assay_method = models.CharField(
+        max_length=50,
+        choices=[
+            ('checkerboard', 'Checkerboard'),
+            ('time_kill', 'Time-Kill'),
+            ('disk_diffusion', 'Disk Diffusion'),
+            ('broth_microdilution', 'Broth Microdilution'),
+            ('other', 'Other'),
+        ],
+        default='checkerboard',
+        blank=True, null=True,
+        help_text="Experimental method used to determine synergy"
+    )
+
     # Other data
     moa_observed = models.TextField(blank=True, null=True, verbose_name="Observed Mechanism of Action")
     notes = models.TextField(blank=True, null=True)
@@ -125,6 +149,20 @@ class SynergyExperiment(models.Model):
     def __str__(self):
         return f"{self.phytochemical} + {self.antibiotic} vs {self.pathogen}"
     
+class Plant(models.Model):
+    scientific_name = models.CharField(max_length=255, unique=True)  # e.g., "Curcuma longa"
+    common_name = models.CharField(max_length=255, blank=True, null=True)  # e.g., "Turmeric"
+    family = models.CharField(max_length=100, blank=True, null=True)  # e.g., "Zingiberaceae"
+    phytochemicals = models.ManyToManyField('Phytochemical', blank=True, related_name='source_plants')
+
+    def __str__(self):
+        return self.scientific_name
+
+    class Meta:
+        verbose_name = "Plant"
+        verbose_name_plural = "Plants"
+
+
     # Model to store a single view count for the entire site.
 class SiteViewCounter(models.Model):
     count = models.PositiveIntegerField(default=0, help_text="The total number of page views for the site.")

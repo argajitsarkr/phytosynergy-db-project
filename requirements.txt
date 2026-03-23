@@ -11,3 +11,4 @@ sqlparse==0.5.3
 typing_extensions==4.14.1
 tzdata==2025.2
 requests>=2.31.0
+rdkit-pypi>=2023.9.1

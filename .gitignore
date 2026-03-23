@@ -23,5 +23,6 @@ db_preview.sqlite3
 .last_good_deploy
 
 # Other
-.DS_Store.tmp.driveupload*
-.claude/
+.DS_Store
+.tmp.driveupload/
+SITE_REPORT.md

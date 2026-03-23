@@ -5,7 +5,8 @@ from .models import (
     Antibiotic,
     Pathogen,
     Source,
-    SynergyExperiment
+    SynergyExperiment,
+    Plant,
 )
 
 # -----------------------------------------------------------------------------
@@ -16,6 +17,16 @@ admin.site.register(Phytochemical)
 admin.site.register(Antibiotic)
 admin.site.register(Pathogen)
 admin.site.register(Source)
+
+
+# -----------------------------------------------------------------------------
+# Plant model with M2M widget for phytochemicals
+# -----------------------------------------------------------------------------
+@admin.register(Plant)
+class PlantAdmin(admin.ModelAdmin):
+    list_display = ['scientific_name', 'common_name', 'family']
+    search_fields = ['scientific_name', 'common_name']
+    filter_horizontal = ['phytochemicals']
 
 
 # -----------------------------------------------------------------------------
