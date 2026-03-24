@@ -1,0 +1,630 @@
+{% extends "synergy_data/base.html" %}
+{% load static %}
+{% load analytics_filters %}
+
+{% block title %}Analytics Dashboard — PhytoSynergyDB{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+
+    <!-- Page Header -->
+    <div class="text-center mb-5">
+        <h1 class="fw-800" style="color: var(--primary);"><i class="fas fa-chart-bar me-2"></i>Analytics Dashboard</h1>
+        <p class="text-muted fs-5">Real-time visualizations of phytochemical-antibiotic synergy data</p>
+    </div>
+
+    <!-- Summary Stat Cards -->
+    <div class="row g-3 mb-5">
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="analytics-stat-card">
+                <div class="analytics-stat-number">{{ total_experiments }}</div>
+                <div class="analytics-stat-label">Experiments</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="analytics-stat-card" style="border-top-color: var(--success);">
+                <div class="analytics-stat-number" style="color: var(--success);">{{ total_synergy }}</div>
+                <div class="analytics-stat-label">Synergistic</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="analytics-stat-card" style="border-top-color: var(--accent);">
+                <div class="analytics-stat-number" style="color: var(--accent);">{{ total_phytochemicals }}</div>
+                <div class="analytics-stat-label">Phytochemicals</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="analytics-stat-card" style="border-top-color: #6a1b9a;">
+                <div class="analytics-stat-number" style="color: #6a1b9a;">{{ total_antibiotics }}</div>
+                <div class="analytics-stat-label">Antibiotics</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="analytics-stat-card" style="border-top-color: #e65100;">
+                <div class="analytics-stat-number" style="color: #e65100;">{{ total_pathogens }}</div>
+                <div class="analytics-stat-label">Pathogens</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="analytics-stat-card" style="border-top-color: var(--gray-600);">
+                <div class="analytics-stat-number" style="color: var(--gray-600);">{{ total_sources }}</div>
+                <div class="analytics-stat-label">Publications</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 1: Interpretation Donut + ESKAPE Bars -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-5">
+            <div class="analytics-card">
+                <h5 class="analytics-card-title"><i class="fas fa-circle-half-stroke me-2"></i>Synergy Interpretation Distribution</h5>
+                <div class="chart-container" style="position: relative; height: 350px;">
+                    <canvas id="interpretationChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="analytics-card">
+                <h5 class="analytics-card-title"><i class="fas fa-bacteria me-2"></i>Experiments by ESKAPE Pathogen</h5>
+                <div class="chart-container" style="position: relative; height: 350px;">
+                    <canvas id="eskapeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 2: Top Phytochemicals + Top Antibiotics -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5 class="analytics-card-title"><i class="fas fa-leaf me-2"></i>Top 10 Phytochemicals by Synergy Count</h5>
+                <div class="chart-container" style="position: relative; height: 380px;">
+                    <canvas id="topPhytoChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5 class="analytics-card-title"><i class="fas fa-capsules me-2"></i>Top 10 Antibiotics by Synergy Count</h5>
+                <div class="chart-container" style="position: relative; height: 380px;">
+                    <canvas id="topAbxChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 3: Year Trend + FIC Distribution -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5 class="analytics-card-title"><i class="fas fa-calendar-alt me-2"></i>Publication Year Trend</h5>
+                <div class="chart-container" style="position: relative; height: 350px;">
+                    <canvas id="yearTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5 class="analytics-card-title"><i class="fas fa-chart-area me-2"></i>FIC Index Distribution</h5>
+                <div class="chart-container" style="position: relative; height: 350px;">
+                    <canvas id="ficHistChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 4: Heatmap -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="analytics-card">
+                <h5 class="analytics-card-title"><i class="fas fa-th me-2"></i>Synergy Heatmap — Average FIC Index (Phytochemical × Antibiotic)</h5>
+                <p class="text-muted small mb-3">Top 15 phytochemicals (rows) × Top 10 antibiotics (columns). Green = synergistic (low FIC), Red = antagonistic (high FIC), Gray = no data.</p>
+                {% if heatmap_grid %}
+                <div class="table-responsive">
+                    <table class="heatmap-table">
+                        <thead>
+                            <tr>
+                                <th class="heatmap-row-label">Phytochemical</th>
+                                {% for abx in heatmap_abx_names %}
+                                <th class="heatmap-col-label">{{ abx }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in heatmap_grid %}
+                            <tr>
+                                <td class="heatmap-row-label">{{ row.name }}</td>
+                                {% for cell in row.cells %}
+                                <td class="heatmap-cell {% if cell == None %}heatmap-nodata{% endif %}"
+                                    {% if cell != None %}
+                                    style="background-color: {{ cell|heatmap_color }};"
+                                    title="Avg FIC: {{ cell|floatformat:3 }}"
+                                    data-fic="{{ cell|floatformat:3 }}"
+                                    {% else %}
+                                    title="No data"
+                                    {% endif %}>
+                                    {% if cell != None %}
+                                    <span class="heatmap-value">{{ cell|floatformat:2 }}</span>
+                                    {% else %}
+                                    <span class="heatmap-value" style="color: #aaa;">—</span>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Heatmap Legend -->
+                <div class="d-flex align-items-center justify-content-center mt-3 gap-2 flex-wrap">
+                    <span class="small text-muted me-1">FIC Scale:</span>
+                    <span class="heatmap-legend-block" style="background:#1b5e20;" title="FIC ≤ 0.25"></span>
+                    <span class="small">≤0.25</span>
+                    <span class="heatmap-legend-block" style="background:#4caf50;" title="FIC ~0.5"></span>
+                    <span class="small">0.5</span>
+                    <span class="heatmap-legend-block" style="background:#fff176;" title="FIC ~1.0"></span>
+                    <span class="small">1.0</span>
+                    <span class="heatmap-legend-block" style="background:#ff9800;" title="FIC ~2.0"></span>
+                    <span class="small">2.0</span>
+                    <span class="heatmap-legend-block" style="background:#c62828;" title="FIC > 4.0"></span>
+                    <span class="small">>4.0</span>
+                    <span class="heatmap-legend-block heatmap-nodata" title="No data"></span>
+                    <span class="small">No data</span>
+                </div>
+                {% else %}
+                <div class="text-center py-5 text-muted">
+                    <i class="fas fa-database fa-3x mb-3"></i>
+                    <p>Not enough data to generate heatmap. Add more experiments to see the visualization.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+/* Analytics Stat Cards */
+.analytics-stat-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.25rem 1rem;
+    text-align: center;
+    border: 1px solid var(--gray-100);
+    border-top: 3px solid var(--primary);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.analytics-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+.analytics-stat-number {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1.2;
+}
+.analytics-stat-label {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.25rem;
+}
+
+/* Analytics Cards */
+.analytics-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid var(--gray-100);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    height: 100%;
+}
+.analytics-card-title {
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+/* Heatmap Table */
+.heatmap-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 2px;
+    font-size: 0.78rem;
+}
+.heatmap-table th,
+.heatmap-table td {
+    padding: 6px 4px;
+    text-align: center;
+    vertical-align: middle;
+}
+.heatmap-row-label {
+    text-align: left !important;
+    font-weight: 600;
+    color: var(--dark);
+    white-space: nowrap;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: #fff !important;
+    padding-right: 10px !important;
+    font-size: 0.75rem;
+}
+.heatmap-col-label {
+    font-weight: 600;
+    color: var(--dark);
+    font-size: 0.7rem;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    height: 110px;
+    white-space: nowrap;
+    background: #fff !important;
+}
+.heatmap-cell {
+    border-radius: 4px;
+    min-width: 52px;
+    height: 36px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative;
+}
+.heatmap-cell:hover {
+    transform: scale(1.15);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    z-index: 10;
+}
+.heatmap-nodata {
+    background: #f0f0f0 !important;
+}
+.heatmap-value {
+    font-weight: 700;
+    font-size: 0.7rem;
+    color: rgba(0,0,0,0.7);
+    text-shadow: 0 0 3px rgba(255,255,255,0.6);
+}
+.heatmap-legend-block {
+    display: inline-block;
+    width: 20px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.15);
+}
+
+/* Chart container responsiveness */
+.chart-container {
+    width: 100%;
+}
+
+/* Empty state for charts with no data */
+.chart-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    color: var(--gray-500);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // Shared font config
+    Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+    Chart.defaults.font.size = 12;
+
+    const interpretationData = {{ interpretation_json|safe }};
+    const eskapeData = {{ eskape_json|safe }};
+    const topPhytoData = {{ top_phyto_json|safe }};
+    const topAbxData = {{ top_abx_json|safe }};
+    const yearData = {{ year_json|safe }};
+    const ficData = {{ fic_json|safe }};
+
+    // =========================================================
+    // 3A. Interpretation Donut Chart
+    // =========================================================
+    const intCtx = document.getElementById('interpretationChart');
+    if (intCtx) {
+        new Chart(intCtx, {
+            type: 'doughnut',
+            data: {
+                labels: interpretationData.labels,
+                datasets: [{
+                    data: interpretationData.counts,
+                    backgroundColor: interpretationData.colors,
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '55%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 16, usePointStyle: true, pointStyleWidth: 12, font: { weight: '600' } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                const pct = total > 0 ? ((ctx.raw / total) * 100).toFixed(1) : 0;
+                                return `${ctx.label}: ${ctx.raw} (${pct}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // =========================================================
+    // 3B. ESKAPE Pathogen Horizontal Bar
+    // =========================================================
+    const eskapeCtx = document.getElementById('eskapeChart');
+    if (eskapeCtx) {
+        const eskapeColors = ['#6a1b9a', '#00447c', '#0b7b9e', '#e65100', '#2e7d32', '#c62828'];
+        new Chart(eskapeCtx, {
+            type: 'bar',
+            data: {
+                labels: eskapeData.labels,
+                datasets: [{
+                    label: 'Experiments',
+                    data: eskapeData.counts,
+                    backgroundColor: eskapeColors.map(c => c + 'CC'),
+                    borderColor: eskapeColors,
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    barPercentage: 0.7
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) { return `${ctx.raw} experiments`; }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { font: { weight: '600', style: 'italic' } }
+                    }
+                }
+            }
+        });
+    }
+
+    // =========================================================
+    // 3C. Top 10 Phytochemicals Horizontal Bar
+    // =========================================================
+    const phytoCtx = document.getElementById('topPhytoChart');
+    if (phytoCtx) {
+        new Chart(phytoCtx, {
+            type: 'bar',
+            data: {
+                labels: topPhytoData.labels,
+                datasets: [{
+                    label: 'Synergy experiments',
+                    data: topPhytoData.counts,
+                    backgroundColor: '#2e7d32CC',
+                    borderColor: '#2e7d32',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    barPercentage: 0.7
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { font: { weight: '500' }, autoSkip: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // =========================================================
+    // 3D. Top 10 Antibiotics Horizontal Bar
+    // =========================================================
+    const abxCtx = document.getElementById('topAbxChart');
+    if (abxCtx) {
+        new Chart(abxCtx, {
+            type: 'bar',
+            data: {
+                labels: topAbxData.labels,
+                datasets: [{
+                    label: 'Synergy experiments',
+                    data: topAbxData.counts,
+                    backgroundColor: '#00447cCC',
+                    borderColor: '#00447c',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    barPercentage: 0.7
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { font: { weight: '500' }, autoSkip: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // =========================================================
+    // 3E. Publication Year Trend Line Chart
+    // =========================================================
+    const yearCtx = document.getElementById('yearTrendChart');
+    if (yearCtx) {
+        new Chart(yearCtx, {
+            type: 'line',
+            data: {
+                labels: yearData.labels,
+                datasets: [{
+                    label: 'Experiments',
+                    data: yearData.counts,
+                    borderColor: '#00447c',
+                    backgroundColor: 'rgba(0,68,124,0.1)',
+                    borderWidth: 2.5,
+                    pointBackgroundColor: '#00447c',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(0,0,0,0.05)' },
+                        ticks: { font: { weight: '600' } }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    }
+                }
+            }
+        });
+    }
+
+    // =========================================================
+    // 3F. FIC Index Distribution Histogram
+    // =========================================================
+    const ficCtx = document.getElementById('ficHistChart');
+    if (ficCtx) {
+        const ficValues = ficData.values;
+        if (ficValues.length > 0) {
+            // Build histogram bins
+            const maxFic = Math.min(Math.max(...ficValues), 6);
+            const binSize = 0.25;
+            const binCount = Math.ceil(maxFic / binSize) + 1;
+            const bins = new Array(binCount).fill(0);
+            const binLabels = [];
+            for (let i = 0; i < binCount; i++) {
+                binLabels.push((i * binSize).toFixed(2));
+            }
+            ficValues.forEach(v => {
+                const idx = Math.min(Math.floor(v / binSize), binCount - 1);
+                if (idx >= 0) bins[idx]++;
+            });
+
+            // Color bins by interpretation zone
+            const binColors = binLabels.map(l => {
+                const v = parseFloat(l);
+                if (v < 0.5) return '#2e7d32CC';
+                if (v < 1.0) return '#e65100CC';
+                if (v < 4.0) return '#757575CC';
+                return '#c62828CC';
+            });
+
+            new Chart(ficCtx, {
+                type: 'bar',
+                data: {
+                    labels: binLabels,
+                    datasets: [{
+                        label: 'Experiments',
+                        data: bins,
+                        backgroundColor: binColors,
+                        borderWidth: 0,
+                        barPercentage: 1.0,
+                        categoryPercentage: 1.0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: function(ctx) { return `FIC ${ctx[0].label} – ${(parseFloat(ctx[0].label) + 0.25).toFixed(2)}`; },
+                                label: function(ctx) { return `${ctx.raw} experiments`; }
+                            }
+                        },
+                        annotation: undefined
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'FIC Index', font: { weight: '600' } },
+                            grid: { display: false },
+                            ticks: {
+                                callback: function(val, idx) {
+                                    const v = parseFloat(this.getLabelForValue(idx));
+                                    if (v === 0.5 || v === 1.0 || v === 4.0 || v === 0) return v.toFixed(1);
+                                    if (idx % 4 === 0) return v.toFixed(1);
+                                    return '';
+                                },
+                                font: { size: 10 }
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 },
+                            title: { display: true, text: 'Count', font: { weight: '600' } },
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+});
+</script>
+{% endblock %}

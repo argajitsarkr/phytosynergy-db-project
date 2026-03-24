@@ -12,7 +12,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.db import IntegrityError
-from django.db.models import Q
+from django.db.models import Avg, Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 
@@ -1132,3 +1132,169 @@ def extract_from_pdf(request):
             context['pdf_filename'] = pdf_file.name
 
     return render(request, 'synergy_data/extract_pdf.html', context)
+
+
+# ==============================================================================
+# ANALYTICS / DASHBOARD VIEW
+# ==============================================================================
+
+def analytics_page(request):
+    """Public analytics dashboard with interactive visualizations."""
+    experiments = SynergyExperiment.objects.select_related(
+        'phytochemical', 'antibiotic', 'pathogen', 'source'
+    )
+
+    # ------------------------------------------------------------------
+    # 3A. Synergy Interpretation Distribution (Donut Chart)
+    # ------------------------------------------------------------------
+    interpretation_counts = dict(
+        experiments.values_list('interpretation')
+        .annotate(count=Count('id'))
+        .values_list('interpretation', 'count')
+    )
+    interpretation_data = {
+        'labels': ['Synergy', 'Additive', 'Indifference', 'Antagonism'],
+        'counts': [
+            interpretation_counts.get('Synergy', 0),
+            interpretation_counts.get('Additive', 0),
+            interpretation_counts.get('Indifference', 0),
+            interpretation_counts.get('Antagonism', 0),
+        ],
+        'colors': ['#2e7d32', '#e65100', '#757575', '#c62828'],
+    }
+
+    # ------------------------------------------------------------------
+    # 3B. Experiments by ESKAPE Pathogen (Horizontal Bar Chart)
+    # ------------------------------------------------------------------
+    eskape_genera = ['Enterococcus', 'Staphylococcus', 'Klebsiella',
+                     'Acinetobacter', 'Pseudomonas', 'Enterobacter']
+    eskape_counts = []
+    for genus in eskape_genera:
+        cnt = experiments.filter(pathogen__genus__iexact=genus).count()
+        eskape_counts.append(cnt)
+    eskape_data = {
+        'labels': eskape_genera,
+        'counts': eskape_counts,
+    }
+
+    # ------------------------------------------------------------------
+    # 3C. Top 10 Phytochemicals by Synergy Count
+    # ------------------------------------------------------------------
+    top_phyto = (
+        experiments.filter(interpretation='Synergy')
+        .values('phytochemical__compound_name')
+        .annotate(count=Count('id'))
+        .order_by('-count')[:10]
+    )
+    top_phyto_data = {
+        'labels': [p['phytochemical__compound_name'] for p in top_phyto],
+        'counts': [p['count'] for p in top_phyto],
+    }
+
+    # ------------------------------------------------------------------
+    # 3D. Top 10 Antibiotics by Synergy Count
+    # ------------------------------------------------------------------
+    top_abx = (
+        experiments.filter(interpretation='Synergy')
+        .values('antibiotic__antibiotic_name')
+        .annotate(count=Count('id'))
+        .order_by('-count')[:10]
+    )
+    top_abx_data = {
+        'labels': [a['antibiotic__antibiotic_name'] for a in top_abx],
+        'counts': [a['count'] for a in top_abx],
+    }
+
+    # ------------------------------------------------------------------
+    # 3E. Publication Year Trend (Line Chart)
+    # ------------------------------------------------------------------
+    year_trend = (
+        experiments.filter(source__publication_year__isnull=False)
+        .values('source__publication_year')
+        .annotate(count=Count('id'))
+        .order_by('source__publication_year')
+    )
+    year_data = {
+        'labels': [y['source__publication_year'] for y in year_trend],
+        'counts': [y['count'] for y in year_trend],
+    }
+
+    # ------------------------------------------------------------------
+    # 3F. FIC Index Distribution (Histogram)
+    # ------------------------------------------------------------------
+    fic_values = list(
+        experiments.filter(fic_index__isnull=False)
+        .values_list('fic_index', flat=True)
+    )
+    fic_data = {
+        'values': [float(v) for v in fic_values],
+    }
+
+    # ------------------------------------------------------------------
+    # 3G. Synergy Heatmap (Phytochemical x Antibiotic)
+    # ------------------------------------------------------------------
+    top15_phyto = (
+        experiments.values('phytochemical__id', 'phytochemical__compound_name')
+        .annotate(count=Count('id'))
+        .order_by('-count')[:15]
+    )
+    top10_abx = (
+        experiments.values('antibiotic__id', 'antibiotic__antibiotic_name')
+        .annotate(count=Count('id'))
+        .order_by('-count')[:10]
+    )
+
+    phyto_ids = [p['phytochemical__id'] for p in top15_phyto]
+    abx_ids = [a['antibiotic__id'] for a in top10_abx]
+    phyto_names = [p['phytochemical__compound_name'] for p in top15_phyto]
+    abx_names = [a['antibiotic__antibiotic_name'] for a in top10_abx]
+
+    heatmap_qs = (
+        experiments.filter(
+            phytochemical__id__in=phyto_ids,
+            antibiotic__id__in=abx_ids,
+            fic_index__isnull=False,
+        )
+        .values('phytochemical__id', 'antibiotic__id')
+        .annotate(avg_fic=Avg('fic_index'))
+    )
+    heatmap_lookup = {}
+    for row in heatmap_qs:
+        key = (row['phytochemical__id'], row['antibiotic__id'])
+        heatmap_lookup[key] = float(row['avg_fic'])
+
+    heatmap_grid = []
+    for p_id, p_name in zip(phyto_ids, phyto_names):
+        row_data = {'name': p_name, 'cells': []}
+        for a_id in abx_ids:
+            avg_fic = heatmap_lookup.get((p_id, a_id))
+            row_data['cells'].append(avg_fic)
+        heatmap_grid.append(row_data)
+
+    # ------------------------------------------------------------------
+    # Summary stats
+    # ------------------------------------------------------------------
+    total_experiments = experiments.count()
+    total_synergy = interpretation_counts.get('Synergy', 0)
+    total_phytochemicals = Phytochemical.objects.count()
+    total_antibiotics = Antibiotic.objects.count()
+    total_pathogens = Pathogen.objects.count()
+    total_sources = Source.objects.count()
+
+    context = {
+        'interpretation_json': json.dumps(interpretation_data),
+        'eskape_json': json.dumps(eskape_data),
+        'top_phyto_json': json.dumps(top_phyto_data),
+        'top_abx_json': json.dumps(top_abx_data),
+        'year_json': json.dumps(year_data),
+        'fic_json': json.dumps(fic_data),
+        'heatmap_grid': heatmap_grid,
+        'heatmap_abx_names': abx_names,
+        'total_experiments': total_experiments,
+        'total_synergy': total_synergy,
+        'total_phytochemicals': total_phytochemicals,
+        'total_antibiotics': total_antibiotics,
+        'total_pathogens': total_pathogens,
+        'total_sources': total_sources,
+    }
+    return render(request, 'synergy_data/analytics.html', context)

@@ -19,6 +19,9 @@ urlpatterns = [
     path('data-entry/', views.data_entry_view, name='data_entry'),
     path('data-entry/edit/<int:pk>/', views.edit_entry_view, name='edit_entry'),
 
+    # Analytics dashboard (public)
+    path('analytics/', views.analytics_page, name='analytics'),
+
     # AI-assisted PDF extraction (login-protected)
     path('extract/', views.extract_from_pdf, name='extract_pdf'),
 
