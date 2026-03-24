@@ -1160,7 +1160,7 @@ def analytics_page(request):
             interpretation_counts.get('Indifference', 0),
             interpretation_counts.get('Antagonism', 0),
         ],
-        'colors': ['#2e7d32', '#e65100', '#757575', '#c62828'],
+        'colors': ['#a01b68', '#ffc372', '#baa496', '#d14124'],
     }
 
     # ------------------------------------------------------------------
