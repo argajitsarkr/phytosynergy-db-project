@@ -22,32 +22,32 @@
             </div>
         </div>
         <div class="col-6 col-md-4 col-lg-2">
-            <div class="analytics-stat-card" style="border-top-color: #dc731c;">
-                <div class="analytics-stat-number" style="color: #dc731c;">{{ total_synergy }}</div>
+            <div class="analytics-stat-card" style="border-top-color: #266CA9;">
+                <div class="analytics-stat-number" style="color: #266CA9;">{{ total_synergy }}</div>
                 <div class="analytics-stat-label">Synergistic</div>
             </div>
         </div>
         <div class="col-6 col-md-4 col-lg-2">
-            <div class="analytics-stat-card" style="border-top-color: #a01b68;">
-                <div class="analytics-stat-number" style="color: #a01b68;">{{ total_phytochemicals }}</div>
+            <div class="analytics-stat-card" style="border-top-color: #0F2573;">
+                <div class="analytics-stat-number" style="color: #0F2573;">{{ total_phytochemicals }}</div>
                 <div class="analytics-stat-label">Phytochemicals</div>
             </div>
         </div>
         <div class="col-6 col-md-4 col-lg-2">
-            <div class="analytics-stat-card" style="border-top-color: #dc9cbf;">
-                <div class="analytics-stat-number" style="color: #a01b68;">{{ total_antibiotics }}</div>
+            <div class="analytics-stat-card" style="border-top-color: #ADE1FB;">
+                <div class="analytics-stat-number" style="color: #266CA9;">{{ total_antibiotics }}</div>
                 <div class="analytics-stat-label">Antibiotics</div>
             </div>
         </div>
         <div class="col-6 col-md-4 col-lg-2">
-            <div class="analytics-stat-card" style="border-top-color: #d14124;">
-                <div class="analytics-stat-number" style="color: #d14124;">{{ total_pathogens }}</div>
+            <div class="analytics-stat-card" style="border-top-color: #041D56;">
+                <div class="analytics-stat-number" style="color: #041D56;">{{ total_pathogens }}</div>
                 <div class="analytics-stat-label">Pathogens</div>
             </div>
         </div>
         <div class="col-6 col-md-4 col-lg-2">
-            <div class="analytics-stat-card" style="border-top-color: #745745;">
-                <div class="analytics-stat-number" style="color: #745745;">{{ total_sources }}</div>
+            <div class="analytics-stat-card" style="border-top-color: #01082D;">
+                <div class="analytics-stat-number" style="color: #01082D;">{{ total_sources }}</div>
                 <div class="analytics-stat-label">Publications</div>
             </div>
         </div>
@@ -158,15 +158,15 @@
                 <!-- Heatmap Legend -->
                 <div class="d-flex align-items-center justify-content-center mt-3 gap-2 flex-wrap">
                     <span class="small text-muted me-1">FIC Scale:</span>
-                    <span class="heatmap-legend-block" style="background:#a01b68;" title="FIC ≤ 0.25"></span>
+                    <span class="heatmap-legend-block" style="background:#01082D;" title="FIC ≤ 0.25"></span>
                     <span class="small">≤0.25</span>
-                    <span class="heatmap-legend-block" style="background:#dc9cbf;" title="FIC ~0.5"></span>
+                    <span class="heatmap-legend-block" style="background:#041D56;" title="FIC ~0.5"></span>
                     <span class="small">0.5</span>
-                    <span class="heatmap-legend-block" style="background:#ffc372;" title="FIC ~1.0"></span>
+                    <span class="heatmap-legend-block" style="background:#266CA9;" title="FIC ~1.0"></span>
                     <span class="small">1.0</span>
-                    <span class="heatmap-legend-block" style="background:#e79e8e;" title="FIC ~2.0"></span>
+                    <span class="heatmap-legend-block" style="background:#ADE1FB;" title="FIC ~2.0"></span>
                     <span class="small">2.0</span>
-                    <span class="heatmap-legend-block" style="background:#d14124;" title="FIC > 4.0"></span>
+                    <span class="heatmap-legend-block" style="background:#ADE1FB;" title="FIC > 4.0"></span>
                     <span class="small">>4.0</span>
                     <span class="heatmap-legend-block heatmap-nodata" title="No data"></span>
                     <span class="small">No data</span>
@@ -284,8 +284,8 @@
 .heatmap-value {
     font-weight: 700;
     font-size: 0.7rem;
-    color: rgba(0,0,0,0.7);
-    text-shadow: 0 0 3px rgba(255,255,255,0.6);
+    color: rgba(255,255,255,0.9);
+    text-shadow: 0 0 4px rgba(0,0,0,0.5);
 }
 .heatmap-legend-block {
     display: inline-block;
@@ -374,7 +374,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // =========================================================
     const eskapeCtx = document.getElementById('eskapeChart');
     if (eskapeCtx) {
-        const eskapeColors = ['#ffc372', '#dc731c', '#baa496', '#a01b68', '#dc9cbf', '#d14124'];
+        const eskapeColors = ['#ADE1FB', '#266CA9', '#0F2573', '#041D56', '#01082D', '#266CA9'];
         new Chart(eskapeCtx, {
             type: 'bar',
             data: {
@@ -428,8 +428,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 datasets: [{
                     label: 'Synergy experiments',
                     data: topPhytoData.counts,
-                    backgroundColor: '#a01b68CC',
-                    borderColor: '#a01b68',
+                    backgroundColor: '#0F2573CC',
+                    borderColor: '#0F2573',
                     borderWidth: 1,
                     borderRadius: 6,
                     barPercentage: 0.7
@@ -469,8 +469,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 datasets: [{
                     label: 'Synergy experiments',
                     data: topAbxData.counts,
-                    backgroundColor: '#dc731cCC',
-                    borderColor: '#dc731c',
+                    backgroundColor: '#266CA9CC',
+                    borderColor: '#266CA9',
                     borderWidth: 1,
                     borderRadius: 6,
                     barPercentage: 0.7
@@ -510,10 +510,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 datasets: [{
                     label: 'Experiments',
                     data: yearData.counts,
-                    borderColor: '#a01b68',
-                    backgroundColor: 'rgba(160,27,104,0.1)',
+                    borderColor: '#0F2573',
+                    backgroundColor: 'rgba(15,37,115,0.12)',
                     borderWidth: 2.5,
-                    pointBackgroundColor: '#a01b68',
+                    pointBackgroundColor: '#0F2573',
                     pointBorderColor: '#fff',
                     pointBorderWidth: 2,
                     pointRadius: 5,
@@ -567,10 +567,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // Color bins by interpretation zone
             const binColors = binLabels.map(l => {
                 const v = parseFloat(l);
-                if (v < 0.5) return '#a01b68CC';
-                if (v < 1.0) return '#ffc372CC';
-                if (v < 4.0) return '#baa496CC';
-                return '#d14124CC';
+                if (v < 0.5) return '#01082DCC';
+                if (v < 1.0) return '#0F2573CC';
+                if (v < 4.0) return '#266CA9CC';
+                return '#ADE1FBCC';
             });
 
             new Chart(ficCtx, {

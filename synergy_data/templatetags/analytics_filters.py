@@ -21,18 +21,18 @@ def heatmap_color(fic_value):
     v = max(0.0, min(v, 5.0))
 
     # Define color stops: (fic_value, R, G, B)
-    # 0.0  → Dark Purple (160, 27, 104)  — strong synergy
-    # 0.5  → Purple 50   (220, 156, 191) — synergy threshold
-    # 1.0  → Gold 70     (255, 195, 114) — additive
-    # 2.0  → Red 60      (231, 158, 142) — indifference
-    # 4.0+ → Red         (209, 65, 36)   — antagonism
+    # 0.0  → Darkest navy  (1, 8, 45)     — strong synergy
+    # 0.5  → Darker blue   (4, 29, 86)    — synergy threshold
+    # 1.0  → Dark blue     (15, 37, 115)  — additive
+    # 2.0  → Medium blue   (38, 108, 169) — indifference
+    # 4.0+ → Light blue    (173, 225, 251) — antagonism
     stops = [
-        (0.0, 160,  27, 104),
-        (0.5, 220, 156, 191),
-        (1.0, 255, 195, 114),
-        (2.0, 231, 158, 142),
-        (4.0, 209,  65,  36),
-        (5.0, 209,  65,  36),
+        (0.0,   1,   8,  45),
+        (0.5,   4,  29,  86),
+        (1.0,  15,  37, 115),
+        (2.0,  38, 108, 169),
+        (4.0, 173, 225, 251),
+        (5.0, 173, 225, 251),
     ]
 
     # Find the two stops to interpolate between
@@ -49,4 +49,4 @@ def heatmap_color(fic_value):
             b = int(b0 + t * (b1 - b0))
             return f'rgb({r},{g},{b})'
 
-    return 'rgb(198,40,40)'
+    return 'rgb(173,225,251)'
