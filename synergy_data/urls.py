@@ -22,9 +22,6 @@ urlpatterns = [
     # Analytics dashboard (public)
     path('analytics/', views.analytics_page, name='analytics'),
 
-    # AI-assisted PDF extraction (login-protected)
-    path('extract/', views.extract_from_pdf, name='extract_pdf'),
-
     # API endpoints
     path('api/v1/experiments/', views.api_experiments, name='api_experiments'),
     path('api/v1/statistics/', views.api_statistics, name='api_statistics'),

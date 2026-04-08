@@ -25,7 +25,6 @@ services:
       - DEBUG=0 # Set to 0 for production
       - ALLOWED_HOSTS=192.168.1.35,localhost,.ngrok-free.dev
       - CSRF_TRUSTED_ORIGINS=https://*.ngrok-free.dev
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
     restart: always
 
   nginx:
