@@ -1,3 +1,6 @@
+import csv
+import io
+
 from django import forms
 from .models import SynergyExperiment
 
@@ -186,3 +189,75 @@ class SynergyEntryForm(forms.Form):
             'placeholder': 'Any additional notes...',
         }),
     )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        mic_fields = [
+            cleaned_data.get('mic_phyto_alone'),
+            cleaned_data.get('mic_abx_alone'),
+            cleaned_data.get('mic_phyto_in_combo'),
+            cleaned_data.get('mic_abx_in_combo'),
+        ]
+        has_all_mic = all(v is not None for v in mic_fields)
+        has_fic = cleaned_data.get('fic_index') is not None
+
+        if not has_all_mic and not has_fic:
+            raise forms.ValidationError(
+                "Each entry must have either all 4 MIC values (for auto-FIC calculation) "
+                "or a manually entered FIC index. Entries without quantitative synergy "
+                "data (e.g., disk diffusion only) cannot be added."
+            )
+        return cleaned_data
+
+
+# Expected CSV columns for bulk import
+BULK_CSV_COLUMNS = [
+    'source_doi',
+    'pathogen_full_name',
+    'phytochemical_name',
+    'antibiotic_name',
+    'mic_phyto_alone',
+    'mic_abx_alone',
+    'mic_phyto_in_combo',
+    'mic_abx_in_combo',
+    'mic_units',
+    'fic_index',
+    'interpretation',
+    'moa_observed',
+]
+
+
+class BulkCSVUploadForm(forms.Form):
+    csv_file = forms.FileField(
+        label="CSV File",
+        help_text="Upload a CSV file matching the PhytoSynergyDB template.",
+        widget=forms.ClearableFileInput(attrs={
+            'class': 'form-control',
+            'accept': '.csv',
+        }),
+    )
+
+    def clean_csv_file(self):
+        f = self.cleaned_data['csv_file']
+        if not f.name.lower().endswith('.csv'):
+            raise forms.ValidationError("Only .csv files are accepted.")
+        if f.size > 10 * 1024 * 1024:
+            raise forms.ValidationError("File too large (max 10 MB).")
+
+        # Validate header row
+        try:
+            text = f.read().decode('utf-8-sig')
+            f.seek(0)
+            reader = csv.DictReader(io.StringIO(text))
+            headers = [h.strip().lower() for h in (reader.fieldnames or [])]
+        except Exception:
+            raise forms.ValidationError("Could not read the CSV file. Ensure it is UTF-8 encoded.")
+
+        required = {'source_doi', 'pathogen_full_name', 'phytochemical_name', 'antibiotic_name'}
+        missing = required - set(headers)
+        if missing:
+            raise forms.ValidationError(
+                f"Missing required columns: {', '.join(sorted(missing))}. "
+                "Download the template to see the expected format."
+            )
+        return f

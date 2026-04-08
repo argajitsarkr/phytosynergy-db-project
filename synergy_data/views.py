@@ -1,4 +1,5 @@
 import csv
+import io
 import json
 import logging
 import os
@@ -12,7 +13,7 @@ from django.db.models import Avg, Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 
-from .forms import SynergyEntryForm
+from .forms import BULK_CSV_COLUMNS, BulkCSVUploadForm, SynergyEntryForm
 from .models import (
     Antibiotic,
     AntibioticClass,
@@ -459,6 +460,233 @@ def edit_entry_view(request, pk):
         'editing': True,
         'experiment_id': pk,
     })
+
+
+# ==============================================================================
+# BULK CSV IMPORT (login-protected)
+# ==============================================================================
+
+def _safe_decimal(value):
+    """Convert a value to Decimal safely, returning None on failure."""
+    if value is None:
+        return None
+    val = str(value).strip()
+    if not val or val.lower() == 'null':
+        return None
+    try:
+        return Decimal(val)
+    except (InvalidOperation, ValueError, TypeError):
+        return None
+
+
+@login_required
+def bulk_import_template(request):
+    """Download a blank CSV template for bulk import."""
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="PhytoSynergyDB_import_template.csv"'
+    writer = csv.writer(response)
+    writer.writerow(BULK_CSV_COLUMNS)
+    # Write one example row
+    writer.writerow([
+        '10.1016/j.phymed.2023.154789',
+        'Staphylococcus aureus ATCC 25923',
+        'Berberine',
+        'Ciprofloxacin',
+        '64',
+        '0.5',
+        '16',
+        '0.125',
+        'µg/mL',
+        '',  # FIC — leave blank to auto-calculate
+        '',  # Interpretation — auto-derived
+        'Efflux pump inhibition',
+    ])
+    return response
+
+
+@login_required
+def bulk_import_view(request):
+    """Bulk CSV import with strict validation: every row must have all 4 MICs or a FIC index."""
+    context = {'form': BulkCSVUploadForm()}
+
+    if request.method == 'POST':
+        action = request.POST.get('action', 'validate')
+
+        # ── CONFIRM ACTION: Save previously validated rows ──
+        if action == 'confirm':
+            saved = 0
+            errors = []
+            confirm_json = request.POST.get('valid_rows_json', '[]')
+            try:
+                rows_to_save = json.loads(confirm_json)
+            except json.JSONDecodeError:
+                messages.error(request, "Could not parse confirmed data.")
+                return redirect('bulk_import')
+
+            for i, row in enumerate(rows_to_save):
+                try:
+                    source, _ = Source.objects.get_or_create(doi=row['source_doi'])
+                    genus, species, strain = parse_pathogen_name(row['pathogen_full_name'])
+                    pathogen, _ = Pathogen.objects.get_or_create(
+                        genus=genus, species=species, strain=strain
+                    )
+                    phytochemical = get_or_create_case_insensitive(
+                        Phytochemical, 'compound_name', row['phytochemical_name']
+                    )
+                    try:
+                        enrich_phytochemical(phytochemical)
+                    except Exception:
+                        pass
+                    antibiotic = get_or_create_case_insensitive(
+                        Antibiotic, 'antibiotic_name', row['antibiotic_name']
+                    )
+
+                    mic_phyto_alone = _safe_decimal(row.get('mic_phyto_alone'))
+                    mic_abx_alone = _safe_decimal(row.get('mic_abx_alone'))
+                    mic_phyto_in_combo = _safe_decimal(row.get('mic_phyto_in_combo'))
+                    mic_abx_in_combo = _safe_decimal(row.get('mic_abx_in_combo'))
+                    mic_units = (row.get('mic_units') or 'µg/mL').strip()
+
+                    fic_index = _safe_decimal(row.get('fic_index'))
+                    if fic_index is None:
+                        fic_index = auto_calculate_fic(
+                            mic_phyto_alone, mic_abx_alone,
+                            mic_phyto_in_combo, mic_abx_in_combo
+                        )
+                    interpretation = (row.get('interpretation') or '').strip()
+                    if interpretation not in ['Synergy', 'Additive', 'Indifference', 'Antagonism']:
+                        interpretation = auto_interpret_fic(fic_index)
+
+                    SynergyExperiment.objects.create(
+                        phytochemical=phytochemical,
+                        antibiotic=antibiotic,
+                        pathogen=pathogen,
+                        source=source,
+                        mic_phyto_alone=mic_phyto_alone,
+                        mic_abx_alone=mic_abx_alone,
+                        mic_phyto_in_combo=mic_phyto_in_combo,
+                        mic_abx_in_combo=mic_abx_in_combo,
+                        mic_units=mic_units,
+                        fic_index=fic_index,
+                        interpretation=interpretation,
+                        moa_observed=row.get('moa_observed') or '',
+                        notes=row.get('notes') or '',
+                    )
+                    saved += 1
+                except Exception as e:
+                    errors.append(f"Row {i+1}: {str(e)}")
+
+            if saved:
+                messages.success(request, f"Successfully imported {saved} experiment(s).")
+            if errors:
+                for err in errors[:5]:
+                    messages.warning(request, err)
+            return redirect('bulk_import')
+
+        # ── VALIDATE ACTION: Parse CSV and preview ──
+        form = BulkCSVUploadForm(request.POST, request.FILES)
+        context['form'] = form
+
+        if not form.is_valid():
+            return render(request, 'synergy_data/bulk_import.html', context)
+
+        csv_file = form.cleaned_data['csv_file']
+        text = csv_file.read().decode('utf-8-sig')
+        reader = csv.DictReader(io.StringIO(text))
+        # Normalize header names
+        reader.fieldnames = [h.strip().lower() for h in reader.fieldnames]
+
+        valid_rows = []
+        rejected_rows = []
+        row_num = 1  # header is row 0
+
+        for raw_row in reader:
+            row_num += 1
+            # Strip whitespace and normalize nulls
+            row = {}
+            for k, v in raw_row.items():
+                k = k.strip().lower()
+                v = (v or '').strip()
+                if v.lower() in ('null', 'none', 'n/a', ''):
+                    v = None
+                row[k] = v
+
+            # Skip completely empty rows
+            if not any(row.values()):
+                continue
+
+            # Required fields check
+            doi = row.get('source_doi')
+            pathogen = row.get('pathogen_full_name')
+            phyto = row.get('phytochemical_name')
+            abx = row.get('antibiotic_name')
+
+            if not all([doi, pathogen, phyto, abx]):
+                missing = []
+                if not doi: missing.append('source_doi')
+                if not pathogen: missing.append('pathogen_full_name')
+                if not phyto: missing.append('phytochemical_name')
+                if not abx: missing.append('antibiotic_name')
+                rejected_rows.append({
+                    'row': row_num,
+                    'reason': f"Missing required fields: {', '.join(missing)}",
+                    'data': row,
+                })
+                continue
+
+            # MIC/FIC validation — the core quality gate
+            mic_vals = [
+                _safe_decimal(row.get('mic_phyto_alone')),
+                _safe_decimal(row.get('mic_abx_alone')),
+                _safe_decimal(row.get('mic_phyto_in_combo')),
+                _safe_decimal(row.get('mic_abx_in_combo')),
+            ]
+            has_all_mic = all(v is not None for v in mic_vals)
+            fic_val = _safe_decimal(row.get('fic_index'))
+
+            if not has_all_mic and fic_val is None:
+                rejected_rows.append({
+                    'row': row_num,
+                    'reason': "Must have all 4 MIC values or a FIC index. "
+                              "Qualitative-only data (disk diffusion, zone diameters) not accepted.",
+                    'data': row,
+                })
+                continue
+
+            # Auto-calculate FIC if all MICs present but FIC missing
+            if fic_val is None and has_all_mic:
+                fic_val = auto_calculate_fic(*mic_vals)
+
+            # Auto-derive interpretation
+            interp = (row.get('interpretation') or '').strip()
+            valid_interps = ['Synergy', 'Additive', 'Indifference', 'Antagonism']
+            if interp not in valid_interps:
+                interp = auto_interpret_fic(fic_val)
+
+            row['_mic_vals'] = mic_vals
+            row['_fic'] = fic_val
+            row['_interpretation'] = interp
+            valid_rows.append(row)
+
+        # Preview: show valid + rejected before saving
+        if valid_rows or rejected_rows:
+            # Serialize valid_rows for the confirm form (strip internal keys)
+            serializable = []
+            for r in valid_rows:
+                clean = {k: v for k, v in r.items() if not k.startswith('_')}
+                # Add computed values back as regular fields
+                if r.get('_fic') is not None:
+                    clean['fic_index'] = str(r['_fic'])
+                clean['interpretation'] = r.get('_interpretation') or ''
+                serializable.append(clean)
+
+            context['valid_rows'] = valid_rows
+            context['rejected_rows'] = rejected_rows
+            context['valid_count'] = len(valid_rows)
+            context['rejected_count'] = len(rejected_rows)
+            context['valid_rows_json'] = json.dumps(serializable, default=str)
+
+    return render(request, 'synergy_data/bulk_import.html', context)
 
 
 # ==============================================================================

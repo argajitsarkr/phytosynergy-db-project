@@ -22,6 +22,14 @@
     <form method="post" {% if editing %}action="{% url 'edit_entry' experiment_id %}"{% endif %} novalidate>
         {% csrf_token %}
 
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+
         <!-- Section 1: Source & Entities -->
         <div class="data-entry-card mb-4">
             <div class="card-header">
@@ -107,7 +115,7 @@
                 <i class="fas fa-vial me-2"></i> MIC Values
             </div>
             <div class="card-body p-4">
-                <p class="text-muted small mb-3">All MIC fields are optional. Fill in what's available from the paper.</p>
+                <p class="text-muted small mb-3">Provide either <strong>all 4 MIC values</strong> (FIC auto-calculated) or enter a <strong>FIC index</strong> manually below.</p>
 
                 <div class="field-group-title">Tested Alone</div>
                 <div class="row">

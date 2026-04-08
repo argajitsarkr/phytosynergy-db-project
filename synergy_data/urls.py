@@ -19,6 +19,10 @@ urlpatterns = [
     path('data-entry/', views.data_entry_view, name='data_entry'),
     path('data-entry/edit/<int:pk>/', views.edit_entry_view, name='edit_entry'),
 
+    # Bulk CSV import (login-protected)
+    path('bulk-import/', views.bulk_import_view, name='bulk_import'),
+    path('bulk-import/template/', views.bulk_import_template, name='bulk_import_template'),
+
     # Analytics dashboard (public)
     path('analytics/', views.analytics_page, name='analytics'),
 
