@@ -26,4 +26,11 @@ EXPOSE 8000
 
 # The command to run when the container starts
 # We add --no-input to collectstatic for non-interactive environments
-CMD sh -c "python manage.py collectstatic --no-input && gunicorn phytosynergy_project.wsgi:application --bind 0.0.0.0:8000"
+# Gunicorn flags:
+#   --workers 3         multiple sync workers so one slow request can't freeze
+#                       the whole site (rule of thumb: 2 * CPUs + 1)
+#   --timeout 120       give legitimate slow requests (large exports, imports)
+#                       headroom before the worker is killed
+#   --access-logfile -  send access + error logs to stdout so they're visible
+#   --error-logfile  -  via `docker compose logs web` for incident debugging
+CMD sh -c "python manage.py collectstatic --no-input && gunicorn phytosynergy_project.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120 --access-logfile - --error-logfile -"

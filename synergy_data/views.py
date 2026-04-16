@@ -8,7 +8,7 @@ from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import Avg, Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
@@ -798,88 +798,100 @@ def bulk_import_view(request):
                 row = row_wrapper.get('data', {})
                 row_num = row_wrapper.get('row_num', 0)
                 try:
-                    # --- Source (get_or_create by DOI) ---
-                    source, _ = Source.objects.get_or_create(
-                        doi=row.get('source_doi'),
-                        defaults={
-                            'publication_year': row.get('publication_year'),
-                            'article_title': row.get('article_title') or None,
-                            'journal': row.get('journal') or None,
-                        },
-                    )
-
-                    # --- Pathogen (parse + get_or_create) ---
-                    genus, species, strain = parse_pathogen_name(row['pathogen_full_name'])
-                    pathogen, _ = Pathogen.objects.get_or_create(
-                        genus=genus,
-                        species=species,
-                        strain=strain,
-                    )
-
-                    # --- Phytochemical (case-insensitive) ---
-                    phytochemical = get_or_create_case_insensitive(
-                        Phytochemical, 'compound_name', row['phytochemical_name']
-                    )
-                    try:
-                        enrich_phytochemical(phytochemical)
-                    except Exception:
-                        pass
-
-                    # --- Antibiotic (case-insensitive) ---
-                    antibiotic = get_or_create_case_insensitive(
-                        Antibiotic, 'antibiotic_name', row['antibiotic_name']
-                    )
-
-                    # --- Duplicate check ---
-                    if SynergyExperiment.objects.filter(
-                        phytochemical=phytochemical,
-                        antibiotic=antibiotic,
-                        pathogen=pathogen,
-                        source=source,
-                    ).exists():
-                        skipped_duplicate += 1
-                        continue
-
-                    # --- MIC values (re-clean in case the JSON round-trip
-                    #     turned them into strings) ---
-                    mic_phyto_alone = _safe_decimal(row.get('mic_phyto_alone'))
-                    mic_abx_alone = _safe_decimal(row.get('mic_abx_alone'))
-                    mic_phyto_in_combo = _safe_decimal(row.get('mic_phyto_in_combo'))
-                    mic_abx_in_combo = _safe_decimal(row.get('mic_abx_in_combo'))
-                    mic_units = (row.get('mic_units') or 'µg/mL').strip() or 'µg/mL'
-
-                    fic_index = _safe_decimal(row.get('fic_index'))
-                    if fic_index is None:
-                        fic_index = auto_calculate_fic(
-                            mic_phyto_alone, mic_abx_alone,
-                            mic_phyto_in_combo, mic_abx_in_combo,
+                    # Each row is its own atomic unit: either every
+                    # get_or_create + the experiment row commit together, or
+                    # nothing for this row commits. Prevents orphan FK records
+                    # if the worker is killed mid-loop.
+                    with transaction.atomic():
+                        # --- Source (get_or_create by DOI) ---
+                        source, _ = Source.objects.get_or_create(
+                            doi=row.get('source_doi'),
+                            defaults={
+                                'publication_year': row.get('publication_year'),
+                                'article_title': row.get('article_title') or None,
+                                'journal': row.get('journal') or None,
+                            },
                         )
-                    interpretation = (row.get('interpretation') or '').strip()
-                    if interpretation not in ['Synergy', 'Additive', 'Indifference', 'Antagonism']:
-                        interpretation = auto_interpret_fic(fic_index)
 
-                    SynergyExperiment.objects.create(
-                        phytochemical=phytochemical,
-                        antibiotic=antibiotic,
-                        pathogen=pathogen,
-                        source=source,
-                        mic_phyto_alone=mic_phyto_alone,
-                        mic_abx_alone=mic_abx_alone,
-                        mic_phyto_in_combo=mic_phyto_in_combo,
-                        mic_abx_in_combo=mic_abx_in_combo,
-                        mic_units=mic_units,
-                        fic_index=fic_index,
-                        interpretation=interpretation,
-                        moa_observed=row.get('moa_observed') or '',
-                        notes=row.get('notes') or '',
-                    )
-                    imported += 1
+                        # --- Pathogen (parse + get_or_create) ---
+                        genus, species, strain = parse_pathogen_name(row['pathogen_full_name'])
+                        pathogen, _ = Pathogen.objects.get_or_create(
+                            genus=genus,
+                            species=species,
+                            strain=strain,
+                        )
+
+                        # --- Phytochemical (case-insensitive) ---
+                        # NOTE: PubChem/ClassyFire enrichment is intentionally
+                        # NOT called here. Doing 6+ network calls per row inside
+                        # a request blocks the gunicorn worker (~46 s/row worst
+                        # case) and freezes the whole site. Run
+                        #   python manage.py enrich_phytochemicals
+                        # after the import to backfill chemistry data offline.
+                        phytochemical = get_or_create_case_insensitive(
+                            Phytochemical, 'compound_name', row['phytochemical_name']
+                        )
+
+                        # --- Antibiotic (case-insensitive) ---
+                        antibiotic = get_or_create_case_insensitive(
+                            Antibiotic, 'antibiotic_name', row['antibiotic_name']
+                        )
+
+                        # --- Duplicate check ---
+                        if SynergyExperiment.objects.filter(
+                            phytochemical=phytochemical,
+                            antibiotic=antibiotic,
+                            pathogen=pathogen,
+                            source=source,
+                        ).exists():
+                            skipped_duplicate += 1
+                            continue
+
+                        # --- MIC values (re-clean in case the JSON round-trip
+                        #     turned them into strings) ---
+                        mic_phyto_alone = _safe_decimal(row.get('mic_phyto_alone'))
+                        mic_abx_alone = _safe_decimal(row.get('mic_abx_alone'))
+                        mic_phyto_in_combo = _safe_decimal(row.get('mic_phyto_in_combo'))
+                        mic_abx_in_combo = _safe_decimal(row.get('mic_abx_in_combo'))
+                        mic_units = (row.get('mic_units') or 'µg/mL').strip() or 'µg/mL'
+
+                        fic_index = _safe_decimal(row.get('fic_index'))
+                        if fic_index is None:
+                            fic_index = auto_calculate_fic(
+                                mic_phyto_alone, mic_abx_alone,
+                                mic_phyto_in_combo, mic_abx_in_combo,
+                            )
+                        interpretation = (row.get('interpretation') or '').strip()
+                        if interpretation not in ['Synergy', 'Additive', 'Indifference', 'Antagonism']:
+                            interpretation = auto_interpret_fic(fic_index)
+
+                        SynergyExperiment.objects.create(
+                            phytochemical=phytochemical,
+                            antibiotic=antibiotic,
+                            pathogen=pathogen,
+                            source=source,
+                            mic_phyto_alone=mic_phyto_alone,
+                            mic_abx_alone=mic_abx_alone,
+                            mic_phyto_in_combo=mic_phyto_in_combo,
+                            mic_abx_in_combo=mic_abx_in_combo,
+                            mic_units=mic_units,
+                            fic_index=fic_index,
+                            interpretation=interpretation,
+                            moa_observed=row.get('moa_observed') or '',
+                            notes=row.get('notes') or '',
+                        )
+                        imported += 1
                 except Exception as e:
                     errors.append(f"Row {row_num}: {e}")
 
             if imported:
                 messages.success(
                     request, f"Successfully imported {imported} experiment(s)."
+                )
+                messages.info(
+                    request,
+                    "Run `python manage.py enrich_phytochemicals` on the server "
+                    "to backfill chemistry data (PubChem, ClassyFire) for the new compounds."
                 )
             if skipped_duplicate:
                 messages.info(

@@ -50,3 +50,15 @@ To check the status of your containers: sudo docker-compose ps
 To view logs: sudo docker-compose logs -f
 To stop the application: sudo docker-compose down
 To update the application: Pull the latest code (git pull origin main) and then rebuild and restart (sudo docker-compose up --build -d)
+
+## Bulk Import — Post-Import Chemistry Enrichment
+
+The `/bulk-import/` page intentionally does **not** call PubChem or ClassyFire during the import request, because doing so would issue 6+ HTTP calls per row inside the gunicorn worker and could freeze the site for large uploads. Imports complete in seconds.
+
+After running a bulk import, backfill chemistry data (PubChem properties, Lipinski profile, ClassyFire classification) for any new compounds with:
+
+```bash
+sudo docker compose exec web python manage.py enrich_phytochemicals
+```
+
+This command iterates only the compounds that are missing data, rate-limits to 5 req/sec, and is safe to re-run.
