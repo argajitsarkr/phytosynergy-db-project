@@ -1,6 +1,6 @@
 {% extends 'synergy_data/base.html' %}
 
-{% block title %}Bulk CSV Import — PhytoSynergyDB{% endblock %}
+{% block title %}Bulk Import — PhytoSynergyDB{% endblock %}
 
 {% block content %}
 <div class="data-entry-container">
@@ -8,28 +8,41 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 style="color: var(--text-primary); font-weight: 800; margin-bottom: 0.25rem;">
-                <i class="fas fa-file-csv me-2" style="color: var(--accent);"></i>Bulk CSV Import
+                <i class="fas fa-file-csv me-2" style="color: var(--accent);"></i>Bulk Import
             </h2>
-            <p class="text-muted mb-0">Upload a CSV file to import multiple synergy experiments at once.</p>
+            <p class="text-muted mb-0">
+                Upload a CSV or Excel (.xlsx) file to import multiple synergy experiments at once.
+            </p>
         </div>
         <a href="{% url 'bulk_import_template' %}" class="btn btn-outline-custom btn-sm">
-            <i class="fas fa-download me-1"></i> Download Template CSV
+            <i class="fas fa-download me-1"></i> Download XLSX Template
         </a>
     </div>
+
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} border-0 py-2 mb-2">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 
     <!-- Data Quality Rule -->
     <div class="alert alert-info border-0" style="background: var(--primary-light); color: var(--primary-dark);">
         <i class="fas fa-shield-alt me-2"></i>
         <strong>Data Quality Rule:</strong> Every row must have either <strong>all 4 MIC values</strong>
         (for auto-FIC calculation) or a <strong>FIC index</strong>. Rows without quantitative synergy data
-        (e.g., disk diffusion only, zone diameters, % inhibition) will be rejected.
+        (e.g., disk diffusion only, zone diameters, % inhibition) will be rejected. Literal
+        <code>null</code> strings, <code>N/A</code>, and empty cells are all treated as missing values.
     </div>
 
-    {% if not valid_rows and not rejected_rows %}
+    {% if not preview_rows %}
     <!-- Upload Form -->
     <div class="data-entry-card mb-4">
         <div class="card-header">
-            <i class="fas fa-upload me-2"></i> Upload CSV
+            <i class="fas fa-upload me-2"></i> Upload Data File
         </div>
         <div class="card-body p-4">
             <form method="post" enctype="multipart/form-data">
@@ -53,13 +66,18 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary-custom">
-                    <i class="fas fa-check-circle me-2"></i> Validate & Preview
+                    <i class="fas fa-check-circle me-2"></i> Validate &amp; Preview
                 </button>
             </form>
 
             <!-- Expected format -->
             <div class="mt-4 pt-3 border-top">
-                <h6 class="fw-bold mb-2">Expected CSV Columns:</h6>
+                <h6 class="fw-bold mb-2">Expected Columns:</h6>
+                <p class="text-muted small mb-2">
+                    Header names are matched case-insensitively. Common aliases like
+                    <code>doi</code>, <code>pathogen</code>, <code>compound</code>,
+                    <code>antibiotic</code>, <code>fic</code>, and <code>mechanism</code> are all recognised.
+                </p>
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered" style="font-size: 0.8rem;">
                         <thead style="background: var(--gray-50);">
@@ -81,57 +99,82 @@
                             <tr><td><code>mic_units</code></td><td>No</td><td>Units (default: µg/mL)</td></tr>
                             <tr><td><code>fic_index</code></td><td><span class="badge bg-warning text-dark">*</span></td><td>FIC index (auto-calculated if all 4 MICs present)</td></tr>
                             <tr><td><code>interpretation</code></td><td>No</td><td>Synergy / Additive / Indifference / Antagonism (auto-derived from FIC)</td></tr>
+                            <tr><td><code>publication_year</code></td><td>No</td><td>Year of publication (e.g., 2023)</td></tr>
+                            <tr><td><code>article_title</code></td><td>No</td><td>Title of the paper</td></tr>
+                            <tr><td><code>journal</code></td><td>No</td><td>Journal name</td></tr>
                             <tr><td><code>moa_observed</code></td><td>No</td><td>Mechanism of action observed</td></tr>
+                            <tr><td><code>notes</code></td><td>No</td><td>Any additional notes</td></tr>
                         </tbody>
                     </table>
                 </div>
-                <p class="text-muted small"><span class="badge bg-warning text-dark">*</span> Must provide either all 4 MIC values OR a FIC index for each row.</p>
+                <p class="text-muted small">
+                    <span class="badge bg-warning text-dark">*</span>
+                    Must provide either all 4 MIC values OR a FIC index for each row.
+                </p>
             </div>
         </div>
     </div>
     {% endif %}
 
-    {% if valid_rows or rejected_rows %}
-    <!-- Validation Results -->
+    {% if preview_rows %}
+    <!-- Preview state -->
 
     <!-- Summary -->
     <div class="row g-3 mb-4">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="data-entry-card" style="border-left: 4px solid var(--success);">
                 <div class="card-body p-3 d-flex align-items-center">
                     <i class="fas fa-check-circle fa-2x me-3" style="color: var(--success);"></i>
                     <div>
                         <div class="fw-bold fs-4" style="color: var(--success);">{{ valid_count }}</div>
-                        <div class="text-muted small">Valid rows ready to import</div>
+                        <div class="text-muted small">Valid rows</div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
+            <div class="data-entry-card" style="border-left: 4px solid #e65100;">
+                <div class="card-body p-3 d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle fa-2x me-3" style="color: #e65100;"></i>
+                    <div>
+                        <div class="fw-bold fs-4" style="color: #e65100;">{{ warning_count }}</div>
+                        <div class="text-muted small">Rows with warnings (importable)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
             <div class="data-entry-card" style="border-left: 4px solid var(--danger);">
                 <div class="card-body p-3 d-flex align-items-center">
                     <i class="fas fa-times-circle fa-2x me-3" style="color: var(--danger);"></i>
                     <div>
-                        <div class="fw-bold fs-4" style="color: var(--danger);">{{ rejected_count }}</div>
-                        <div class="text-muted small">Rejected rows (missing MIC/FIC data)</div>
+                        <div class="fw-bold fs-4" style="color: var(--danger);">{{ error_count }}</div>
+                        <div class="text-muted small">Rejected rows (will be skipped)</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    {% if valid_rows %}
-    <!-- Valid Rows Preview -->
+    <div class="alert alert-secondary border-0 py-2 small">
+        <strong>{{ importable_count }}</strong> row{{ importable_count|pluralize }} ready to import,
+        <strong>{{ warning_count }}</strong> with warnings,
+        <strong>{{ error_count }}</strong> will be skipped.
+        Total parsed: {{ total_count }}.
+    </div>
+
+    <!-- Rows preview table -->
     <div class="data-entry-card mb-4">
-        <div class="card-header" style="background: var(--success-bg); color: var(--success-text);">
-            <i class="fas fa-check me-2"></i> Valid Rows ({{ valid_count }})
+        <div class="card-header">
+            <i class="fas fa-table me-2"></i> Row-by-row preview
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-sm table-hover mb-0" style="font-size: 0.78rem;">
                     <thead style="background: var(--gray-50);">
                         <tr>
-                            <th>#</th>
+                            <th>Row</th>
+                            <th>Status</th>
                             <th>DOI</th>
                             <th>Pathogen</th>
                             <th>Phytochemical</th>
@@ -142,35 +185,54 @@
                             <th>MIC Ac</th>
                             <th>FIC</th>
                             <th>Interpretation</th>
+                            <th>Note</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for row in valid_rows %}
-                        <tr>
-                            <td>{{ forloop.counter }}</td>
-                            <td style="max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ row.source_doi }}">{{ row.source_doi }}</td>
-                            <td><em>{{ row.pathogen_full_name }}</em></td>
-                            <td>{{ row.phytochemical_name }}</td>
-                            <td>{{ row.antibiotic_name }}</td>
-                            <td>{{ row.mic_phyto_alone|default:"—" }}</td>
-                            <td>{{ row.mic_abx_alone|default:"—" }}</td>
-                            <td>{{ row.mic_phyto_in_combo|default:"—" }}</td>
-                            <td>{{ row.mic_abx_in_combo|default:"—" }}</td>
+                        {% for row in preview_rows %}
+                        <tr style="
+                            {% if row.status == 'valid' %}background:#e8f5e9;
+                            {% elif row.status == 'warning' %}background:#fff8e1;
+                            {% else %}background:#ffebee;{% endif %}">
+                            <td><strong>{{ row.row_num }}</strong></td>
                             <td>
-                                {% if row._fic != None %}
-                                <strong>{{ row._fic|floatformat:4 }}</strong>
+                                {% if row.status == 'valid' %}
+                                <span class="badge" style="background:#2e7d32;">Valid</span>
+                                {% elif row.status == 'warning' %}
+                                <span class="badge" style="background:#e65100;">Warning</span>
+                                {% else %}
+                                <span class="badge" style="background:#c62828;">Rejected</span>
+                                {% endif %}
+                            </td>
+                            <td style="max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+                                title="{{ row.data.source_doi|default:'' }}">
+                                {{ row.data.source_doi|default:"—" }}
+                            </td>
+                            <td><em>{{ row.data.pathogen_full_name|default:"—" }}</em></td>
+                            <td>{{ row.data.phytochemical_name|default:"—" }}</td>
+                            <td>{{ row.data.antibiotic_name|default:"—" }}</td>
+                            <td>{{ row.data.mic_phyto_alone|default:"—" }}</td>
+                            <td>{{ row.data.mic_abx_alone|default:"—" }}</td>
+                            <td>{{ row.data.mic_phyto_in_combo|default:"—" }}</td>
+                            <td>{{ row.data.mic_abx_in_combo|default:"—" }}</td>
+                            <td>
+                                {% if row.fic != None %}
+                                <strong>{{ row.fic|floatformat:4 }}</strong>
                                 {% else %}—{% endif %}
                             </td>
                             <td>
-                                {% if row._interpretation == "Synergy" %}
+                                {% if row.interpretation == "Synergy" %}
                                 <span class="badge" style="background:#2e7d32;">Synergy</span>
-                                {% elif row._interpretation == "Additive" %}
+                                {% elif row.interpretation == "Additive" %}
                                 <span class="badge" style="background:#e65100;">Additive</span>
-                                {% elif row._interpretation == "Indifference" %}
+                                {% elif row.interpretation == "Indifference" %}
                                 <span class="badge" style="background:#757575;">Indifference</span>
-                                {% elif row._interpretation == "Antagonism" %}
+                                {% elif row.interpretation == "Antagonism" %}
                                 <span class="badge" style="background:#c62828;">Antagonism</span>
                                 {% else %}—{% endif %}
+                            </td>
+                            <td style="max-width:180px; font-size:0.72rem;">
+                                {{ row.reason|default:"" }}
                             </td>
                         </tr>
                         {% endfor %}
@@ -180,56 +242,30 @@
         </div>
     </div>
 
+    {% if importable_count %}
     <!-- Confirm Import -->
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <input type="hidden" name="action" value="confirm">
-        <input type="hidden" name="valid_rows_json" value="{{ valid_rows_json }}">
-        <!-- Dummy file field to satisfy form validation on confirm -->
+        <input type="hidden" name="import_data_json" value="{{ import_data_json }}">
         <div class="d-flex gap-3 mb-4">
             <button type="submit" class="btn btn-primary-custom btn-lg">
-                <i class="fas fa-database me-2"></i> Import {{ valid_count }} Valid Row{{ valid_count|pluralize }}
+                <i class="fas fa-database me-2"></i>
+                Confirm Import ({{ importable_count }} row{{ importable_count|pluralize }})
             </button>
             <a href="{% url 'bulk_import' %}" class="btn btn-outline-custom btn-lg">
                 <i class="fas fa-redo me-2"></i> Start Over
             </a>
         </div>
     </form>
-    {% endif %}
-
-    {% if rejected_rows %}
-    <!-- Rejected Rows -->
-    <div class="data-entry-card mb-4">
-        <div class="card-header" style="background: var(--danger-bg); color: var(--danger-text);">
-            <i class="fas fa-exclamation-triangle me-2"></i> Rejected Rows ({{ rejected_count }})
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-sm mb-0" style="font-size: 0.78rem;">
-                    <thead style="background: var(--gray-50);">
-                        <tr>
-                            <th>CSV Row</th>
-                            <th>Reason</th>
-                            <th>DOI</th>
-                            <th>Phytochemical</th>
-                            <th>Antibiotic</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for rej in rejected_rows %}
-                        <tr style="background: #fff5f5;">
-                            <td><strong>{{ rej.row }}</strong></td>
-                            <td style="color: var(--danger);">{{ rej.reason }}</td>
-                            <td>{{ rej.data.source_doi|default:"—" }}</td>
-                            <td>{{ rej.data.phytochemical_name|default:"—" }}</td>
-                            <td>{{ rej.data.antibiotic_name|default:"—" }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    {% else %}
+    <div class="alert alert-danger border-0">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        No rows are importable. Fix the errors listed above and re-upload the file.
     </div>
+    <a href="{% url 'bulk_import' %}" class="btn btn-outline-custom">
+        <i class="fas fa-redo me-2"></i> Start Over
+    </a>
     {% endif %}
 
     {% endif %}

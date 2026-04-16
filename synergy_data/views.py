@@ -13,7 +13,13 @@ from django.db.models import Avg, Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 
-from .forms import BULK_CSV_COLUMNS, BulkCSVUploadForm, SynergyEntryForm
+from .forms import (
+    BULK_CSV_COLUMNS,
+    COLUMN_MAP,
+    BulkCSVUploadForm,
+    SynergyEntryForm,
+    _canonical_header,
+)
 from .models import (
     Antibiotic,
     AntibioticClass,
@@ -463,73 +469,354 @@ def edit_entry_view(request, pk):
 
 
 # ==============================================================================
-# BULK CSV IMPORT (login-protected)
+# BULK CSV / XLSX IMPORT (login-protected)
 # ==============================================================================
 
-def _safe_decimal(value):
-    """Convert a value to Decimal safely, returning None on failure."""
+# Strings students commonly type for "empty" cells — all treated as NULL.
+_NULL_STRINGS = {
+    'null', 'n/a', 'na', 'none', '-', '--', '---', '', 'not reported',
+    'not available', 'nr', 'nd', 'not determined', 'unknown', '?',
+}
+
+
+def _clean_value(value, field_type='text'):
+    """Clean a single cell value from student-entered data.
+
+    Handles:
+    - literal "null" strings -> None
+    - corrupted micro signs ("Âµg/mL" -> "µg/mL")
+    - tabs, NBSP, carriage returns
+    - decimal ranges ("32-64" -> 64.0, upper bound)
+    - inequality prefixes (">256" -> 256.0)
+    - year strings with trailing ".0" from Excel numeric cells
+    """
     if value is None:
         return None
-    val = str(value).strip()
-    if not val or val.lower() == 'null':
+
+    s = str(value).strip()
+
+    # Fast path: literal None text or empty
+    if s.lower() in _NULL_STRINGS:
         return None
-    try:
-        return Decimal(val)
-    except (InvalidOperation, ValueError, TypeError):
+
+    # Encoding repair — order matters, the longer sequences go first.
+    s = (
+        s.replace('Âµ', 'µ')   # CP1252 double-decode of U+00B5
+         .replace('Î¼', 'µ')   # CP1252 double-decode of U+03BC (Greek mu)
+         .replace('\t', '')
+         .replace('\r', '')
+         .replace('\xa0', ' ')
+    ).strip()
+
+    if s == '' or s.lower() in _NULL_STRINGS:
         return None
+
+    if field_type == 'decimal':
+        # Range like "32-64" — take the upper bound (not a leading-negative).
+        if '-' in s and not s.startswith('-'):
+            parts = [p.strip() for p in s.split('-') if p.strip()]
+            try:
+                return Decimal(str(max(float(p) for p in parts)))
+            except (ValueError, InvalidOperation):
+                return None
+
+        # Strip inequality markers — we only store a point estimate.
+        for ch in ('>', '<', '≥', '≤', '=', '~'):
+            s = s.replace(ch, '')
+        s = s.strip()
+
+        try:
+            return Decimal(s)
+        except (InvalidOperation, ValueError, TypeError):
+            return None
+
+    if field_type == 'integer':
+        try:
+            return int(float(s))
+        except (ValueError, TypeError):
+            return None
+
+    return s
+
+
+def _safe_decimal(value):
+    """Back-compat shim used elsewhere in this module."""
+    return _clean_value(value, field_type='decimal')
+
+
+def _parse_upload_to_rows(uploaded_file):
+    """Parse either a CSV or XLSX upload into a list of dicts keyed by
+    canonical column names. Returns (rows, total_row_count)."""
+    name = uploaded_file.name.lower()
+
+    raw_headers = []
+    raw_rows = []
+
+    if name.endswith('.xlsx'):
+        import openpyxl  # local import keeps startup light
+        uploaded_file.seek(0)
+        wb = openpyxl.load_workbook(uploaded_file, read_only=True, data_only=True)
+        ws = wb.active
+        iterator = ws.iter_rows(values_only=True)
+        try:
+            raw_headers = list(next(iterator))
+        except StopIteration:
+            return [], 0
+        for row in iterator:
+            raw_rows.append(list(row))
+    else:
+        uploaded_file.seek(0)
+        text = uploaded_file.read().decode('utf-8-sig')
+        reader = csv.reader(io.StringIO(text))
+        try:
+            raw_headers = next(reader)
+        except StopIteration:
+            return [], 0
+        for row in reader:
+            raw_rows.append(row)
+
+    # Map each raw header to its canonical internal name (empty string = ignore).
+    canonical_headers = [_canonical_header(h) for h in raw_headers]
+
+    cleaned_rows = []
+    for raw in raw_rows:
+        # Pad short rows, trim long rows to header length.
+        if len(raw) < len(canonical_headers):
+            raw = list(raw) + [None] * (len(canonical_headers) - len(raw))
+        row_dict = {}
+        for key, val in zip(canonical_headers, raw):
+            if not key:
+                continue
+            # Last-column-wins if a file has duplicate headers after aliasing.
+            row_dict[key] = val
+
+        # Drop rows where every cell is empty / None.
+        if not any(
+            (v is not None and str(v).strip() != '')
+            for v in row_dict.values()
+        ):
+            continue
+        cleaned_rows.append(row_dict)
+
+    return cleaned_rows, len(cleaned_rows)
+
+
+# Columns that must be cleaned as decimals when staging a row.
+_DECIMAL_FIELDS = (
+    'mic_phyto_alone', 'mic_abx_alone',
+    'mic_phyto_in_combo', 'mic_abx_in_combo',
+    'fic_index',
+)
+_INTEGER_FIELDS = ('publication_year',)
+
+
+def _stage_row(row_num, raw_row):
+    """Apply cleaning + validation to a single raw row dict and classify it.
+
+    Returns a dict with keys: status ('valid' | 'warning' | 'error'),
+    row_num, data (cleaned dict), reason (str, for errors/warnings),
+    fic (Decimal|None), interpretation (str|None).
+    """
+    clean = {}
+    for key, val in raw_row.items():
+        if key in _DECIMAL_FIELDS:
+            clean[key] = _clean_value(val, 'decimal')
+        elif key in _INTEGER_FIELDS:
+            clean[key] = _clean_value(val, 'integer')
+        else:
+            clean[key] = _clean_value(val, 'text')
+
+    # Required fields
+    required = ('source_doi', 'pathogen_full_name', 'phytochemical_name', 'antibiotic_name')
+    missing_required = [f for f in required if not clean.get(f)]
+    if missing_required:
+        return {
+            'status': 'error',
+            'row_num': row_num,
+            'data': clean,
+            'reason': f"Missing required fields: {', '.join(missing_required)}",
+            'fic': None,
+            'interpretation': None,
+        }
+
+    mic_vals = [
+        clean.get('mic_phyto_alone'),
+        clean.get('mic_abx_alone'),
+        clean.get('mic_phyto_in_combo'),
+        clean.get('mic_abx_in_combo'),
+    ]
+    has_all_mic = all(v is not None for v in mic_vals)
+    fic_val = clean.get('fic_index')
+
+    if not has_all_mic and fic_val is None:
+        return {
+            'status': 'error',
+            'row_num': row_num,
+            'data': clean,
+            'reason': (
+                "Must have all 4 MIC values or a FIC index. "
+                "Qualitative-only data (disk diffusion, zone diameters) not accepted."
+            ),
+            'fic': None,
+            'interpretation': None,
+        }
+
+    # Auto-calc FIC if all 4 MICs are present and FIC is missing.
+    if fic_val is None and has_all_mic:
+        fic_val = auto_calculate_fic(*mic_vals)
+
+    # Normalise interpretation free-text onto the controlled vocabulary.
+    interp_raw = clean.get('interpretation')
+    interpretation_map = {
+        'synergy': 'Synergy', 'synergistic': 'Synergy', 'syn': 'Synergy',
+        'additive': 'Additive', 'add': 'Additive', 'partial synergy': 'Additive',
+        'indifference': 'Indifference', 'indifferent': 'Indifference', 'ind': 'Indifference',
+        'no interaction': 'Indifference',
+        'antagonism': 'Antagonism', 'antagonistic': 'Antagonism', 'ant': 'Antagonism',
+    }
+    if interp_raw:
+        interp = interpretation_map.get(interp_raw.lower().strip(), interp_raw)
+    else:
+        interp = None
+    if interp not in ('Synergy', 'Additive', 'Indifference', 'Antagonism'):
+        interp = auto_interpret_fic(fic_val)
+
+    # Warning if optional-but-useful data is missing (MIC values when only FIC
+    # provided, or missing interpretation/MOA). Row is still importable.
+    warnings = []
+    if not has_all_mic:
+        warnings.append("Only FIC provided — some MIC values missing")
+    if not clean.get('moa_observed'):
+        warnings.append("No mechanism of action")
+    if not clean.get('publication_year'):
+        warnings.append("No publication year")
+
+    status = 'warning' if warnings else 'valid'
+    return {
+        'status': status,
+        'row_num': row_num,
+        'data': clean,
+        'reason': '; '.join(warnings) if warnings else '',
+        'fic': fic_val,
+        'interpretation': interp,
+    }
 
 
 @login_required
 def bulk_import_template(request):
-    """Download a blank CSV template for bulk import."""
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="PhytoSynergyDB_import_template.csv"'
-    writer = csv.writer(response)
-    writer.writerow(BULK_CSV_COLUMNS)
-    # Write one example row
-    writer.writerow([
-        '10.1016/j.phymed.2023.154789',
-        'Staphylococcus aureus ATCC 25923',
-        'Berberine',
-        'Ciprofloxacin',
-        '64',
-        '0.5',
-        '16',
-        '0.125',
-        'µg/mL',
-        '',  # FIC — leave blank to auto-calculate
-        '',  # Interpretation — auto-derived
-        'Efflux pump inhibition',
-    ])
+    """Download a blank XLSX template for bulk import, pre-filled with one
+    example row so students can see the expected format and units."""
+    try:
+        import openpyxl
+    except ImportError:
+        # Graceful fallback to CSV if openpyxl isn't installed yet.
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = (
+            'attachment; filename="PhytoSynergyDB_import_template.csv"'
+        )
+        writer = csv.writer(response)
+        writer.writerow(BULK_CSV_COLUMNS)
+        return response
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "PhytoSynergyDB Data"
+
+    for col_idx, header in enumerate(BULK_CSV_COLUMNS, start=1):
+        ws.cell(row=1, column=col_idx, value=header)
+
+    example = {
+        'source_doi': '10.1016/j.phymed.2023.154789',
+        'publication_year': 2023,
+        'article_title': 'Synergistic activity of berberine with ciprofloxacin against S. aureus',
+        'journal': 'Phytomedicine',
+        'pathogen_full_name': 'Staphylococcus aureus ATCC 25923',
+        'phytochemical_name': 'Berberine',
+        'plant_source': 'Berberis vulgaris',
+        'antibiotic_name': 'Ciprofloxacin',
+        'antibiotic_class': 'Fluoroquinolone',
+        'mic_phyto_alone': 64,
+        'mic_abx_alone': 0.5,
+        'mic_phyto_in_combo': 16,
+        'mic_abx_in_combo': 0.125,
+        'mic_units': 'µg/mL',
+        'fic_index': 0.5,
+        'interpretation': 'Synergy',
+        'assay_method': 'checkerboard',
+        'moa_observed': 'Efflux pump inhibition',
+        'notes': '',
+    }
+    for col_idx, header in enumerate(BULK_CSV_COLUMNS, start=1):
+        ws.cell(row=2, column=col_idx, value=example.get(header, ''))
+
+    # Reasonable default widths
+    for col_idx in range(1, len(BULK_CSV_COLUMNS) + 1):
+        ws.column_dimensions[openpyxl.utils.get_column_letter(col_idx)].width = 20
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = (
+        'attachment; filename="PhytoSynergyDB_import_template.xlsx"'
+    )
+    wb.save(response)
     return response
 
 
 @login_required
 def bulk_import_view(request):
-    """Bulk CSV import with strict validation: every row must have all 4 MICs or a FIC index."""
+    """Bulk CSV/XLSX import with strict validation.
+
+    Every row must have all 4 MICs or a FIC index. Rows missing only optional
+    fields (MOA, year) are flagged as warnings but still imported on confirm.
+    Duplicate experiments (same phyto+abx+pathogen+source) are skipped.
+    """
     context = {'form': BulkCSVUploadForm()}
 
     if request.method == 'POST':
         action = request.POST.get('action', 'validate')
 
-        # ── CONFIRM ACTION: Save previously validated rows ──
+        # ── CONFIRM ACTION: save previously validated rows ──
         if action == 'confirm':
-            saved = 0
+            imported = 0
+            skipped_duplicate = 0
+            skipped_invalid = 0
             errors = []
-            confirm_json = request.POST.get('valid_rows_json', '[]')
+
+            confirm_json = request.POST.get('import_data_json', '[]')
             try:
                 rows_to_save = json.loads(confirm_json)
             except json.JSONDecodeError:
                 messages.error(request, "Could not parse confirmed data.")
                 return redirect('bulk_import')
 
-            for i, row in enumerate(rows_to_save):
+            for row_wrapper in rows_to_save:
+                if row_wrapper.get('status') == 'error':
+                    skipped_invalid += 1
+                    continue
+
+                row = row_wrapper.get('data', {})
+                row_num = row_wrapper.get('row_num', 0)
                 try:
-                    source, _ = Source.objects.get_or_create(doi=row['source_doi'])
+                    # --- Source (get_or_create by DOI) ---
+                    source, _ = Source.objects.get_or_create(
+                        doi=row.get('source_doi'),
+                        defaults={
+                            'publication_year': row.get('publication_year'),
+                            'article_title': row.get('article_title') or None,
+                            'journal': row.get('journal') or None,
+                        },
+                    )
+
+                    # --- Pathogen (parse + get_or_create) ---
                     genus, species, strain = parse_pathogen_name(row['pathogen_full_name'])
                     pathogen, _ = Pathogen.objects.get_or_create(
-                        genus=genus, species=species, strain=strain
+                        genus=genus,
+                        species=species,
+                        strain=strain,
                     )
+
+                    # --- Phytochemical (case-insensitive) ---
                     phytochemical = get_or_create_case_insensitive(
                         Phytochemical, 'compound_name', row['phytochemical_name']
                     )
@@ -537,21 +824,35 @@ def bulk_import_view(request):
                         enrich_phytochemical(phytochemical)
                     except Exception:
                         pass
+
+                    # --- Antibiotic (case-insensitive) ---
                     antibiotic = get_or_create_case_insensitive(
                         Antibiotic, 'antibiotic_name', row['antibiotic_name']
                     )
 
+                    # --- Duplicate check ---
+                    if SynergyExperiment.objects.filter(
+                        phytochemical=phytochemical,
+                        antibiotic=antibiotic,
+                        pathogen=pathogen,
+                        source=source,
+                    ).exists():
+                        skipped_duplicate += 1
+                        continue
+
+                    # --- MIC values (re-clean in case the JSON round-trip
+                    #     turned them into strings) ---
                     mic_phyto_alone = _safe_decimal(row.get('mic_phyto_alone'))
                     mic_abx_alone = _safe_decimal(row.get('mic_abx_alone'))
                     mic_phyto_in_combo = _safe_decimal(row.get('mic_phyto_in_combo'))
                     mic_abx_in_combo = _safe_decimal(row.get('mic_abx_in_combo'))
-                    mic_units = (row.get('mic_units') or 'µg/mL').strip()
+                    mic_units = (row.get('mic_units') or 'µg/mL').strip() or 'µg/mL'
 
                     fic_index = _safe_decimal(row.get('fic_index'))
                     if fic_index is None:
                         fic_index = auto_calculate_fic(
                             mic_phyto_alone, mic_abx_alone,
-                            mic_phyto_in_combo, mic_abx_in_combo
+                            mic_phyto_in_combo, mic_abx_in_combo,
                         )
                     interpretation = (row.get('interpretation') or '').strip()
                     if interpretation not in ['Synergy', 'Additive', 'Indifference', 'Antagonism']:
@@ -572,119 +873,92 @@ def bulk_import_view(request):
                         moa_observed=row.get('moa_observed') or '',
                         notes=row.get('notes') or '',
                     )
-                    saved += 1
+                    imported += 1
                 except Exception as e:
-                    errors.append(f"Row {i+1}: {str(e)}")
+                    errors.append(f"Row {row_num}: {e}")
 
-            if saved:
-                messages.success(request, f"Successfully imported {saved} experiment(s).")
+            if imported:
+                messages.success(
+                    request, f"Successfully imported {imported} experiment(s)."
+                )
+            if skipped_duplicate:
+                messages.info(
+                    request,
+                    f"Skipped {skipped_duplicate} duplicate experiment(s) already in the database.",
+                )
+            if skipped_invalid:
+                messages.warning(
+                    request,
+                    f"Skipped {skipped_invalid} invalid row(s) that could not be imported.",
+                )
             if errors:
                 for err in errors[:5]:
                     messages.warning(request, err)
+                if len(errors) > 5:
+                    messages.warning(
+                        request, f"… and {len(errors) - 5} more error(s)."
+                    )
             return redirect('bulk_import')
 
-        # ── VALIDATE ACTION: Parse CSV and preview ──
+        # ── VALIDATE ACTION: parse file and show preview ──
         form = BulkCSVUploadForm(request.POST, request.FILES)
         context['form'] = form
 
         if not form.is_valid():
             return render(request, 'synergy_data/bulk_import.html', context)
 
-        csv_file = form.cleaned_data['csv_file']
-        text = csv_file.read().decode('utf-8-sig')
-        reader = csv.DictReader(io.StringIO(text))
-        # Normalize header names
-        reader.fieldnames = [h.strip().lower() for h in reader.fieldnames]
+        uploaded_file = form.cleaned_data['csv_file']
+        try:
+            raw_rows, _total = _parse_upload_to_rows(uploaded_file)
+        except Exception as e:
+            messages.error(request, f"Could not parse uploaded file: {e}")
+            return render(request, 'synergy_data/bulk_import.html', context)
 
-        valid_rows = []
-        rejected_rows = []
-        row_num = 1  # header is row 0
+        staged = []
+        for offset, raw_row in enumerate(raw_rows, start=2):  # row 1 is header
+            staged.append(_stage_row(offset, raw_row))
 
-        for raw_row in reader:
-            row_num += 1
-            # Strip whitespace and normalize nulls
-            row = {}
-            for k, v in raw_row.items():
-                k = k.strip().lower()
-                v = (v or '').strip()
-                if v.lower() in ('null', 'none', 'n/a', ''):
-                    v = None
-                row[k] = v
+        valid_count = sum(1 for s in staged if s['status'] == 'valid')
+        warning_count = sum(1 for s in staged if s['status'] == 'warning')
+        error_count = sum(1 for s in staged if s['status'] == 'error')
 
-            # Skip completely empty rows
-            if not any(row.values()):
-                continue
-
-            # Required fields check
-            doi = row.get('source_doi')
-            pathogen = row.get('pathogen_full_name')
-            phyto = row.get('phytochemical_name')
-            abx = row.get('antibiotic_name')
-
-            if not all([doi, pathogen, phyto, abx]):
-                missing = []
-                if not doi: missing.append('source_doi')
-                if not pathogen: missing.append('pathogen_full_name')
-                if not phyto: missing.append('phytochemical_name')
-                if not abx: missing.append('antibiotic_name')
-                rejected_rows.append({
-                    'row': row_num,
-                    'reason': f"Missing required fields: {', '.join(missing)}",
-                    'data': row,
+        # Build the template-friendly view + a JSON blob for the confirm step.
+        preview_rows = []
+        import_payload = []
+        for s in staged:
+            preview_rows.append({
+                'row_num': s['row_num'],
+                'status': s['status'],
+                'reason': s['reason'],
+                'fic': s['fic'],
+                'interpretation': s['interpretation'],
+                'data': s['data'],
+            })
+            # Only non-error rows need to survive the JSON round-trip —
+            # errors are shown in preview but never imported.
+            if s['status'] != 'error':
+                payload_data = {k: ('' if v is None else str(v)) for k, v in s['data'].items()}
+                # Surface the computed FIC/interpretation so the confirm step
+                # doesn't need to recalculate if the input FIC was blank.
+                if s['fic'] is not None:
+                    payload_data['fic_index'] = str(s['fic'])
+                if s['interpretation']:
+                    payload_data['interpretation'] = s['interpretation']
+                import_payload.append({
+                    'status': s['status'],
+                    'row_num': s['row_num'],
+                    'data': payload_data,
                 })
-                continue
 
-            # MIC/FIC validation — the core quality gate
-            mic_vals = [
-                _safe_decimal(row.get('mic_phyto_alone')),
-                _safe_decimal(row.get('mic_abx_alone')),
-                _safe_decimal(row.get('mic_phyto_in_combo')),
-                _safe_decimal(row.get('mic_abx_in_combo')),
-            ]
-            has_all_mic = all(v is not None for v in mic_vals)
-            fic_val = _safe_decimal(row.get('fic_index'))
-
-            if not has_all_mic and fic_val is None:
-                rejected_rows.append({
-                    'row': row_num,
-                    'reason': "Must have all 4 MIC values or a FIC index. "
-                              "Qualitative-only data (disk diffusion, zone diameters) not accepted.",
-                    'data': row,
-                })
-                continue
-
-            # Auto-calculate FIC if all MICs present but FIC missing
-            if fic_val is None and has_all_mic:
-                fic_val = auto_calculate_fic(*mic_vals)
-
-            # Auto-derive interpretation
-            interp = (row.get('interpretation') or '').strip()
-            valid_interps = ['Synergy', 'Additive', 'Indifference', 'Antagonism']
-            if interp not in valid_interps:
-                interp = auto_interpret_fic(fic_val)
-
-            row['_mic_vals'] = mic_vals
-            row['_fic'] = fic_val
-            row['_interpretation'] = interp
-            valid_rows.append(row)
-
-        # Preview: show valid + rejected before saving
-        if valid_rows or rejected_rows:
-            # Serialize valid_rows for the confirm form (strip internal keys)
-            serializable = []
-            for r in valid_rows:
-                clean = {k: v for k, v in r.items() if not k.startswith('_')}
-                # Add computed values back as regular fields
-                if r.get('_fic') is not None:
-                    clean['fic_index'] = str(r['_fic'])
-                clean['interpretation'] = r.get('_interpretation') or ''
-                serializable.append(clean)
-
-            context['valid_rows'] = valid_rows
-            context['rejected_rows'] = rejected_rows
-            context['valid_count'] = len(valid_rows)
-            context['rejected_count'] = len(rejected_rows)
-            context['valid_rows_json'] = json.dumps(serializable, default=str)
+        context.update({
+            'preview_rows': preview_rows,
+            'valid_count': valid_count,
+            'warning_count': warning_count,
+            'error_count': error_count,
+            'importable_count': valid_count + warning_count,
+            'total_count': len(staged),
+            'import_data_json': json.dumps(import_payload, default=str),
+        })
 
     return render(request, 'synergy_data/bulk_import.html', context)
 

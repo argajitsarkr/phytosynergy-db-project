@@ -210,12 +210,17 @@ class SynergyEntryForm(forms.Form):
         return cleaned_data
 
 
-# Expected CSV columns for bulk import
+# Canonical column order shown in the downloaded template.
 BULK_CSV_COLUMNS = [
     'source_doi',
+    'publication_year',
+    'article_title',
+    'journal',
     'pathogen_full_name',
     'phytochemical_name',
+    'plant_source',
     'antibiotic_name',
+    'antibiotic_class',
     'mic_phyto_alone',
     'mic_abx_alone',
     'mic_phyto_in_combo',
@@ -223,41 +228,160 @@ BULK_CSV_COLUMNS = [
     'mic_units',
     'fic_index',
     'interpretation',
+    'assay_method',
     'moa_observed',
+    'notes',
 ]
+
+
+# Maps whatever a student typed as a header (lower-cased, whitespace-stripped)
+# to the canonical internal field name used by the import pipeline. Handles the
+# common variations seen in real collection spreadsheets.
+COLUMN_MAP = {
+    # Source / publication metadata
+    'source_doi': 'source_doi',
+    'doi': 'source_doi',
+    'publication_year': 'publication_year',
+    'year': 'publication_year',
+    'article_title': 'article_title',
+    'title': 'article_title',
+    'paper_title': 'article_title',
+    'journal': 'journal',
+    'journal_name': 'journal',
+
+    # Pathogen
+    'pathogen_full_name': 'pathogen_full_name',
+    'pathogen_name': 'pathogen_full_name',
+    'pathogen': 'pathogen_full_name',
+    'organism': 'pathogen_full_name',
+    'bacteria': 'pathogen_full_name',
+    'strain': 'pathogen_full_name',
+
+    # Phytochemical
+    'phytochemical_name': 'phytochemical_name',
+    'phytochemical': 'phytochemical_name',
+    'compound': 'phytochemical_name',
+    'compound_name': 'phytochemical_name',
+    'natural_product': 'phytochemical_name',
+    'plant_source': 'plant_source',
+    'plant': 'plant_source',
+    'source_plant': 'plant_source',
+
+    # Antibiotic
+    'antibiotic_name': 'antibiotic_name',
+    'antibiotic': 'antibiotic_name',
+    'drug': 'antibiotic_name',
+    'antibiotic_class': 'antibiotic_class',
+    'drug_class': 'antibiotic_class',
+
+    # MIC values
+    'mic_phyto_alone': 'mic_phyto_alone',
+    'mic_phytochemical_alone': 'mic_phyto_alone',
+    'mic_compound_alone': 'mic_phyto_alone',
+    'mic_abx_alone': 'mic_abx_alone',
+    'mic_antibiotic_alone': 'mic_abx_alone',
+    'mic_drug_alone': 'mic_abx_alone',
+    'mic_phyto_in_combo': 'mic_phyto_in_combo',
+    'mic_phytochemical_in_combo': 'mic_phyto_in_combo',
+    'mic_phyto_combo': 'mic_phyto_in_combo',
+    'mic_compound_combo': 'mic_phyto_in_combo',
+    'mic_abx_in_combo': 'mic_abx_in_combo',
+    'mic_antibiotic_in_combo': 'mic_abx_in_combo',
+    'mic_abx_combo': 'mic_abx_in_combo',
+    'mic_drug_combo': 'mic_abx_in_combo',
+    'mic_units': 'mic_units',
+    'units': 'mic_units',
+    'concentration_units': 'mic_units',
+
+    # Synergy metrics
+    'fic_index': 'fic_index',
+    'fic': 'fic_index',
+    'fici': 'fic_index',
+    'interpretation': 'interpretation',
+    'synergy_interpretation': 'interpretation',
+    'result': 'interpretation',
+
+    # Method & notes
+    'assay_method': 'assay_method',
+    'method': 'assay_method',
+    'moa_observed': 'moa_observed',
+    'mechanism': 'moa_observed',
+    'mechanism_of_action': 'moa_observed',
+    'moa': 'moa_observed',
+    'notes': 'notes',
+    'comments': 'notes',
+    'remarks': 'notes',
+}
+
+
+def _canonical_header(raw_header):
+    """Normalize one raw header cell to its canonical internal name.
+
+    Returns the canonical name if recognised, otherwise an empty string so
+    unknown columns are silently ignored rather than crashing the import.
+    """
+    if raw_header is None:
+        return ''
+    h = (
+        str(raw_header)
+        .replace('\t', '')
+        .replace('\r', '')
+        .replace('\xa0', ' ')
+        .strip()
+        .lower()
+        .replace(' ', '_')
+    )
+    return COLUMN_MAP.get(h, '')
 
 
 class BulkCSVUploadForm(forms.Form):
     csv_file = forms.FileField(
-        label="CSV File",
-        help_text="Upload a CSV file matching the PhytoSynergyDB template.",
+        label="Data file (.csv or .xlsx)",
+        help_text="Upload a CSV or Excel (.xlsx) file matching the PhytoSynergyDB template.",
         widget=forms.ClearableFileInput(attrs={
             'class': 'form-control',
-            'accept': '.csv',
+            'accept': '.csv,.xlsx',
         }),
     )
 
     def clean_csv_file(self):
         f = self.cleaned_data['csv_file']
-        if not f.name.lower().endswith('.csv'):
-            raise forms.ValidationError("Only .csv files are accepted.")
+        name = f.name.lower()
+        if not (name.endswith('.csv') or name.endswith('.xlsx')):
+            raise forms.ValidationError("Only .csv or .xlsx files are accepted.")
         if f.size > 10 * 1024 * 1024:
             raise forms.ValidationError("File too large (max 10 MB).")
 
-        # Validate header row
+        # Read the header row from either format to validate required columns.
         try:
-            text = f.read().decode('utf-8-sig')
-            f.seek(0)
-            reader = csv.DictReader(io.StringIO(text))
-            headers = [h.strip().lower() for h in (reader.fieldnames or [])]
-        except Exception:
-            raise forms.ValidationError("Could not read the CSV file. Ensure it is UTF-8 encoded.")
+            if name.endswith('.xlsx'):
+                import openpyxl  # local import — only needed on xlsx path
+                f.seek(0)
+                wb = openpyxl.load_workbook(f, read_only=True, data_only=True)
+                ws = wb.active
+                header_row = next(ws.iter_rows(min_row=1, max_row=1, values_only=True), ())
+                headers = [_canonical_header(h) for h in header_row]
+                f.seek(0)
+            else:
+                text = f.read().decode('utf-8-sig')
+                f.seek(0)
+                reader = csv.DictReader(io.StringIO(text))
+                headers = [_canonical_header(h) for h in (reader.fieldnames or [])]
+        except forms.ValidationError:
+            raise
+        except Exception as e:
+            raise forms.ValidationError(
+                f"Could not read the uploaded file: {e}. "
+                "Ensure CSV files are UTF-8 encoded and XLSX files are valid Excel workbooks."
+            )
 
         required = {'source_doi', 'pathogen_full_name', 'phytochemical_name', 'antibiotic_name'}
-        missing = required - set(headers)
+        present = set(headers)
+        missing = required - present
         if missing:
             raise forms.ValidationError(
                 f"Missing required columns: {', '.join(sorted(missing))}. "
+                "Accepted aliases include 'doi', 'pathogen', 'compound', 'antibiotic'. "
                 "Download the template to see the expected format."
             )
         return f
