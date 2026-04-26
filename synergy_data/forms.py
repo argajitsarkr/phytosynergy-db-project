@@ -355,7 +355,7 @@ class BulkCSVUploadForm(forms.Form):
         # Read the header row from either format to validate required columns.
         try:
             if name.endswith('.xlsx'):
-                import openpyxl  # local import — only needed on xlsx path
+                import openpyxl  # local import - only needed on xlsx path
                 f.seek(0)
                 wb = openpyxl.load_workbook(f, read_only=True, data_only=True)
                 ws = wb.active

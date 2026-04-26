@@ -1,6 +1,6 @@
 {% extends 'synergy_data/base.html' %}
 
-{% block title %}Bulk Import — PhytoSynergyDB{% endblock %}
+{% block title %}Bulk Import - PhytoSynergyDB{% endblock %}
 
 {% block content %}
 <div class="data-entry-container">
@@ -206,19 +206,19 @@
                             </td>
                             <td style="max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
                                 title="{{ row.data.source_doi|default:'' }}">
-                                {{ row.data.source_doi|default:"—" }}
+                                {{ row.data.source_doi|default:"-" }}
                             </td>
-                            <td><em>{{ row.data.pathogen_full_name|default:"—" }}</em></td>
-                            <td>{{ row.data.phytochemical_name|default:"—" }}</td>
-                            <td>{{ row.data.antibiotic_name|default:"—" }}</td>
-                            <td>{{ row.data.mic_phyto_alone|default:"—" }}</td>
-                            <td>{{ row.data.mic_abx_alone|default:"—" }}</td>
-                            <td>{{ row.data.mic_phyto_in_combo|default:"—" }}</td>
-                            <td>{{ row.data.mic_abx_in_combo|default:"—" }}</td>
+                            <td><em>{{ row.data.pathogen_full_name|default:"-" }}</em></td>
+                            <td>{{ row.data.phytochemical_name|default:"-" }}</td>
+                            <td>{{ row.data.antibiotic_name|default:"-" }}</td>
+                            <td>{{ row.data.mic_phyto_alone|default:"-" }}</td>
+                            <td>{{ row.data.mic_abx_alone|default:"-" }}</td>
+                            <td>{{ row.data.mic_phyto_in_combo|default:"-" }}</td>
+                            <td>{{ row.data.mic_abx_in_combo|default:"-" }}</td>
                             <td>
                                 {% if row.fic != None %}
                                 <strong>{{ row.fic|floatformat:4 }}</strong>
-                                {% else %}—{% endif %}
+                                {% else %}-{% endif %}
                             </td>
                             <td>
                                 {% if row.interpretation == "Synergy" %}
@@ -229,7 +229,7 @@
                                 <span class="badge" style="background:#757575;">Indifference</span>
                                 {% elif row.interpretation == "Antagonism" %}
                                 <span class="badge" style="background:#c62828;">Antagonism</span>
-                                {% else %}—{% endif %}
+                                {% else %}-{% endif %}
                             </td>
                             <td style="max-width:180px; font-size:0.72rem;">
                                 {{ row.reason|default:"" }}

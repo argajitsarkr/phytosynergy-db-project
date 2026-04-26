@@ -21,11 +21,11 @@ def heatmap_color(fic_value):
     v = max(0.0, min(v, 5.0))
 
     # Define color stops: (fic_value, R, G, B)
-    # 0.0  → Darkest navy  (1, 8, 45)     — strong synergy
-    # 0.5  → Darker blue   (4, 29, 86)    — synergy threshold
-    # 1.0  → Dark blue     (15, 37, 115)  — additive
-    # 2.0  → Medium blue   (38, 108, 169) — indifference
-    # 4.0+ → Light blue    (173, 225, 251) — antagonism
+    # 0.0  → Darkest navy  (1, 8, 45)     - strong synergy
+    # 0.5  → Darker blue   (4, 29, 86)    - synergy threshold
+    # 1.0  → Dark blue     (15, 37, 115)  - additive
+    # 2.0  → Medium blue   (38, 108, 169) - indifference
+    # 4.0+ → Light blue    (173, 225, 251) - antagonism
     stops = [
         (0.0,   1,   8,  45),
         (0.5,   4,  29,  86),

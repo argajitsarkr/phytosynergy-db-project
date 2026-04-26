@@ -2,7 +2,7 @@
 {% load static %}
 {% load analytics_filters %}
 
-{% block title %}Analytics Dashboard — PhytoSynergyDB{% endblock %}
+{% block title %}Analytics Dashboard - PhytoSynergyDB{% endblock %}
 
 {% block content %}
 <div class="container py-5">
@@ -117,7 +117,7 @@
     <div class="row g-4 mb-4">
         <div class="col-12">
             <div class="analytics-card">
-                <h5 class="analytics-card-title"><i class="fas fa-th me-2"></i>Synergy Heatmap — Average FIC Index (Phytochemical × Antibiotic)</h5>
+                <h5 class="analytics-card-title"><i class="fas fa-th me-2"></i>Synergy Heatmap - Average FIC Index (Phytochemical × Antibiotic)</h5>
                 <p class="text-muted small mb-3">Top 15 phytochemicals (rows) × Top 10 antibiotics (columns). Green = synergistic (low FIC), Red = antagonistic (high FIC), Gray = no data.</p>
                 {% if heatmap_grid %}
                 <div class="table-responsive">
@@ -146,7 +146,7 @@
                                     {% if cell != None %}
                                     <span class="heatmap-value">{{ cell|floatformat:2 }}</span>
                                     {% else %}
-                                    <span class="heatmap-value" style="color: #aaa;">—</span>
+                                    <span class="heatmap-value" style="color: #aaa;">-</span>
                                     {% endif %}
                                 </td>
                                 {% endfor %}

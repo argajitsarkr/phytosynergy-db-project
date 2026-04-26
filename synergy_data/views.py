@@ -472,7 +472,7 @@ def edit_entry_view(request, pk):
 # BULK CSV / XLSX IMPORT (login-protected)
 # ==============================================================================
 
-# Strings students commonly type for "empty" cells — all treated as NULL.
+# Strings students commonly type for "empty" cells - all treated as NULL.
 _NULL_STRINGS = {
     'null', 'n/a', 'na', 'none', '-', '--', '---', '', 'not reported',
     'not available', 'nr', 'nd', 'not determined', 'unknown', '?',
@@ -499,7 +499,7 @@ def _clean_value(value, field_type='text'):
     if s.lower() in _NULL_STRINGS:
         return None
 
-    # Encoding repair — order matters, the longer sequences go first.
+    # Encoding repair - order matters, the longer sequences go first.
     s = (
         s.replace('Âµ', 'µ')   # CP1252 double-decode of U+00B5
          .replace('Î¼', 'µ')   # CP1252 double-decode of U+03BC (Greek mu)
@@ -512,7 +512,7 @@ def _clean_value(value, field_type='text'):
         return None
 
     if field_type == 'decimal':
-        # Range like "32-64" — take the upper bound (not a leading-negative).
+        # Range like "32-64" - take the upper bound (not a leading-negative).
         if '-' in s and not s.startswith('-'):
             parts = [p.strip() for p in s.split('-') if p.strip()]
             try:
@@ -520,7 +520,7 @@ def _clean_value(value, field_type='text'):
             except (ValueError, InvalidOperation):
                 return None
 
-        # Strip inequality markers — we only store a point estimate.
+        # Strip inequality markers - we only store a point estimate.
         for ch in ('>', '<', '≥', '≤', '=', '~'):
             s = s.replace(ch, '')
         s = s.strip()
@@ -685,7 +685,7 @@ def _stage_row(row_num, raw_row):
     # provided, or missing interpretation/MOA). Row is still importable.
     warnings = []
     if not has_all_mic:
-        warnings.append("Only FIC provided — some MIC values missing")
+        warnings.append("Only FIC provided - some MIC values missing")
     if not clean.get('moa_observed'):
         warnings.append("No mechanism of action")
     if not clean.get('publication_year'):
@@ -946,7 +946,7 @@ def bulk_import_view(request):
                 'interpretation': s['interpretation'],
                 'data': s['data'],
             })
-            # Only non-error rows need to survive the JSON round-trip —
+            # Only non-error rows need to survive the JSON round-trip -
             # errors are shown in preview but never imported.
             if s['status'] != 'error':
                 payload_data = {k: ('' if v is None else str(v)) for k, v in s['data'].items()}

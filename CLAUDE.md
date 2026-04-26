@@ -1,4 +1,4 @@
-# CLAUDE.md — PhytoSynergyDB Project Guide
+# CLAUDE.md - PhytoSynergyDB Project Guide
 
 > **READ THIS BEFORE MAKING ANY CHANGES.**
 > Update this file after every session with a summary of changes made and any new lessons learned.
@@ -7,7 +7,7 @@
 
 ## Project Overview
 
-**App:** PhytoSynergyDB — curated database of phytochemical–antibiotic synergy experiments against ESKAPE pathogens.
+**App:** PhytoSynergyDB - curated database of phytochemical–antibiotic synergy experiments against ESKAPE pathogens.
 **Stack:** Django 4.2 LTS · PostgreSQL 15 · Gunicorn · Nginx · Docker Compose · ngrok tunnel
 **Host:** Dell PowerEdge R730, 84 GB RAM (self-hosted, ngrok public URL)
 **Repo:** `https://github.com/argajitsarkr/phytosynergy-db-project.git`
@@ -75,8 +75,8 @@ C:\Users\Arghya\Downloads\Projects\     ← GIT ROOT
 | `/api/v1/experiments/` | `api_experiments` | Public | JSON, paginated, filterable |
 | `/api/v1/statistics/` | `api_statistics` | Public | Aggregate stats JSON |
 | `/api/docs/` | `api_docs` | Public | |
-| `/accounts/login/` | Django `LoginView` | — | Template: `synergy_data/login.html` |
-| `/accounts/logout/` | Django `LogoutView` | — | Redirects to `home` |
+| `/accounts/login/` | Django `LoginView` | - | Template: `synergy_data/login.html` |
+| `/accounts/logout/` | Django `LogoutView` | - | Redirects to `home` |
 
 ---
 
@@ -90,8 +90,8 @@ SynergyExperiment
   ├── source        → Source (doi, pmid, publication_year, article_title, journal)
   ├── mic_phyto_alone / mic_abx_alone / mic_phyto_in_combo / mic_abx_in_combo (Decimal, nullable)
   ├── mic_units (default µg/mL)
-  ├── fic_index (Decimal, nullable) — auto-calculated if all 4 MICs present
-  ├── interpretation (Synergy / Additive / Indifference / Antagonism) — auto-derived from FIC
+  ├── fic_index (Decimal, nullable) - auto-calculated if all 4 MICs present
+  ├── interpretation (Synergy / Additive / Indifference / Antagonism) - auto-derived from FIC
   ├── assay_method (checkerboard / time_kill / disk_diffusion / broth_microdilution / other)
   ├── moa_observed (TextField, nullable)
   └── notes (TextField, nullable)
@@ -101,7 +101,7 @@ SynergyExperiment
 
 ---
 
-## Bulk Import (`/bulk-import/`) — Critical Rules
+## Bulk Import (`/bulk-import/`) - Critical Rules
 
 ### What it does
 Accepts `.csv` or `.xlsx` uploads. Phase 1 parses and shows a colour-coded preview (green/yellow/red). Phase 2 (confirm) imports all non-error rows.
@@ -121,7 +121,7 @@ docker compose exec web python manage.py enrich_phytochemicals
 - Duplicate experiments (same phyto + abx + pathogen + source) are skipped, counted separately
 
 ### Each row is wrapped in `transaction.atomic()`
-A failure on any row rolls back only that row — no orphan FK records, no partial state.
+A failure on any row rolls back only that row - no orphan FK records, no partial state.
 
 ### Column aliases (COLUMN_MAP in `forms.py`)
 The import recognises common variants: `doi` → `source_doi`, `fic` → `fic_index`, `compound` → `phytochemical_name`, `antibiotic` → `antibiotic_name`, `mechanism` → `moa_observed`, etc. Full map in `synergy_data/forms.py`.
@@ -133,7 +133,7 @@ The import recognises common variants: `doi` → `source_doi`, `fic` → `fic_in
 | Function | Purpose |
 |----------|---------|
 | `parse_pathogen_name(full_name)` | Splits `"Staphylococcus aureus 03"` → `("Staphylococcus", "aureus", "03")` |
-| `auto_calculate_fic(...)` | `(mic_phyto_combo / mic_phyto_alone) + (mic_abx_combo / mic_abx_alone)` — returns None if any value is zero/None |
+| `auto_calculate_fic(...)` | `(mic_phyto_combo / mic_phyto_alone) + (mic_abx_combo / mic_abx_alone)` - returns None if any value is zero/None |
 | `auto_interpret_fic(fic)` | Maps FIC float → `"Synergy"` / `"Additive"` / etc. |
 | `get_or_create_case_insensitive(model, field, value)` | Race-condition-safe iexact lookup with IntegrityError fallback |
 | `_clean_value(value, field_type)` | Strips null strings, fixes encoding, handles ranges/inequalities |
@@ -166,7 +166,7 @@ docker compose exec web python manage.py compute_properties
 1. **Read this file first**
 2. Edit files inside `C:\Users\Arghya\Downloads\Projects\`
 3. Run `python manage.py check` to catch Django-level errors before committing
-4. Stage specific files — **NEVER `git add .`** (the root contains personal files)
+4. Stage specific files - **NEVER `git add .`** (the root contains personal files)
 5. Commit and push:
    ```bash
    cd "C:/Users/Arghya/Downloads/Projects"
@@ -215,7 +215,7 @@ docker compose restart web             # nginx + db stay up; only web restarts
 
 | Variable | Purpose |
 |----------|---------|
-| `DATABASE_URL` | Postgres connection string — `postgres://user:pass@db:5432/phytosynergy_db` |
+| `DATABASE_URL` | Postgres connection string - `postgres://user:pass@db:5432/phytosynergy_db` |
 | `DJANGO_SECRET_KEY` | Django secret key |
 | `DEBUG` | `0` for production, `1` for dev |
 | `ALLOWED_HOSTS` | Comma-separated; include server IP, `localhost`, ngrok wildcard |
@@ -223,7 +223,7 @@ docker compose restart web             # nginx + db stay up; only web restarts
 
 ---
 
-## ❌ MISTAKES LOG — What NOT To Do
+## ❌ MISTAKES LOG - What NOT To Do
 
 ### 1. NEVER call `enrich_phytochemical()` inside a request that processes multiple rows
 - **What happened (2026-04-17):** 30-row XLSX import triggered ~46 s of PubChem/ClassyFire HTTP calls per row inside the gunicorn worker. Single worker blocked → site froze for all users for ~23 minutes.
@@ -236,7 +236,7 @@ docker compose restart web             # nginx + db stay up; only web restarts
 - **Rule:** Always set `--workers` explicitly. Rule of thumb: `2 × CPU_count + 1`.
 
 ### 3. NEVER use `git add .` or `git add -A` from the project root without checking `git status` first
-- The working directory is inside `C:\Users\Arghya\Downloads\Projects\` — check `git status` carefully before staging.
+- The working directory is inside `C:\Users\Arghya\Downloads\Projects\` - check `git status` carefully before staging.
 
 ### 4. ALWAYS wrap multi-step DB operations in `transaction.atomic()`
 - Without it, a partially-completed loop leaves orphan FK records that are hard to clean up.
@@ -245,12 +245,17 @@ docker compose restart web             # nginx + db stay up; only web restarts
 - `requirements.txt` changes are only picked up on `docker compose build --no-cache web`.
 - `docker compose restart web` does NOT reinstall packages.
 
+### 6. NEVER use the em dash character "-" in any file
+- **Rule:** Always use a plain hyphen `-` instead of the em dash `-` in all templates, CSS, Python, and CLAUDE.md files.
+- **Applies to:** titles, comments, labels, descriptions - everywhere in the project source files.
+
 ---
 
 ## Changelog
 
 | Date | Commit | Description |
 |------|--------|-------------|
+| 2026-04-26 | - | Replace all em dashes with hyphens across templates, CSS, Python files; add rule #6 to CLAUDE.md |
 | 2026-04-17 | `71263e3` | Fix bulk import freeze: remove in-request PubChem enrichment, add `transaction.atomic()`, harden gunicorn (--workers 3 --timeout 120) |
 | 2026-04-17 | `8b94cd6` | Fix bulk import to accept XLSX + CSV, clean null strings / encoding, COLUMN_MAP aliases, colour-coded preview, duplicate detection |
 | 2026-04-17 | `c820240` | Add bulk CSV import with strict MIC/FIC validation |

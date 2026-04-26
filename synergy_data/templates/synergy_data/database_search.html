@@ -172,19 +172,19 @@
 
                 <!-- MIC Antibiotic -->
                 <div class="rc-data-point">
-                    <span class="rc-value">{% if experiment.mic_abx_in_combo %}{{ experiment.mic_abx_in_combo|floatformat:2 }}{% else %}—{% endif %}</span>
+                    <span class="rc-value">{% if experiment.mic_abx_in_combo %}{{ experiment.mic_abx_in_combo|floatformat:2 }}{% else %}-{% endif %}</span>
                     <span class="rc-label">MIC Abx Combo</span>
                 </div>
 
                 <!-- MIC Phytochemical -->
                 <div class="rc-data-point">
-                    <span class="rc-value">{% if experiment.mic_phyto_in_combo %}{{ experiment.mic_phyto_in_combo|floatformat:2 }}{% else %}—{% endif %}</span>
+                    <span class="rc-value">{% if experiment.mic_phyto_in_combo %}{{ experiment.mic_phyto_in_combo|floatformat:2 }}{% else %}-{% endif %}</span>
                     <span class="rc-label">MIC Phyto Combo</span>
                 </div>
 
                 <!-- Publication Year -->
                 <div class="rc-data-point">
-                    <span class="rc-value">{% if experiment.source.publication_year %}{{ experiment.source.publication_year }}{% else %}—{% endif %}</span>
+                    <span class="rc-value">{% if experiment.source.publication_year %}{{ experiment.source.publication_year }}{% else %}-{% endif %}</span>
                     <span class="rc-label">Year</span>
                 </div>
 
