@@ -7,11 +7,12 @@
 
 ## Project Overview
 
-**App:** PhytoSynergyDB - curated database of phytochemical–antibiotic synergy experiments against ESKAPE pathogens.
+**App:** PhytoSynergyDB - curated database of phytochemical-antibiotic synergy experiments against ESKAPE pathogens.
 **Stack:** Django 4.2 LTS · PostgreSQL 15 · Gunicorn · Nginx · Docker Compose · ngrok tunnel
 **Host:** Dell PowerEdge R730, 84 GB RAM (self-hosted, ngrok public URL)
 **Repo:** `https://github.com/argajitsarkr/phytosynergy-db-project.git`
-**Active branch:** `main`
+**Active branch:** `main` (only branch; `color-palette-redesign` was merged & deleted on 2026-04-30)
+**Server path:** `/home/mmilab/Desktop/Database/phytosynergy-project/` (NOT `~/phytosynergy-db-project`)
 
 ---
 
@@ -181,21 +182,32 @@ docker compose exec web python manage.py compute_properties
 
 ## Deploy Workflow (on the server)
 
+> **Server project path:** `/home/mmilab/Desktop/Database/phytosynergy-project/`
+> **CRITICAL:** The Django source code is BAKED INTO the `web` Docker image at build time (no bind-mount). `git pull` updates the host filesystem but NOT the running container. Every code change requires a rebuild - `docker compose restart web` alone will keep serving the OLD code.
+
 ```bash
-cd ~/phytosynergy-db-project           # adjust if path differs
+cd ~/Desktop/Database/phytosynergy-project
 git pull origin main
 
-# If requirements.txt or Dockerfile changed:
-docker compose down
+# ALWAYS rebuild the web image after a pull (code is baked in, not mounted):
+docker compose build web
+docker compose up -d web
+docker compose exec web python manage.py collectstatic --noinput
+docker compose restart nginx
+
+# If requirements.txt or Dockerfile changed, force a clean rebuild:
 docker compose build --no-cache web
-docker compose up -d
+docker compose up -d web
 
-# If only Python/template files changed (no new dependencies):
-docker compose restart web
-
-# Always run after deploy:
+# Verify:
 docker compose ps                      # all four services should be Up
 docker compose logs --tail=50 web      # check for startup errors
+docker compose exec web head -5 /app/staticfiles/synergy_data/css/custom.css   # confirm new CSS landed
+```
+
+**Data safety:** `docker compose build` and `docker compose up -d web` do NOT touch the `db` container or its volume. PostgreSQL data persists in a named volume independent of containers/images. Only `docker compose down -v` or `docker volume rm` would wipe the database. Optional pre-deploy backup:
+```bash
+docker compose exec db pg_dump -U <db_user> phytosynergy_db > ~/phytosynergy_backup_$(date +%F).sql
 ```
 
 **After any bulk import:**
@@ -245,9 +257,57 @@ docker compose restart web             # nginx + db stay up; only web restarts
 - `requirements.txt` changes are only picked up on `docker compose build --no-cache web`.
 - `docker compose restart web` does NOT reinstall packages.
 
-### 6. NEVER use the em dash character "-" in any file
-- **Rule:** Always use a plain hyphen `-` instead of the em dash `-` in all templates, CSS, Python, and CLAUDE.md files.
-- **Applies to:** titles, comments, labels, descriptions - everywhere in the project source files.
+### 6. HARD RULE - NEVER use em dashes (—) ANYWHERE
+- **Rule:** The em dash character `—` (U+2014) is BANNED in this project. Always use a plain ASCII hyphen `-` instead. No exceptions.
+- **Applies to:** EVERY file and EVERY surface - HTML templates, CSS, Python source, JS, Markdown, CLAUDE.md, CHANGELOG.md, DEPLOYMENT.md, commit messages, PR descriptions, page copy, button labels, comments, docstrings, alt text, meta tags, error messages, and any user-facing text rendered on the site.
+- **Also banned:** the en dash `–` (U+2013) - use `-` for ranges too (e.g. `32-64`, not `32–64`).
+- **Why:** Em dashes break grep, look like AI-generated output, and have caused encoding corruption in CSV/XLSX uploads.
+- **How to check before committing:**
+  ```bash
+  grep -rn $'—\|–' --include="*.py" --include="*.html" --include="*.css" --include="*.md" --include="*.js" .
+  ```
+  Should return zero results. If anything matches, replace with `-` before committing.
+
+### 7. CRITICAL - Code is baked into the Docker image; `restart` does NOT pick up new code
+- **What happened (2026-04-30):** After `git pull` on the server, ran `docker compose restart web` and the navbar redesign did not appear. The web container had been running for 13 days off an image built before the pull. `git pull` updated the host source but the container kept serving its baked-in copy.
+- **Fix:** Always `docker compose build web && docker compose up -d web` after a pull. `restart` only restarts the same image.
+- **Rule:** ANY code/template/static change requires `build` + `up -d`, plus `collectstatic` for static files. See Deploy Workflow above.
+
+### 8. After deploying static file changes, always run `collectstatic` AND restart nginx
+- nginx serves CSS/JS from the `staticfiles/` volume populated by `collectstatic`.
+- Skipping `collectstatic` means nginx keeps serving the old CSS even with a freshly-built web image.
+- Run `docker compose exec web python manage.py collectstatic --noinput && docker compose restart nginx` after every static asset change.
+
+### 9. Server project path is NOT what CLAUDE.md said before
+- **Real path:** `/home/mmilab/Desktop/Database/phytosynergy-project/`
+- **Wrong path** previously documented: `~/phytosynergy-db-project` (does not exist on the server).
+
+---
+
+## Typography (Navbar - GrantSetu style)
+
+The navigation bar uses the same font stack as the GrantSetu project for visual consistency:
+
+| Element | Font | Source |
+|---------|------|--------|
+| Brand wordmark (`.navbar-brand`) | **Inter** weight 900, uppercase | Google Fonts CDN |
+| Nav links, dropdown items, login button | **Roboto Mono** weight 600-700, uppercase, 13px, letter-spacing 0.06em | Google Fonts CDN |
+| Body / headings (rest of site) | Plus Jakarta Sans | Google Fonts CDN |
+
+CSS variables defined in `synergy_data/static/synergy_data/css/custom.css`:
+```css
+--font-nav-mono:    'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+--font-nav-display: 'Inter', system-ui, sans-serif;
+```
+Imported via the single Google Fonts URL at the top of `custom.css`. Do NOT add separate `<link>` tags in templates - keep all font loading in CSS.
+
+**Navbar visual spec (matches GrantSetu):**
+- 72 px tall, sticky top, white background
+- 2 px solid black bottom border
+- Brand: black uppercase Inter 900
+- Links: black Roboto Mono 600 uppercase 13px, hover -> red (`var(--primary)`)
+- Dropdown: 2px black border, rounded 12px, shadow
+- Login button: 2px black border, hover fills black
 
 ---
 
@@ -255,6 +315,8 @@ docker compose restart web             # nginx + db stay up; only web restarts
 
 | Date | Commit | Description |
 |------|--------|-------------|
+| 2026-04-30 | - | Apply GrantSetu navbar fonts (Inter + Roboto Mono); add Typography section + em-dash hard rule (#6 strengthened) + rules #7-9 (Docker rebuild required, collectstatic+nginx restart, server path) to CLAUDE.md |
+| 2026-04-30 | `651ebde` | Restyle navbar to GrantSetu look: 72px height, 2px black border, uppercase mono links, fast-forward `color-palette-redesign` into `main` and delete the redesign branch |
 | 2026-04-26 | - | Replace all em dashes with hyphens across templates, CSS, Python files; add rule #6 to CLAUDE.md |
 | 2026-04-17 | `71263e3` | Fix bulk import freeze: remove in-request PubChem enrichment, add `transaction.atomic()`, harden gunicorn (--workers 3 --timeout 120) |
 | 2026-04-17 | `8b94cd6` | Fix bulk import to accept XLSX + CSV, clean null strings / encoding, COLUMN_MAP aliases, colour-coded preview, duplicate detection |
