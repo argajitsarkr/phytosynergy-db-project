@@ -11,7 +11,7 @@
 **Stack:** Django 4.2 LTS · PostgreSQL 15 · Gunicorn · Nginx · Docker Compose · ngrok tunnel
 **Host:** Dell PowerEdge R730, 84 GB RAM (self-hosted, ngrok public URL)
 **Repo:** `https://github.com/argajitsarkr/phytosynergy-db-project.git`
-**Active branch:** `color-palette-redesign`
+**Active branch:** `main`
 
 ---
 
@@ -172,7 +172,7 @@ docker compose exec web python manage.py compute_properties
    cd "C:/Users/Arghya/Downloads/Projects"
    git add <specific files>
    git commit -m "descriptive message"
-   git push origin color-palette-redesign
+   git push origin main
    ```
 6. Deploy on the server (see **Deploy Workflow** below)
 7. Update the **Changelog** section at the bottom of this file
@@ -183,7 +183,7 @@ docker compose exec web python manage.py compute_properties
 
 ```bash
 cd ~/phytosynergy-db-project           # adjust if path differs
-git pull origin color-palette-redesign
+git pull origin main
 
 # If requirements.txt or Dockerfile changed:
 docker compose down
