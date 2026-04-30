@@ -315,6 +315,7 @@ Imported via the single Google Fonts URL at the top of `custom.css`. Do NOT add 
 
 | Date | Commit | Description |
 |------|--------|-------------|
+| 2026-05-01 | - | Rebuild home page in NUUK / GrantSetu editorial style (blue palette kept). Sections: left-aligned hero with label pill + giant display heading + 3 mini-stats; about with 2x2 hover-fill grid-band; ESKAPE pathogen cards refined; recent entries table in 2px black border; dark "Process" 4-cell band (added Cite & Share step); dark stats band (4 cols); FAQ accordion with schema.org JSON-LD; full-bleed primary-blue final CTA. New CSS classes: `.label-pill`, `.heading-display`, `.hero-nuuk`, `.btn-nuuk-primary/secondary/link/arrow`, `.section-band`, `.section-dark`, `.grid-band` (2x2 + 1x4), `.stats-dark-band`, `.faq-row`, `.cta-band`, `.btn-cta-white/outline-white`. New view context: `synergy_share`, `faq_data`. |
 | 2026-04-30 | - | Apply GrantSetu navbar fonts (Inter + Roboto Mono); add Typography section + em-dash hard rule (#6 strengthened) + rules #7-9 (Docker rebuild required, collectstatic+nginx restart, server path) to CLAUDE.md |
 | 2026-04-30 | `651ebde` | Restyle navbar to GrantSetu look: 72px height, 2px black border, uppercase mono links, fast-forward `color-palette-redesign` into `main` and delete the redesign branch |
 | 2026-04-26 | - | Replace all em dashes with hyphens across templates, CSS, Python files; add rule #6 to CLAUDE.md |

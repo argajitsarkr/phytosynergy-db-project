@@ -171,6 +171,41 @@ def home_page(request):
         'phytochemical', 'antibiotic', 'pathogen', 'source'
     ).order_by('-id')[:5]
 
+    # Synergy share for stats band
+    if synergy_entries_count > 0:
+        synergy_share = round(100.0 * synergy_confirmed_count / synergy_entries_count)
+    else:
+        synergy_share = 0
+
+    # FAQ entries (also emitted as schema.org JSON-LD in template)
+    faq_data = [
+        {'q': 'What is the FIC index?',
+         'a': 'The Fractional Inhibitory Concentration (FIC) index quantifies how two '
+              'antimicrobials interact. Values up to 0.5 indicate synergy, up to 1.0 '
+              'additive, up to 4.0 indifference, and above 4.0 antagonism.'},
+        {'q': 'How are entries curated?',
+         'a': 'Every record is extracted from a peer-reviewed publication with DOI or '
+              'PMID. We capture MIC values for each compound alone and in combination, '
+              'compute FIC, and record assay method, pathogen strain, and observed '
+              'mechanism of action.'},
+        {'q': 'Can I bulk-download the data?',
+         'a': 'Yes. The Download page exports any filtered subset (or the full database) '
+              'as CSV. Programmatic access is also available via the REST API at '
+              '/api/v1/experiments/.'},
+        {'q': 'How do I cite PhytoSynergyDB?',
+         'a': 'Cite the database URL plus the original publication DOI for each '
+              'experiment you reference. A formal citation entry will be issued on the '
+              'first major release; until then, please cite by URL and access date.'},
+        {'q': 'Is the API rate-limited?',
+         'a': 'The public API is rate-limited per IP at a research-friendly threshold. '
+              'For computational pipelines or large-batch requests, contact us so we '
+              'can issue a higher-limit token.'},
+        {'q': 'How can I contribute data?',
+         'a': 'Sign up for a researcher account, then use Data Entry for single rows or '
+              'Bulk Import for an XLSX/CSV upload. Submissions are reviewed against the '
+              'original source before publication.'},
+    ]
+
     context = {
         'synergy_entries_count': synergy_entries_count,
         'phytochemical_count': phytochemical_count,
@@ -178,8 +213,10 @@ def home_page(request):
         'source_count': source_count,
         'eskape_pathogen_count': eskape_pathogen_count,
         'synergy_confirmed_count': synergy_confirmed_count,
+        'synergy_share': synergy_share,
         'eskape_data': eskape_data,
         'recent_entries': recent_entries,
+        'faq_data': faq_data,
     }
     return render(request, 'synergy_data/home.html', context)
 
