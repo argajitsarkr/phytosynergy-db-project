@@ -5,33 +5,86 @@
 
 {% block content %}
 
-<!-- Section 1: Hero Section -->
-<section class="hero-section">
+<!-- Section 1: Hero (PlantZone-style mint panel) -->
+<section class="hero-section hero-bubbly">
     <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-10 text-center">
-                <h1>Phytochemical-Antibiotic<br>Synergy Database</h1>
-                <p class="tagline">
-                    A curated knowledgebase for phytochemical-antibiotic synergy data against
-                    ESKAPE pathogens - accelerating antimicrobial resistance research.
-                </p>
-
-                <!-- Integrated Search Bar -->
-                <form action="{% url 'database_search' %}" method="get" class="hero-search-form">
-                    <div class="hero-search-wrapper">
-                        <i class="fas fa-search hero-search-icon"></i>
-                        <input type="text" name="query" class="hero-search-input" placeholder="Search by phytochemical, antibiotic, or pathogen...">
-                        <button type="submit" class="hero-search-btn">Search</button>
+        <div class="hero-panel">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-7">
+                    <h1 class="hero-heading">
+                        Phytochemical-Antibiotic<br>
+                        <span class="hero-accent">Synergy</span> Database
+                    </h1>
+                    <p class="tagline">
+                        A curated knowledgebase for phytochemical-antibiotic synergy data against
+                        ESKAPE pathogens - accelerating antimicrobial resistance research.
+                    </p>
+                    <div class="hero-cta-row">
+                        <a href="{% url 'database_search' %}" class="btn-pill-primary">
+                            Explore Database
+                        </a>
+                        <a href="#how-to-use" class="watch-link">
+                            <span class="play-circle"><i class="fas fa-play"></i></span>
+                            Watch How It Works
+                        </a>
                     </div>
-                </form>
+                </div>
+                <div class="col-lg-5">
+                    <div class="hero-visual-spacer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
-                <div class="d-flex justify-content-center gap-3 mt-4">
-                    <a href="{% url 'database_search' %}?query=" class="btn btn-cta-primary btn-lg">
-                        <i class="fas fa-database me-2"></i>Browse All Entries
-                    </a>
-                    <a href="{% url 'about' %}" class="btn btn-cta-outline btn-lg">
-                        Learn More
-                    </a>
+<!-- Section 1b: Why Phytochemical Synergy Matters (carousel) -->
+<section class="why-synergy-section">
+    <div class="container">
+        <div class="why-panel">
+            <div class="why-header">
+                <h2>Why Phytochemical Synergy Matters
+                    <i class="fas fa-leaf why-leaf"></i>
+                </h2>
+                <p class="why-sub">
+                    Curated evidence on plant compounds that restore or amplify antibiotic
+                    activity against drug-resistant ESKAPE pathogens.
+                </p>
+            </div>
+
+            <div class="why-arrow-group">
+                <button class="why-arrow why-arrow-prev" type="button"
+                        data-bs-target="#whyCarousel" data-bs-slide="prev"
+                        aria-label="Previous">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="why-arrow why-arrow-next" type="button"
+                        data-bs-target="#whyCarousel" data-bs-slide="next"
+                        aria-label="Next">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+
+            <div id="whyCarousel" class="carousel slide" data-bs-ride="false" data-bs-interval="false">
+                <div class="carousel-inner">
+                    {% for group in why_synergy_card_groups %}
+                    <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                        <div class="row g-3">
+                            {% for card in group %}
+                            <div class="col-md-6">
+                                <div class="why-card">
+                                    <div class="why-card-icon">
+                                        <i class="fas {{ card.icon }}"></i>
+                                    </div>
+                                    <div class="why-card-body">
+                                        <h4>{{ card.title }}</h4>
+                                        <p>{{ card.desc }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -78,9 +131,9 @@
                 <h2 class="section-title text-start">The pharmaceutical knowledgebase engineered to power your next discovery</h2>
                 <p>
                     Antimicrobial resistance (AMR) is one of the greatest threats to global health. The ESKAPE pathogens
-                    &mdash; <em>Enterococcus faecium</em>, <em>Staphylococcus aureus</em>, <em>Klebsiella pneumoniae</em>,
+                    - <em>Enterococcus faecium</em>, <em>Staphylococcus aureus</em>, <em>Klebsiella pneumoniae</em>,
                     <em>Acinetobacter baumannii</em>, <em>Pseudomonas aeruginosa</em>, and <em>Enterobacter</em> spp.
-                    &mdash; are responsible for the majority of hospital-acquired infections worldwide.
+                    - are responsible for the majority of hospital-acquired infections worldwide.
                 </p>
                 <p>
                     PhytoSynergyDB is the first curated database dedicated to cataloguing synergistic interactions
@@ -221,7 +274,7 @@
 </section>
 
 <!-- Section 6: How to Use -->
-<section class="section" style="background: var(--bg-section);">
+<section class="section" id="how-to-use" style="background: var(--bg-section);">
     <div class="container">
         <h2 class="section-title">From Data to Discovery in Three Steps</h2>
         <p class="section-subtitle">

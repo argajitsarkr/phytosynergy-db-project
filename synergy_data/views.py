@@ -171,6 +171,26 @@ def home_page(request):
         'phytochemical', 'antibiotic', 'pathogen', 'source'
     ).order_by('-id')[:5]
 
+    # "Why Synergy Matters" carousel - static content, grouped 2-per-slide
+    why_synergy_cards = [
+        {'icon': 'fa-virus', 'title': 'AMR Crisis',
+         'desc': 'ESKAPE pathogens drive a growing share of hospital deaths. '
+                 'Phytochemical adjuvants offer a fresh axis against resistance.'},
+        {'icon': 'fa-link', 'title': 'Synergistic Combos',
+         'desc': 'FIC index 0.5 or lower confirms synergy - lower antibiotic '
+                 'doses, fewer side effects, slower resistance.'},
+        {'icon': 'fa-leaf', 'title': 'Curated Evidence',
+         'desc': 'Every entry traces back to a peer-reviewed source with DOI, '
+                 'MIC values, FIC, and assay method.'},
+        {'icon': 'fa-database', 'title': 'Open & Searchable',
+         'desc': 'Filter by pathogen, antibiotic class, mechanism, or compound. '
+                 'Export anything as CSV, query the REST API.'},
+    ]
+    why_synergy_card_groups = [
+        why_synergy_cards[i:i + 2]
+        for i in range(0, len(why_synergy_cards), 2)
+    ]
+
     context = {
         'synergy_entries_count': synergy_entries_count,
         'phytochemical_count': phytochemical_count,
@@ -180,6 +200,7 @@ def home_page(request):
         'synergy_confirmed_count': synergy_confirmed_count,
         'eskape_data': eskape_data,
         'recent_entries': recent_entries,
+        'why_synergy_card_groups': why_synergy_card_groups,
     }
     return render(request, 'synergy_data/home.html', context)
 
