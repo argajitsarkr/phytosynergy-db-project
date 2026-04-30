@@ -1320,3 +1320,259 @@ a:hover { color: var(--accent); }
     }
     .filter-section { padding: 0.85rem; }
 }
+
+
+/* ============================================================
+   GRANTSETU REFINEMENT LAYER (editorial / NUUK-inspired)
+   Applied OVER the original blue palette - colors unchanged,
+   only typography, borders, spacing, and motion are refined.
+   ============================================================ */
+
+/* -- Editorial headings: heavy, tight tracking -- */
+h1, h2, h3, h4, h5, h6,
+.section-title,
+.hero-section h1,
+.about-section .section-title,
+.stat-number,
+.footer-brand {
+    font-family: var(--font-nav-display), 'Inter', 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+
+.hero-section h1,
+.section-title {
+    font-weight: 900;
+    letter-spacing: -0.03em;
+}
+
+/* -- Mono uppercase eyebrow / caption labels -- */
+.label-mono,
+.section-eyebrow,
+.stat-label,
+.footer-heading {
+    font-family: var(--font-nav-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--primary);
+}
+
+/* Reuse on tag pills, badges, table column headers */
+.tag-mono {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.7rem;
+    font-family: var(--font-nav-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--primary);
+    background: var(--primary-light);
+    border: 1.5px solid var(--primary);
+    border-radius: 9999px;
+}
+.tag-mono::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--primary);
+}
+
+/* -- Buttons: GrantSetu style (sharp, uppercase, mono) -- */
+.btn-primary,
+.btn,
+button.btn-primary,
+.search-category-btn,
+.hero-search-btn,
+button[type="submit"].btn-primary {
+    font-family: var(--font-nav-mono);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-radius: 8px !important;
+    border-width: 2px !important;
+    transition: all 0.2s ease;
+}
+
+.btn-primary,
+button.btn-primary {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: #ffffff !important;
+    padding: 0.65rem 1.4rem !important;
+}
+.btn-primary:hover,
+button.btn-primary:hover {
+    background-color: var(--primary-dark) !important;
+    border-color: var(--primary-dark) !important;
+    box-shadow: 0 8px 24px rgba(0,68,124,0.25);
+    transform: translateY(-1px);
+}
+
+.btn-outline-primary {
+    border: 2px solid #000000 !important;
+    color: #000000 !important;
+    background: transparent !important;
+    font-family: var(--font-nav-mono);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-radius: 8px !important;
+    padding: 0.6rem 1.3rem !important;
+}
+.btn-outline-primary:hover {
+    background: #000000 !important;
+    color: #ffffff !important;
+}
+
+/* -- Cards: 2px border, hover lift, sharp corners -- */
+.card,
+.about-info-card,
+.featured-card,
+.entry-card,
+.publication-card,
+.dashboard-card {
+    border: 2px solid var(--border-light) !important;
+    border-radius: 14px !important;
+    box-shadow: none;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+.card:hover,
+.about-info-card:hover,
+.featured-card:hover,
+.entry-card:hover,
+.publication-card:hover,
+.dashboard-card:hover {
+    border-color: #000000 !important;
+    box-shadow: 0 14px 32px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+}
+
+/* -- Hero: bigger display heading, mono eyebrow line -- */
+.hero-section h1 {
+    font-size: clamp(2.4rem, 4.5vw, 3.6rem);
+}
+.hero-section .tagline {
+    font-family: var(--font-nav-display), 'Inter', sans-serif;
+    font-weight: 500;
+}
+
+/* -- Stat bar: heavy display numbers, mono labels -- */
+.stat-number {
+    font-weight: 900;
+    font-size: clamp(2rem, 3vw, 2.6rem);
+    letter-spacing: -0.03em;
+    color: var(--primary);
+}
+.stat-label {
+    color: var(--text-secondary);
+    margin-top: 0.35rem;
+}
+.stat-divider {
+    background: var(--border-light);
+}
+
+/* -- Section dividers: 2px black accent rule -- */
+.section-divider,
+hr.section-rule {
+    border: 0;
+    border-top: 2px solid #000000;
+    margin: 3rem 0 2.5rem;
+    opacity: 1;
+}
+
+/* Optional decorative top accent for major sections */
+.section-eyebrow {
+    display: inline-block;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid #000000;
+    margin-bottom: 1rem;
+}
+
+/* -- Tables: editorial - black header bar, mono headers -- */
+.table thead th,
+table.dataTable thead th {
+    background: #000000 !important;
+    color: #ffffff !important;
+    font-family: var(--font-nav-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: 0;
+}
+.table tbody td,
+table.dataTable tbody td {
+    border-color: var(--border-light);
+}
+.table tbody tr:hover {
+    background: var(--primary-light);
+}
+
+/* -- Form inputs: 2px black border on focus -- */
+.form-control,
+.form-select,
+input[type="text"]:not(.search-bar-wrapper input),
+input[type="email"],
+input[type="number"],
+textarea,
+select {
+    border: 1.5px solid var(--border-medium);
+    border-radius: 8px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.form-control:focus,
+.form-select:focus,
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: #000000 !important;
+    box-shadow: 0 0 0 3px rgba(0,68,124,0.12) !important;
+    outline: none;
+}
+
+/* -- Footer: uppercase mono headings, 2px black top divider -- */
+.site-footer {
+    border-top: 2px solid #000000;
+}
+.footer-heading {
+    font-family: var(--font-nav-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    margin-bottom: 0.9rem;
+}
+.footer-brand {
+    font-family: var(--font-nav-display), 'Inter', sans-serif;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+}
+.footer-links a {
+    transition: color 0.15s ease, padding-left 0.15s ease;
+}
+.footer-links a:hover {
+    color: var(--primary);
+    padding-left: 4px;
+}
+
+/* -- Selection color -- */
+::selection {
+    background: var(--primary);
+    color: #ffffff;
+}
+
+/* -- Smooth focus ring globally -- */
+*:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
