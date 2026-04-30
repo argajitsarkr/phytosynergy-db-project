@@ -284,26 +284,6 @@ docker compose restart web             # nginx + db stay up; only web restarts
 
 ---
 
-## Palette (current - green, replaces earlier blue)
-
-| Token | Value | Use |
-|-------|-------|-----|
-| `--primary` | `#2E7D32` | Brand green (buttons, stat numbers, ESKAPE letter chips, table headers, links) |
-| `--primary-dark` | `#1B5E20` | Hover state for primary, hero-heading text |
-| `--primary-light` | `#E8F5E9` | Soft mint backgrounds, icon chips, tag pill bg |
-| `--primary-hover` | `#256A28` | Pressed/active hover |
-| `--accent` | `#6CC04A` | Leaf green (italic hero accent word, secondary highlights) |
-| `--accent-dark` | `#4FA22E` | Hover for accent |
-| `--accent-light` | `#F0F9EA` | Subtle accent backgrounds |
-| `--success` | `#43A047` | Synergy badge green (kept distinct from `--primary` so it doesn't disappear) |
-| `--warning` | `#e65100` | Additive badge (orange, unchanged) |
-| `--danger` | `#c62828` | Antagonism badge (red, unchanged) |
-| `--info` | `#0b7b9e` | Gram-negative badge (kept neutral teal so it stays distinguishable from gram-positive green) |
-
-The earlier blue palette (`#00447c` / `#0b7b9e`) is fully retired - do NOT reintroduce blue tokens.
-
----
-
 ## Typography (Navbar - GrantSetu style)
 
 The navigation bar uses the same font stack as the GrantSetu project for visual consistency:
@@ -335,7 +315,6 @@ Imported via the single Google Fonts URL at the top of `custom.css`. Do NOT add 
 
 | Date | Commit | Description |
 |------|--------|-------------|
-| 2026-05-01 | - | Site palette flipped from blue to green (#2E7D32 primary, #6CC04A accent, #43A047 synergy). New PlantZone-inspired bubbly hero with mint rounded panel, italic accent word, green pill CTA, and circular "Watch How It Works" play link. New "Why Phytochemical Synergy Matters" Bootstrap carousel section (2 cards per slide, prev/next square arrows). Replaced `&mdash;` HTML entities in about copy with hyphens. All existing data sections (stats, ESKAPE, recent entries, mission CTA) preserved and inherit new green tokens automatically. |
 | 2026-04-30 | - | Apply GrantSetu navbar fonts (Inter + Roboto Mono); add Typography section + em-dash hard rule (#6 strengthened) + rules #7-9 (Docker rebuild required, collectstatic+nginx restart, server path) to CLAUDE.md |
 | 2026-04-30 | `651ebde` | Restyle navbar to GrantSetu look: 72px height, 2px black border, uppercase mono links, fast-forward `color-palette-redesign` into `main` and delete the redesign branch |
 | 2026-04-26 | - | Replace all em dashes with hyphens across templates, CSS, Python files; add rule #6 to CLAUDE.md |
