@@ -1650,12 +1650,28 @@ select:focus {
    HERO (NUUK style)
    ============================================================ */
 .hero-nuuk {
-    background: #ffffff;
+    position: relative;
+    background:
+        linear-gradient(90deg,
+            rgba(255,255,255,0.96) 0%,
+            rgba(255,255,255,0.88) 45%,
+            rgba(255,255,255,0.55) 75%,
+            rgba(255,255,255,0.35) 100%),
+        url('../images/hero_background-green.jpg') right center / cover no-repeat;
     padding: 3.5rem 0 4.5rem;
     color: var(--text-primary);
     border-bottom: 2px solid #000000;
+    overflow: hidden;
 }
-.hero-nuuk-inner { max-width: 1200px; }
+.hero-nuuk-inner { max-width: 1200px; position: relative; z-index: 1; }
+
+@media (max-width: 767px) {
+    .hero-nuuk {
+        background:
+            linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.85)),
+            url('../images/hero_background-green.jpg') center / cover no-repeat;
+    }
+}
 
 .hero-display {
     font-size: clamp(2.1rem, 6vw, 5rem);
