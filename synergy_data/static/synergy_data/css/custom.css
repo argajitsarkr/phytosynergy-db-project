@@ -16,17 +16,17 @@
    1. DESIGN TOKENS - Black + Blue Palette
    ============================================================ */
 :root {
-    --primary: #00447c;
-    --primary-dark: #002756;
-    --primary-light: #e8f0f8;
-    --primary-hover: #003566;
+    --primary: #272757;
+    --primary-dark: #0F0E47;
+    --primary-light: #ECECF5;
+    --primary-hover: #505081;
 
-    --accent: #0b7b9e;
-    --accent-dark: #035b7a;
-    --accent-light: #e0f2f6;
+    --accent: #8686AC;
+    --accent-dark: #505081;
+    --accent-light: #E8E8F2;
 
-    --dark: #212121;
-    --darker: #0c0c0c;
+    --dark: #0F0E47;
+    --darker: #08072B;
 
     --gray-50: #f2f3f4;
     --gray-100: #eaeaea;
@@ -37,7 +37,7 @@
     --gray-600: #6b6963;
     --gray-700: #4a4944;
     --gray-800: #333231;
-    --gray-900: #212121;
+    --gray-900: #0F0E47;
 
     --success: #2e7d32;
     --success-bg: #e8f5e9;
@@ -48,22 +48,22 @@
     --danger: #c62828;
     --danger-bg: #ffebee;
     --danger-text: #b71c1c;
-    --info: #0b7b9e;
-    --info-bg: #e0f2f6;
-    --info-text: #035b7a;
+    --info: #505081;
+    --info-bg: #E8E8F2;
+    --info-text: #272757;
 
     --bg-white: #ffffff;
-    --bg-light: #f2f3f4;
-    --bg-section: #f2f3f4;
-    --bg-dark: #212121;
+    --bg-light: #F4F4F8;
+    --bg-section: #F4F4F8;
+    --bg-dark: #0F0E47;
 
-    --text-primary: #212121;
-    --text-secondary: #6b6963;
-    --text-muted: #8a8780;
+    --text-primary: #0F0E47;
+    --text-secondary: #505081;
+    --text-muted: #8686AC;
     --text-white: #ffffff;
 
-    --border-light: #eaeaea;
-    --border-medium: #dddace;
+    --border-light: #E5E5EE;
+    --border-medium: #C9C9DA;
 
     --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
     --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
@@ -2291,7 +2291,7 @@ select:focus {
 .rc-value {
     font-size: 1.05rem;
     font-weight: 800;
-    color: var(--primary, #0F2573);
+    color: var(--primary, #272757);
     line-height: 1.1;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.01em;
