@@ -138,13 +138,13 @@
             {% else %}
                 <h4>Search Results</h4>
             {% endif %}
-            {% if results %}
-                <p class="text-muted mb-0" style="font-size: 0.88rem;">Displaying <strong>all {{ results.count }}</strong> synergistic pairs found</p>
+            {% if total_results %}
+                <p class="text-muted mb-0" style="font-size: 0.88rem;">Showing <strong>{{ page_obj.start_index }}-{{ page_obj.end_index }}</strong> of <strong>{{ total_results }}</strong> synergistic pairs <span class="text-muted">(page {{ page_obj.number }} of {{ paginator.num_pages }})</span></p>
             {% endif %}
         </div>
-        {% if results %}
+        {% if total_results %}
             <div class="d-flex gap-2">
-                <span class="badge results-count-badge synergy-badge">{{ results.count }} results</span>
+                <span class="badge results-count-badge synergy-badge">{{ total_results }} results</span>
                 <a href="{% url 'download_data' %}{% if search_query %}?query={{ search_query }}{% endif %}" class="btn btn-sm btn-outline-custom">
                     <i class="fas fa-download me-1"></i>Export CSV
                 </a>
@@ -297,6 +297,39 @@
             </div>
         {% endfor %}
     </div>
+
+    {% if paginator.num_pages > 1 %}
+    <nav class="psdb-pagination" aria-label="Results pagination">
+        <ul class="psdb-pagination-list">
+            {% if page_obj.has_previous %}
+                <li><a href="?{% if preserved_qs %}{{ preserved_qs }}&{% endif %}page=1" class="psdb-page-link" aria-label="First">&laquo;</a></li>
+                <li><a href="?{% if preserved_qs %}{{ preserved_qs }}&{% endif %}page={{ page_obj.previous_page_number }}" class="psdb-page-link" aria-label="Previous">&lsaquo;</a></li>
+            {% else %}
+                <li><span class="psdb-page-link disabled">&laquo;</span></li>
+                <li><span class="psdb-page-link disabled">&lsaquo;</span></li>
+            {% endif %}
+
+            {% for num in paginator.page_range %}
+                {% if num == page_obj.number %}
+                    <li><span class="psdb-page-link active">{{ num }}</span></li>
+                {% elif num == 1 or num == paginator.num_pages or num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
+                    <li><a href="?{% if preserved_qs %}{{ preserved_qs }}&{% endif %}page={{ num }}" class="psdb-page-link">{{ num }}</a></li>
+                {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+                    <li><span class="psdb-page-ellipsis">&hellip;</span></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li><a href="?{% if preserved_qs %}{{ preserved_qs }}&{% endif %}page={{ page_obj.next_page_number }}" class="psdb-page-link" aria-label="Next">&rsaquo;</a></li>
+                <li><a href="?{% if preserved_qs %}{{ preserved_qs }}&{% endif %}page={{ paginator.num_pages }}" class="psdb-page-link" aria-label="Last">&raquo;</a></li>
+            {% else %}
+                <li><span class="psdb-page-link disabled">&rsaquo;</span></li>
+                <li><span class="psdb-page-link disabled">&raquo;</span></li>
+            {% endif %}
+        </ul>
+        <div class="psdb-pagination-meta">Page {{ page_obj.number }} of {{ paginator.num_pages }} - 25 per page</div>
+    </nav>
+    {% endif %}
 </div>
 
 <!-- 3D Molecular Viewer Modal -->

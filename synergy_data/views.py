@@ -8,6 +8,7 @@ from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import IntegrityError, transaction
 from django.db.models import Avg, Count, Q
 from django.http import HttpResponse, JsonResponse
@@ -239,6 +240,23 @@ def database_search_page(request):
     ).all()
 
     results = _apply_search_filters(results, request)
+    results = results.order_by('-id')
+    total_results = results.count()
+
+    paginator = Paginator(results, 25)
+    page_param = request.GET.get('page')
+    try:
+        page_obj = paginator.page(page_param)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+
+    # Build a querystring with all current filters except `page`, so pagination
+    # links can preserve filters.
+    qd = request.GET.copy()
+    qd.pop('page', None)
+    preserved_qs = qd.urlencode()
 
     # Get distinct chemical classes for filter dropdown
     chemical_classes = (
@@ -250,7 +268,11 @@ def database_search_page(request):
     )
 
     context = {
-        'results': results,
+        'results': page_obj.object_list,
+        'page_obj': page_obj,
+        'paginator': paginator,
+        'total_results': total_results,
+        'preserved_qs': preserved_qs,
         'pathogens': Pathogen.objects.order_by('genus', 'species').all(),
         'antibiotics': Antibiotic.objects.order_by('antibiotic_name').all(),
         'mechanisms': SynergyExperiment.objects.values_list(

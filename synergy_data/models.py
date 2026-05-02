@@ -166,6 +166,7 @@ class Plant(models.Model):
     # Model to store a single view count for the entire site.
 class SiteViewCounter(models.Model):
     count = models.PositiveIntegerField(default=0, help_text="The total number of page views for the site.")
+    unique_visitors = models.PositiveIntegerField(default=0, help_text="Total number of unique sessions seen.")
 
     def __str__(self):
         return str(self.count)
