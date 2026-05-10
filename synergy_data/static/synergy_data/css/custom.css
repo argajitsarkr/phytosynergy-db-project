@@ -2729,3 +2729,54 @@ h1, h2, h3, h4, h5, h6 { color: var(--rzp-ink); letter-spacing: -0.01em; }
 .pathogen-card a:hover {
     color: var(--rzp-blue-hover) !important;
 }
+
+/* ============================================================
+   HERO SPLIT LAYOUT (Razorpay-style)
+   Replace the washed-out full-bleed background with a clean
+   white text column on the left + a bounded image card on the
+   right. Falls back to no image on small screens.
+   ============================================================ */
+.hero-nuuk {
+    background: #ffffff !important;
+    padding: clamp(3rem, 6vw, 5.5rem) 0 clamp(3rem, 5vw, 4.5rem) !important;
+    overflow: hidden;
+    position: relative;
+}
+.hero-nuuk-inner {
+    position: relative;
+    z-index: 2;
+    max-width: 1200px;
+    /* Constrain text content to the left ~58% so it never overlaps
+       the image card on the right. */
+    padding-right: clamp(0px, 42vw, 560px);
+}
+.hero-nuuk::after {
+    content: "";
+    position: absolute;
+    top: clamp(2rem, 4vw, 3rem);
+    bottom: clamp(2rem, 4vw, 3rem);
+    right: clamp(1rem, 4vw, 3rem);
+    width: clamp(280px, 38vw, 520px);
+    background:
+        linear-gradient(135deg,
+            rgba(30,64,175,0.18) 0%,
+            rgba(46,188,116,0.12) 100%),
+        url('../images/hero_background-green.jpg') center / cover no-repeat;
+    border-radius: 20px;
+    box-shadow: 0 12px 32px rgba(13,35,102,.12);
+    z-index: 1;
+}
+.hero-nuuk .hero-display { color: var(--rzp-ink) !important; }
+.hero-nuuk .hero-sub { color: var(--rzp-body) !important; }
+
+@media (max-width: 991px) {
+    .hero-nuuk-inner { padding-right: 0; }
+    .hero-nuuk::after {
+        position: relative;
+        display: block;
+        top: auto; bottom: auto; right: auto;
+        width: auto;
+        height: 220px;
+        margin: 2rem 1rem 0;
+    }
+}
