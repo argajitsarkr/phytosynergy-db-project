@@ -2614,3 +2614,69 @@ h1, h2, h3, h4, h5, h6 { color: var(--rzp-ink); letter-spacing: -0.01em; }
 @media (max-width: 768px) {
     .reco-strip { border-radius: 16px; }
 }
+
+/* ============================================================
+   RAZORPAY-STYLE TWEAKS v2
+   - Darker accent blue for in-heading words (Razorpay reserves
+     bright blue for buttons; headings use a deeper royal tone).
+   - Tighten the dark "Process" band so cards and stats don't
+     float in empty space.
+   ============================================================ */
+:root {
+    --rzp-blue-deep: #1E40AF;   /* royal blue used for accent words inside headings */
+    --rzp-blue: #2563EB;        /* slightly deeper than #3395FF for buttons */
+    --rzp-blue-hover: #1E40AF;
+    --rzp-blue-tint: #E6EEFF;
+}
+
+/* Heading accent words (e.g. "Synergy", "discovery") use the deeper royal tone */
+.hero-accent,
+.heading-display .text-primary-accent,
+.text-primary-accent {
+    color: var(--rzp-blue-deep) !important;
+}
+
+/* Label-pill stays soft-tinted but with deeper text */
+.label-pill { color: var(--rzp-blue-deep) !important; }
+.label-pill-on-dark {
+    background: rgba(255,255,255,.08) !important;
+    color: #93B4FF !important;
+}
+
+/* Tighten the dark Process band: less vertical air, smaller cell padding,
+   and immediately abut the stats band below it (no double padding stack). */
+.section-dark {
+    padding: clamp(2.5rem, 5vw, 4rem) 0 !important;
+}
+.section-dark .heading-display.section-heading {
+    margin-bottom: 1.75rem !important;
+    font-size: clamp(2rem, 4.5vw, 3.25rem);
+    line-height: 1.05;
+}
+.section-dark .label-pill { margin-bottom: 1rem !important; }
+.grid-band-dark .grid-cell,
+.grid-band-dark .grid-cell-dark {
+    padding: 1.5rem 1.5rem !important;
+}
+.grid-band-dark .grid-cell h3,
+.grid-band-dark .grid-cell-dark h3 {
+    margin-bottom: .35rem;
+}
+.grid-band-dark .grid-cell p,
+.grid-band-dark .grid-cell-dark p {
+    margin-bottom: 0;
+    font-size: .92rem;
+    line-height: 1.5;
+}
+
+/* Stats band: shrink padding so the dark slab feels continuous with Process,
+   not like a second large block of air. */
+.stats-dark-band {
+    padding: clamp(2rem, 4vw, 3rem) 0 !important;
+}
+
+/* Pull the stats band tight against the process band above it */
+.section-dark + .stats-dark-band {
+    margin-top: 0;
+    border-top: 1px solid rgba(255,255,255,.08);
+}
