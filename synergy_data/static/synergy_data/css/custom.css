@@ -2680,3 +2680,27 @@ h1, h2, h3, h4, h5, h6 { color: var(--rzp-ink); letter-spacing: -0.01em; }
     margin-top: 0;
     border-top: 1px solid rgba(255,255,255,.08);
 }
+
+/* ============================================================
+   RAZORPAY GREEN ACCENT
+   Razorpay uses a vibrant green as a second accent inside headings
+   ("for developers by developers", "e-commerce business"). One
+   accent per section, contrasting with the primary blue.
+   ============================================================ */
+:root {
+    --rzp-green: #2EBC74;
+    --rzp-green-deep: #1F9D5C;
+    --rzp-green-tint: #E6F7EE;
+}
+
+.text-accent-green { color: var(--rzp-green) !important; }
+
+/* Hero "Synergy" word adopts the green accent so the home heading
+   reads as blue + green two-tone, mirroring Razorpay's pattern. */
+.hero-accent { color: var(--rzp-green) !important; }
+
+/* On dark backgrounds the green needs to stay punchy */
+.section-dark .text-accent-green,
+.section-dark .hero-accent {
+    color: #4CD18E !important;
+}
