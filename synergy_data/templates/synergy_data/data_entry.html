@@ -30,6 +30,30 @@
         </div>
         {% endif %}
 
+        {% if known_paper_warning %}
+        <div class="alert alert-warning" role="alert">
+            <h6 class="alert-heading mb-2">
+                <i class="fas fa-info-circle me-2"></i>This paper is already in the database
+            </h6>
+            <div class="small mb-2">
+                {% if known_paper_warning.title %}
+                    <strong>{{ known_paper_warning.title }}</strong><br>
+                {% endif %}
+                <code>{{ known_paper_warning.doi }}</code> &middot;
+                <strong>{{ known_paper_warning.existing_count }}</strong>
+                experiment{{ known_paper_warning.existing_count|pluralize }} already on file.
+            </div>
+            <div class="small mb-0">
+                If this is a new experiment from the same paper (different compound, antibiotic, or pathogen), proceed.
+                If you're re-entering an existing one, please cancel.
+            </div>
+            <input type="hidden" name="confirm_known_paper" value="1">
+            <button type="submit" class="btn btn-warning btn-sm mt-2">
+                <i class="fas fa-check me-1"></i> Yes, add this experiment
+            </button>
+        </div>
+        {% endif %}
+
         <!-- Section 1: Source & Entities -->
         <div class="data-entry-card mb-4">
             <div class="card-header">

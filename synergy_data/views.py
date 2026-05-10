@@ -102,6 +102,35 @@ def get_or_create_case_insensitive(model, field_name, value):
             return model.objects.get(**lookup)
 
 
+def _normalize_doi(doi):
+    """Normalize DOI for case-insensitive comparison: strip URL prefix, lowercase, trim."""
+    if not doi:
+        return ''
+    return re.sub(r'^https?://(dx\.)?doi\.org/', '', str(doi).strip().lower())
+
+
+def _lookup_existing_paper(doi=None, pmid=None, title=None):
+    """Return the first Source whose DOI / PMID / title matches the given paper, or None.
+
+    DOI match is case-insensitive and ignores URL prefixes; title is iexact.
+    Used to warn curators when a paper they're submitting is already in the DB.
+    """
+    ndoi = _normalize_doi(doi)
+    if ndoi:
+        for s in Source.objects.exclude(doi__isnull=True).exclude(doi=''):
+            if _normalize_doi(s.doi) == ndoi:
+                return s
+    if pmid:
+        s = Source.objects.filter(pmid=str(pmid).strip()).first()
+        if s:
+            return s
+    if title:
+        s = Source.objects.filter(article_title__iexact=str(title).strip()).first()
+        if s:
+            return s
+    return None
+
+
 def _apply_search_filters(results, request):
     """Apply all search/filter parameters from the request to the queryset."""
     query = request.GET.get('query')
@@ -303,6 +332,28 @@ def data_entry_view(request):
 
             # 1. Resolve Source (get_or_create by DOI, update metadata)
             doi = cd['source_doi'].strip()
+
+            # Known-paper warning: if this DOI/title already exists and the
+            # curator hasn't acknowledged it yet, re-render the form with a
+            # yellow banner showing how many experiments are already on file.
+            if request.POST.get('confirm_known_paper') != '1':
+                existing_src = _lookup_existing_paper(
+                    doi=doi,
+                    pmid=cd.get('pmid'),
+                    title=cd.get('article_title'),
+                )
+                if existing_src is not None:
+                    existing_count = SynergyExperiment.objects.filter(
+                        source=existing_src
+                    ).count()
+                    return render(request, 'synergy_data/data_entry.html', {
+                        'form': form,
+                        'known_paper_warning': {
+                            'doi': existing_src.doi or '',
+                            'title': existing_src.article_title or '',
+                            'existing_count': existing_count,
+                        },
+                    })
             source, _ = Source.objects.get_or_create(doi=doi)
             # Update source metadata if provided (fills blanks)
             source_updated = False
@@ -1021,6 +1072,45 @@ def bulk_import_view(request):
                     'data': payload_data,
                 })
 
+        # Known-papers summary: which papers in this upload are already in the DB?
+        # Group importable rows by paper key (normalized DOI, falling back to
+        # PMID or article title). For each paper, count rows in this upload and
+        # how many experiments already exist on file. Surfaced in the preview
+        # template as a yellow banner so curators can sanity-check before
+        # confirming.
+        paper_buckets = {}
+        for s in staged:
+            if s['status'] == 'error':
+                continue
+            d = s['data']
+            key = (
+                _normalize_doi(d.get('source_doi'))
+                or (d.get('pmid') or '').strip()
+                or (d.get('article_title') or '').strip().lower()
+            )
+            if not key:
+                continue
+            paper_buckets.setdefault(key, {
+                'doi': d.get('source_doi') or '',
+                'title': d.get('article_title') or '',
+                'rows_in_upload': 0,
+            })['rows_in_upload'] += 1
+
+        known_papers = []
+        for key, info in paper_buckets.items():
+            existing = _lookup_existing_paper(
+                doi=info['doi'], title=info['title']
+            )
+            if existing is None:
+                continue
+            existing_count = SynergyExperiment.objects.filter(source=existing).count()
+            known_papers.append({
+                'doi': existing.doi or info['doi'],
+                'title': existing.article_title or info['title'],
+                'existing_count': existing_count,
+                'rows_in_upload': info['rows_in_upload'],
+            })
+
         context.update({
             'preview_rows': preview_rows,
             'valid_count': valid_count,
@@ -1029,6 +1119,7 @@ def bulk_import_view(request):
             'importable_count': valid_count + warning_count,
             'total_count': len(staged),
             'import_data_json': json.dumps(import_payload, default=str),
+            'known_papers': known_papers,
         })
 
     return render(request, 'synergy_data/bulk_import.html', context)

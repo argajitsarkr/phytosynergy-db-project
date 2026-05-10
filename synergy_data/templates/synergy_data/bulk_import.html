@@ -163,6 +163,29 @@
         Total parsed: {{ total_count }}.
     </div>
 
+    {% if known_papers %}
+    <div class="alert alert-warning" role="alert">
+        <h6 class="alert-heading mb-2">
+            <i class="fas fa-info-circle me-2"></i>
+            {{ known_papers|length }} paper{{ known_papers|length|pluralize }} in this upload already exist{{ known_papers|length|pluralize:"s," }} in the database
+        </h6>
+        <div class="small mb-2">
+            Rows from already-known papers will still be imported (real replicates from the same paper are valid).
+            Byte-identical re-entries are skipped automatically. Review the list below before confirming.
+        </div>
+        <ul class="mb-0 small" style="padding-left: 1.25rem;">
+            {% for p in known_papers %}
+            <li>
+                {% if p.title %}<strong>{{ p.title }}</strong> &middot; {% endif %}
+                <code>{{ p.doi }}</code>
+                - <strong>{{ p.existing_count }}</strong> existing,
+                <strong>{{ p.rows_in_upload }}</strong> in this upload
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
     <!-- Rows preview table -->
     <div class="data-entry-card mb-4">
         <div class="card-header">
