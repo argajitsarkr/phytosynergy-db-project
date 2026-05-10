@@ -2704,3 +2704,28 @@ h1, h2, h3, h4, h5, h6 { color: var(--rzp-ink); letter-spacing: -0.01em; }
 .section-dark .hero-accent {
     color: #4CD18E !important;
 }
+
+/* ESKAPE pathogen cards: deep royal blue badge + gram pills + explore link */
+.pathogen-letter,
+.pathogen-card-nuuk .pathogen-letter {
+    background: var(--rzp-blue-deep) !important;
+    color: #fff !important;
+}
+.bg-gram-positive,
+.bg-gram-negative,
+.pathogen-card-nuuk .bg-gram-positive,
+.pathogen-card-nuuk .bg-gram-negative {
+    background-color: var(--rzp-blue-tint) !important;
+    color: var(--rzp-blue-deep) !important;
+    font-family: 'Roboto Mono', ui-monospace, monospace;
+    letter-spacing: 0.04em;
+}
+.pathogen-card-nuuk a,
+.pathogen-card a {
+    color: var(--rzp-blue-deep) !important;
+    font-weight: 600;
+}
+.pathogen-card-nuuk a:hover,
+.pathogen-card a:hover {
+    color: var(--rzp-blue-hover) !important;
+}

@@ -299,32 +299,4 @@
     </div>
 </section>
 
-<!-- Section 8: Final CTA (full-bleed primary) -->
-<section class="cta-band">
-    <div class="container text-center">
-        <h2 class="heading-display cta-band-heading">
-            Help us catalogue the next<br>
-            <span class="cta-band-underline">antibiotic adjuvant</span>.
-        </h2>
-        <p class="cta-band-sub">
-            PhytoSynergyDB is open, curated, and free. Browse, cite, or contribute - every
-            entry helps the community fight resistance.
-        </p>
-        <div class="cta-band-actions">
-            <a href="{% url 'database_search' %}" class="btn-cta-white">
-                Browse Database <i class="fas fa-arrow-right ms-1"></i>
-            </a>
-            {% if user.is_authenticated %}
-            <a href="{% url 'data_entry' %}" class="btn-cta-outline-white">
-                Contribute Data
-            </a>
-            {% else %}
-            <a href="{% url 'login' %}" class="btn-cta-outline-white">
-                Researcher Login
-            </a>
-            {% endif %}
-        </div>
-    </div>
-</section>
-
 {% endblock %}
