@@ -29,6 +29,14 @@
                 Read the API Docs
             </a>
         </div>
+        <div class="reco-strip" role="navigation" aria-label="Quick links">
+            <span class="reco-label">Get started</span>
+            <a href="{% url 'database_search' %}"><i class="fas fa-search"></i> Search Database</a>
+            <a href="{% url 'database_search' %}?interpretation=Synergy"><i class="fas fa-check-circle"></i> Synergistic Pairs</a>
+            <a href="{% url 'analytics' %}"><i class="fas fa-chart-bar"></i> Analytics</a>
+            <a href="{% url 'download_data' %}"><i class="fas fa-download"></i> Download CSV</a>
+            <a href="{% url 'api_docs' %}"><i class="fas fa-code"></i> API Docs</a>
+        </div>
         <div class="hero-stat-row">
             <div class="hero-mini-stat">
                 <p class="hero-mini-label">Experiments</p>
