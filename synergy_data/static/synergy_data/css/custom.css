@@ -2831,3 +2831,61 @@ h1, h2, h3, h4, h5, h6 { color: var(--rzp-ink); letter-spacing: -0.01em; }
             url('../images/hero_background-green.jpg') center / cover no-repeat !important;
     }
 }
+
+/* ============================================================
+   ANALYTICS DASHBOARD - stat cards
+   The .analytics-stat-card class is referenced in analytics.html
+   with inline border-top-color overrides but no base rule was
+   ever defined - cards rendered as floating numbers with a stray
+   colored line. Define the box, padding, and number/label typography.
+   ============================================================ */
+.analytics-stat-card {
+    background: #ffffff;
+    border: 1px solid var(--rzp-hairline);
+    border-top: 4px solid var(--rzp-blue-deep);
+    border-radius: 14px;
+    padding: 1.25rem 1rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(13,35,102,.04);
+    transition: transform .15s ease, box-shadow .15s ease;
+    height: 100%;
+}
+.analytics-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(13,35,102,.08);
+}
+.analytics-stat-number {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--rzp-blue-deep);
+    letter-spacing: -0.02em;
+    margin-bottom: 0.25rem;
+}
+.analytics-stat-label {
+    font-family: 'Roboto Mono', ui-monospace, monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--rzp-body);
+}
+
+/* Generic analytics card wrapper (charts) */
+.analytics-card {
+    background: #ffffff;
+    border: 1px solid var(--rzp-hairline);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(13,35,102,.04);
+    height: 100%;
+}
+.analytics-card-title {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--rzp-ink);
+    margin-bottom: 1rem;
+}
+.analytics-card-title i { color: var(--rzp-blue-deep); }
