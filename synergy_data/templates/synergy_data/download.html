@@ -1,4 +1,5 @@
 {% extends 'synergy_data/base.html' %}
+{% load static %}
 
 {% block title %}Download Data - PhytoSynergyDB{% endblock %}
 
@@ -35,7 +36,7 @@
                                 <strong>{{ total_synergies }}</strong> confirmed synergies
                             </p>
                             <a href="{% url 'download_data' %}?export=csv" class="btn btn-primary-custom">
-                                <i class="fas fa-download me-2"></i>Download CSV
+                                <img src="{% static 'synergy_data/icons/download-outlined.svg' %}" alt="" width="18" height="18" style="vertical-align:-3px; margin-right:6px;">Download CSV
                             </a>
                         </div>
                     </div>

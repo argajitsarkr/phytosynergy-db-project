@@ -146,7 +146,7 @@
             <div class="d-flex gap-2">
                 <span class="badge results-count-badge synergy-badge">{{ total_results }} results</span>
                 <a href="{% url 'download_data' %}{% if search_query %}?query={{ search_query }}{% endif %}" class="btn btn-sm btn-outline-custom">
-                    <i class="fas fa-download me-1"></i>Export CSV
+                    <img src="{% static 'synergy_data/icons/download-outlined.svg' %}" alt="" width="16" height="16" style="vertical-align:-3px; margin-right:4px;">Export CSV
                 </a>
             </div>
         {% endif %}

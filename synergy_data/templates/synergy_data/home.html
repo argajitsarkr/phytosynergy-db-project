@@ -33,8 +33,8 @@
             <span class="reco-label">Get started</span>
             <a href="{% url 'database_search' %}"><i class="fas fa-search"></i> Search Database</a>
             <a href="{% url 'database_search' %}?interpretation=Synergy"><i class="fas fa-check-circle"></i> Synergistic Pairs</a>
-            <a href="{% url 'analytics' %}"><i class="fas fa-chart-bar"></i> Analytics</a>
-            <a href="{% url 'download_data' %}"><i class="fas fa-download"></i> Download CSV</a>
+            <a href="{% url 'analytics' %}"><img src="{% static 'synergy_data/icons/analytics-outlined.svg' %}" alt="" class="reco-icon" width="16" height="16"> Analytics</a>
+            <a href="{% url 'download_data' %}"><img src="{% static 'synergy_data/icons/download-outlined.svg' %}" alt="" class="reco-icon" width="16" height="16"> Download CSV</a>
             <a href="{% url 'api_docs' %}"><i class="fas fa-code"></i> API Docs</a>
         </div>
         <div class="hero-stat-row">
