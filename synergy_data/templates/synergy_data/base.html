@@ -57,13 +57,19 @@
                         </ul>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'analytics' %}"><i class="fas fa-chart-bar me-1"></i>Analytics</a>
+                        <a class="nav-link" href="{% url 'analytics' %}">
+                            <img src="{% static 'synergy_data/icons/clipboard-data-fill.svg' %}" alt="" class="nav-link-icon" width="16" height="16">
+                            Analytics
+                        </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'about' %}">About</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'download_data' %}"><i class="fas fa-download me-1"></i>Download</a>
+                        <a class="nav-link" href="{% url 'download_data' %}">
+                            <img src="{% static 'synergy_data/icons/file-arrow-down-fill.svg' %}" alt="" class="nav-link-icon" width="16" height="16">
+                            Download
+                        </a>
                     </li>
                 </ul>
 
