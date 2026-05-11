@@ -115,64 +115,93 @@
     {% endblock %}
 
     <!-- Footer -->
-    <footer class="site-footer">
+    <footer class="site-footer site-footer-dark">
         <div class="container">
-            <div class="row">
-                <!-- Brand Column -->
-                <div class="col-lg-4 mb-4 mb-lg-0">
+            <div class="footer-grid">
+                <!-- Brand block -->
+                <div class="footer-brand-block">
                     <div class="footer-brand">PhytoSynergyDB</div>
                     <p class="footer-desc">
-                        A curated database dedicated to phytochemical-antibiotic synergies against ESKAPE pathogens.
-                        Accelerating antimicrobial resistance research.
+                        A curated database dedicated to <strong>phytochemical-antibiotic synergies</strong>
+                        against ESKAPE pathogens. Accelerating antimicrobial resistance research.
                     </p>
+                    <span class="footer-pill">
+                        <span class="footer-pill-dot"></span>
+                        Life Sci &middot; Antimicrobial Focus
+                    </span>
                 </div>
-                <!-- Quick Links -->
-                <div class="col-6 col-lg-2">
-                    <div class="footer-heading">Database</div>
+
+                <!-- Platform -->
+                <div class="footer-col">
+                    <div class="footer-heading">Platform</div>
                     <ul class="footer-links">
-                        <li><a href="{% url 'database_search' %}">Search</a></li>
-                        <li><a href="{% url 'database_search' %}?query=">Browse All</a></li>
+                        <li><a href="{% url 'database_search' %}">Browse Database</a></li>
+                        <li><a href="{% url 'analytics' %}">Analytics</a></li>
                         <li><a href="{% url 'download_data' %}">Download</a></li>
+                        <li><a href="{% url 'api_docs' %}">API Docs</a></li>
                     </ul>
                 </div>
+
                 <!-- Resources -->
-                <div class="col-6 col-lg-2">
+                <div class="footer-col">
                     <div class="footer-heading">Resources</div>
                     <ul class="footer-links">
                         <li><a href="{% url 'about' %}">About</a></li>
                         <li><a href="{% url 'about' %}#methodology">Methodology</a></li>
                         <li><a href="{% url 'about' %}#citation">How to Cite</a></li>
-                    </ul>
-                </div>
-                <!-- For Researchers -->
-                <div class="col-6 col-lg-2">
-                    <div class="footer-heading">For Researchers</div>
-                    <ul class="footer-links">
-                        <li><a href="{% url 'api_docs' %}">API Access</a></li>
                         <li><a href="{% url 'data_entry' %}">Contribute Data</a></li>
-                        <li><a href="{% url 'about' %}#contact">Contact</a></li>
                     </ul>
                 </div>
-                <!-- Stats -->
-                <div class="col-6 col-lg-2">
-                    <div class="footer-heading">Statistics</div>
+
+                <!-- Company -->
+                <div class="footer-col">
+                    <div class="footer-heading">Company</div>
                     <ul class="footer-links">
-                        <li><span class="text-muted"><i class="fas fa-flask me-1"></i>{{ total_experiments|default:"0" }} Experiments</span></li>
-                        <li><span class="text-muted"><i class="fas fa-leaf me-1"></i>{{ total_phytochemicals|default:"0" }} Phytochemicals</span></li>
-                        <li><span class="text-muted"><i class="fas fa-capsules me-1"></i>{{ total_antibiotics|default:"0" }} Antibiotics</span></li>
+                        <li><a href="{% url 'about' %}">About</a></li>
+                        <li><a href="{% url 'about' %}#contact">Contact</a></li>
+                        <li><a href="https://github.com/argajitsarkr/phytosynergy-db-project" target="_blank" rel="noopener">GitHub</a></li>
                     </ul>
+                    <p class="footer-disclaimer">
+                        Data curated from peer-reviewed publications. PhytoSynergyDB is an
+                        independent academic project, not affiliated with any pharmaceutical body.
+                    </p>
                 </div>
             </div>
 
-            <!-- Bottom bar -->
-            <div class="footer-bottom d-flex flex-column flex-md-row justify-content-between align-items-center">
-                <p>&copy; {% now "Y" %} PhytoSynergyDB Project. All Rights Reserved.</p>
+            <!-- Legal row -->
+            <div class="footer-legal">
+                <div class="footer-legal-heading">Legal</div>
+                <div class="footer-legal-links">
+                    <a href="{% url 'about' %}#terms">Terms &amp; Conditions</a>
+                    <a href="{% url 'about' %}#privacy">Privacy Policy</a>
+                    <a href="{% url 'about' %}#citation">Citation Policy</a>
+                </div>
+            </div>
+
+            <!-- Centered live counter -->
+            <div class="footer-live-row">
                 <div class="live-counter-pill" title="Live site activity">
                     <span class="live-dot" aria-hidden="true"></span>
                     <span class="live-label">LIVE</span>
                     <span class="live-stat"><strong>{{ total_visitors|default:"0" }}</strong> visitors</span>
                     <span class="live-sep">&middot;</span>
                     <span class="live-stat"><strong>{{ total_views|default:"0" }}</strong> views</span>
+                </div>
+            </div>
+
+            <!-- Bottom bar -->
+            <div class="footer-bottom-bar">
+                <p class="footer-copy">&copy; {% now "Y" %} PhytoSynergyDB &middot; Built by researchers, for researchers</p>
+                <div class="footer-social">
+                    <a href="https://github.com/argajitsarkr/phytosynergy-db-project" target="_blank" rel="noopener" aria-label="GitHub">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="https://twitter.com/" target="_blank" rel="noopener" aria-label="X / Twitter">
+                        <i class="fab fa-x-twitter"></i>
+                    </a>
+                    <a href="mailto:contact@phytosynergydb.org" aria-label="Email">
+                        <i class="fas fa-envelope"></i>
+                    </a>
                 </div>
             </div>
         </div>
