@@ -1,5 +1,4 @@
 {% extends 'synergy_data/base.html' %}
-{% load static %}
 
 {% block title %}Bulk Import - PhytoSynergyDB{% endblock %}
 
@@ -16,7 +15,7 @@
             </p>
         </div>
         <a href="{% url 'bulk_import_template' %}" class="btn btn-outline-custom btn-sm">
-            <img src="{% static 'synergy_data/icons/download-outlined.svg' %}" alt="" width="16" height="16" style="vertical-align:-3px; margin-right:4px;"> Download XLSX Template
+            <i class="fas fa-download me-1"></i> Download XLSX Template
         </a>
     </div>
 
