@@ -2735,3 +2735,99 @@ h1, h2, h3, h4, h5, h6 { color: var(--rzp-ink); letter-spacing: -0.01em; }
 .pathogen-card a:hover {
     color: var(--rzp-blue-hover) !important;
 }
+
+/* ============================================================
+   HERO - RADIAL DARKEN + WHITE TEXT
+   Plant photograph is shown at 100% on the right; a soft elliptical
+   navy darken anchored on the left anchors the headline copy. Text
+   in white with green/blue accents, light text-shadow as a safety net
+   over busy parts of the photo.
+   ============================================================ */
+.hero-nuuk {
+    background:
+        radial-gradient(ellipse 80% 100% at 0% 50%,
+            rgba(8,18,52,0.78) 0%,
+            rgba(8,18,52,0.55) 35%,
+            rgba(8,18,52,0.20) 65%,
+            rgba(8,18,52,0.00) 100%),
+        url('../images/hero_background-green.jpg') center / cover no-repeat !important;
+    border-bottom: none !important;
+    color: #ffffff;
+}
+
+.hero-nuuk .hero-display,
+.hero-nuuk .heading-display {
+    color: #ffffff !important;
+    text-shadow: 0 2px 14px rgba(0,0,0,0.45);
+}
+.hero-nuuk .hero-sub {
+    color: rgba(255,255,255,0.92) !important;
+    text-shadow: 0 1px 8px rgba(0,0,0,0.55);
+}
+.hero-nuuk .hero-sub strong {
+    color: #ffffff !important;
+    font-weight: 700;
+}
+
+/* Accent words on the dark hero: green stays vibrant, deep-blue
+   accent words get brightened to a sky tone so they stay legible. */
+.hero-nuuk .hero-accent { color: #4CD18E !important; }
+.hero-nuuk .text-primary-accent { color: #93B4FF !important; }
+
+/* Label pill against the dark hero: glassy, white text */
+.hero-nuuk .label-pill {
+    background: rgba(255,255,255,0.14) !important;
+    color: #ffffff !important;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+/* Hero mini-stats: white labels + white numbers, accent in light blue */
+.hero-nuuk .hero-mini-label { color: rgba(255,255,255,0.72) !important; }
+.hero-nuuk .hero-mini-value { color: #ffffff !important; text-shadow: 0 1px 8px rgba(0,0,0,0.4); }
+.hero-nuuk .hero-mini-value.hero-mini-accent { color: #93B4FF !important; }
+
+/* Secondary CTA ("Read the API Docs") against the dark hero:
+   ghost button with white border. */
+.hero-nuuk .btn-nuuk-secondary {
+    background: rgba(255,255,255,0.08) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.55) !important;
+}
+.hero-nuuk .btn-nuuk-secondary:hover {
+    background: rgba(255,255,255,0.18) !important;
+    border-color: #ffffff !important;
+    color: #ffffff !important;
+}
+
+/* Reco strip when it sits inside the dark hero: glassy pill row */
+.hero-nuuk .reco-strip {
+    background: rgba(255,255,255,0.10) !important;
+    border-color: rgba(255,255,255,0.18) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.2);
+}
+.hero-nuuk .reco-strip .reco-label { color: #ffffff !important; }
+.hero-nuuk .reco-strip a {
+    background: rgba(255,255,255,0.08) !important;
+    border-color: rgba(255,255,255,0.20) !important;
+    color: rgba(255,255,255,0.92) !important;
+}
+.hero-nuuk .reco-strip a:hover {
+    background: rgba(255,255,255,0.18) !important;
+    color: #ffffff !important;
+    border-color: #ffffff !important;
+}
+.hero-nuuk .reco-strip a i { color: #93B4FF !important; }
+
+@media (max-width: 767px) {
+    .hero-nuuk {
+        background:
+            linear-gradient(180deg,
+                rgba(8,18,52,0.72) 0%,
+                rgba(8,18,52,0.45) 70%,
+                rgba(8,18,52,0.35) 100%),
+            url('../images/hero_background-green.jpg') center / cover no-repeat !important;
+    }
+}
