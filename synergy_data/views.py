@@ -13,6 +13,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import Avg, Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
+from django.utils import timezone
 
 from .forms import (
     BULK_CSV_COLUMNS,
@@ -256,7 +257,49 @@ def home_page(request):
 # ==============================================================================
 
 def about_page(request):
-    return render(request, 'synergy_data/about.html')
+    total_experiments = SynergyExperiment.objects.count()
+    total_phytochemicals = Phytochemical.objects.count()
+    total_antibiotics = Antibiotic.objects.count()
+    total_pathogens = Pathogen.objects.count()
+    total_sources = Source.objects.count()
+    total_synergy = SynergyExperiment.objects.filter(interpretation='Synergy').count()
+    last_curation_date = timezone.now().strftime('%B %Y')
+
+    about_faqs = [
+        {'q': 'How is the FIC index calculated when MIC units differ between studies?',
+         'a': 'All MIC values are normalised to a single declared unit (default µg/mL) '
+              'during curation. The FIC index is unit-free because it is a ratio, but '
+              'we record the original units alongside each value for traceability.'},
+        {'q': 'Can I submit my own data?',
+         'a': 'Yes. Registered curators can use the single-row Data Entry form or the '
+              'bulk CSV / XLSX importer. A downloadable template with the canonical '
+              'column headers is available from the Bulk Import page.'},
+        {'q': 'How are duplicate experiments resolved?',
+         'a': 'A composite key of (phytochemical, antibiotic, pathogen, source) is '
+              'enforced. If a row matches an existing experiment on all four fields '
+              'during bulk import it is reported and skipped, not overwritten.'},
+        {'q': 'What licence governs reuse of the data?',
+         'a': 'The curated dataset is released under Creative Commons Attribution 4.0 '
+              '(CC-BY-4.0). The source code is open under the MIT licence. Please '
+              'cite PhytoSynergyDB and the underlying chemistry sources where '
+              'descriptors are reused.'},
+        {'q': 'How fresh is the database?',
+         'a': 'New literature is curated on a rolling basis. Each record links to its '
+              'primary publication via DOI, and bulk re-enrichment against PubChem '
+              'and ClassyFire is run after every import cycle.'},
+    ]
+
+    context = {
+        'total_experiments': total_experiments,
+        'total_phytochemicals': total_phytochemicals,
+        'total_antibiotics': total_antibiotics,
+        'total_pathogens': total_pathogens,
+        'total_sources': total_sources,
+        'total_synergy': total_synergy,
+        'last_curation_date': last_curation_date,
+        'about_faqs': about_faqs,
+    }
+    return render(request, 'synergy_data/about.html', context)
 
 
 # ==============================================================================

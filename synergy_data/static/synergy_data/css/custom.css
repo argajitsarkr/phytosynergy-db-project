@@ -1061,6 +1061,78 @@ a:hover { color: var(--accent); }
     word-break: break-all;
 }
 
+/* About page - sticky TOC */
+.about-toc {
+    position: sticky;
+    top: 72px;
+    z-index: 10;
+    background: var(--bg-white);
+    border-bottom: 1px solid var(--border-light);
+    padding: 0.5rem 0;
+    overflow-x: auto;
+}
+.about-toc ul {
+    list-style: none;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.about-toc a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    white-space: nowrap;
+    font-weight: 600;
+}
+.about-toc a:hover { color: var(--primary); }
+
+/* About page - stats strip */
+.about-stats-strip .stat-mini {
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 1rem 0.75rem;
+    text-align: center;
+    background: var(--bg-white);
+    height: 100%;
+}
+.stat-mini-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1.1;
+}
+.stat-mini-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    margin-top: 0.35rem;
+}
+
+/* About page - schema cards */
+.schema-card {
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.1rem;
+    background: var(--bg-white);
+    height: 100%;
+}
+.schema-card h6 {
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+    color: var(--primary);
+}
+.schema-card p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+
 
 /* ============================================================
    17. FOOTER

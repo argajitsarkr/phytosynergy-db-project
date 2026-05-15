@@ -12,6 +12,31 @@
     </div>
 </div>
 
+<!-- Sticky in-page TOC -->
+<nav class="about-toc">
+    <div class="container">
+        <ul>
+            <li><a href="#problem">Problem</a></li>
+            <li><a href="#approach">Approach</a></li>
+            <li><a href="#stats">At a glance</a></li>
+            <li><a href="#scope">Scope</a></li>
+            <li><a href="#schema">Data model</a></li>
+            <li><a href="#methodology">Methodology</a></li>
+            <li><a href="#interpretation">FIC standards</a></li>
+            <li><a href="#limitations">Limitations</a></li>
+            <li><a href="#versioning">Versioning</a></li>
+            <li><a href="#faq">FAQ</a></li>
+            <li><a href="#citation">Cite</a></li>
+            <li><a href="#license">License</a></li>
+            <li><a href="#api">API</a></li>
+            <li><a href="#contribute">Contribute</a></li>
+            <li><a href="#contact">Contact</a></li>
+            <li><a href="#terms">Terms</a></li>
+            <li><a href="#privacy">Privacy</a></li>
+        </ul>
+    </div>
+</nav>
+
 <!-- Main Content -->
 <div class="about-content-section">
     <div class="container">
@@ -23,9 +48,9 @@
                 <p>
                     Antimicrobial resistance (AMR) is a growing global health crisis. The World Health Organization
                     has declared AMR one of the top ten threats to global public health. The ESKAPE pathogens
-                    &mdash; <em>Enterococcus faecium</em>, <em>Staphylococcus aureus</em>,
+                    - <em>Enterococcus faecium</em>, <em>Staphylococcus aureus</em>,
                     <em>Klebsiella pneumoniae</em>, <em>Acinetobacter baumannii</em>,
-                    <em>Pseudomonas aeruginosa</em>, and <em>Enterobacter</em> spp. &mdash;
+                    <em>Pseudomonas aeruginosa</em>, and <em>Enterobacter</em> spp. -
                     are responsible for the majority of hospital-acquired infections and are increasingly
                     resistant to conventional antibiotics. New therapeutic strategies are urgently needed.
                 </p>
@@ -35,21 +60,84 @@
                 <p>
                     PhytoSynergyDB addresses this challenge by systematically curating data from peer-reviewed
                     scientific literature on synergistic interactions between plant-derived phytochemicals and
-                    conventional antibiotics. Combination therapy &mdash; using a phytochemical to potentiate
-                    the activity of an existing antibiotic &mdash; represents a promising strategy to overcome
+                    conventional antibiotics. Combination therapy - using a phytochemical to potentiate
+                    the activity of an existing antibiotic - represents a promising strategy to overcome
                     resistance. Our database provides a centralized, structured resource to accelerate this research.
                 </p>
 
+                <!-- Live Stats Strip -->
+                <h3 class="mt-5" id="stats">At a Glance</h3>
+                <div class="row g-3 mb-5 about-stats-strip">
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="stat-mini">
+                            <div class="stat-mini-value">{{ total_experiments }}</div>
+                            <div class="stat-mini-label">Experiments</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="stat-mini">
+                            <div class="stat-mini-value">{{ total_phytochemicals }}</div>
+                            <div class="stat-mini-label">Phytochemicals</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="stat-mini">
+                            <div class="stat-mini-value">{{ total_antibiotics }}</div>
+                            <div class="stat-mini-label">Antibiotics</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="stat-mini">
+                            <div class="stat-mini-value">{{ total_pathogens }}</div>
+                            <div class="stat-mini-label">Pathogens</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="stat-mini">
+                            <div class="stat-mini-value">{{ total_sources }}</div>
+                            <div class="stat-mini-label">Publications</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="stat-mini">
+                            <div class="stat-mini-value">{{ total_synergy }}</div>
+                            <div class="stat-mini-label">Synergistic pairs</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scope & Inclusion Criteria -->
+                <h3 class="mt-5" id="scope">Scope &amp; Inclusion Criteria</h3>
+                <p>PhytoSynergyDB indexes only experimental records that satisfy the following criteria:</p>
+                <ul>
+                    <li><strong>Defined compounds.</strong> The phytochemical must be a structurally characterised molecule with at least a name and ideally a PubChem CID, SMILES or InChIKey. Crude plant extracts without an identified active component are excluded.</li>
+                    <li><strong>Quantitative combination data.</strong> Studies must report MIC values for the phytochemical alone, the antibiotic alone, and the combination, using checkerboard, broth-microdilution, time-kill, or disk-diffusion assays.</li>
+                    <li><strong>ESKAPE pathogens.</strong> At least one tested organism must belong to the ESKAPE group; pathogen genus, species and strain are recorded where reported.</li>
+                    <li><strong>Peer-reviewed primary sources.</strong> Each record cites a journal article identified by DOI or PMID. Conference abstracts, theses and unindexed preprints are excluded.</li>
+                    <li><strong>In vitro focus.</strong> The current release indexes in vitro interaction data; in vivo and clinical evidence are out of scope for now.</li>
+                </ul>
+
+                <!-- Data Model -->
+                <h3 class="mt-5" id="schema">Data Model</h3>
+                <p class="mb-4">The relational schema is centred on a <code>SynergyExperiment</code> record that links the six surrounding entities. A composite uniqueness constraint on (phytochemical, antibiotic, pathogen, source) prevents duplicate insertion.</p>
+                <div class="row g-3 mb-5">
+                    <div class="col-md-4"><div class="schema-card"><h6>Phytochemical</h6><p>Compound name, PubChem CID, SMILES, InChIKey, MW, XLogP, HBD/HBA, TPSA, ring count, Lipinski violations, ChemOnt taxonomy.</p></div></div>
+                    <div class="col-md-4"><div class="schema-card"><h6>Antibiotic</h6><p>Name, DrugBank ID, antibiotic class (mechanistic grouping).</p></div></div>
+                    <div class="col-md-4"><div class="schema-card"><h6>Pathogen</h6><p>Genus, species, strain, Gram stain. Unique on (genus, species, strain).</p></div></div>
+                    <div class="col-md-4"><div class="schema-card"><h6>Source</h6><p>DOI, PMID, journal, publication year, article title.</p></div></div>
+                    <div class="col-md-4"><div class="schema-card"><h6>Plant</h6><p>Scientific name, common name, family. Many-to-many link to phytochemicals (botanical provenance).</p></div></div>
+                    <div class="col-md-4"><div class="schema-card"><h6>SynergyExperiment</h6><p>Four MIC values, units, FIC index, interpretation, assay method, observed mechanism of action, curator notes.</p></div></div>
+                </div>
+
                 <!-- Methodology Cards -->
-                <h3 class="mt-5" id="methodology">Methodology & Data Standards</h3>
+                <h3 class="mt-5" id="methodology">Methodology &amp; Data Standards</h3>
                 <p class="mb-4">
                     All data in PhytoSynergyDB is manually extracted from peer-reviewed publications through a
-                    rigorous curation process.
+                    rigorous curation process and is then enriched automatically with chemistry annotations.
                 </p>
                 <div class="row g-4 mb-5">
                     <div class="col-md-6">
                         <div class="method-card">
-                            <div class="method-icon"><i class="fas fa-search"></i></div>
                             <h5>Literature Search</h5>
                             <p>Systematic search of PubMed, Scopus, and Web of Science for studies reporting
                             phytochemical-antibiotic combination effects against ESKAPE pathogens using
@@ -58,7 +146,6 @@
                     </div>
                     <div class="col-md-6">
                         <div class="method-card">
-                            <div class="method-icon"><i class="fas fa-clipboard-check"></i></div>
                             <h5>Data Extraction</h5>
                             <p>Manual extraction of MIC values (alone and in combination), FIC indices,
                             synergy interpretations, pathogen strain details, and observed mechanisms
@@ -67,7 +154,6 @@
                     </div>
                     <div class="col-md-6">
                         <div class="method-card">
-                            <div class="method-icon"><i class="fas fa-calculator"></i></div>
                             <h5>FIC Calculation</h5>
                             <p>Fractional Inhibitory Concentration (FIC) index is calculated as:
                             FIC = (MIC<sub>phyto,combo</sub> / MIC<sub>phyto,alone</sub>) +
@@ -77,17 +163,33 @@
                     </div>
                     <div class="col-md-6">
                         <div class="method-card">
-                            <div class="method-icon"><i class="fas fa-shield-alt"></i></div>
                             <h5>Quality Control</h5>
                             <p>Each record links to its original source via DOI, ensuring full traceability
                             and reproducibility. Data undergoes validation before inclusion. Chemical
                             identifiers (PubChem CID, InChI Key, SMILES) ensure compound disambiguation.</p>
                         </div>
                     </div>
+                    <div class="col-md-6">
+                        <div class="method-card">
+                            <h5>Automated Chemical Enrichment</h5>
+                            <p>Every new phytochemical is annotated through the PubChem PUG-REST API
+                            (canonical SMILES, InChIKey, molecular weight, XLogP, HBD/HBA, TPSA,
+                            rotatable bonds) and the ClassyFire service (three-level ChemOnt taxonomy:
+                            superclass, class, subclass). Curator-supplied fields are never overwritten.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="method-card">
+                            <h5>Local Cheminformatics (RDKit)</h5>
+                            <p>RDKit 2024.3.1 computes logP (Wildman-Crippen), TPSA, ring count, heavy-atom
+                            count and Lipinski Rule-of-Five compliance. Compounds with at most one
+                            violation are flagged as drug-like for downstream filtering.</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Interpretation Standards -->
-                <h3 class="mt-5">Synergy Interpretation Standards</h3>
+                <h3 class="mt-5" id="interpretation">Synergy Interpretation Standards</h3>
                 <div class="table-responsive mb-5">
                     <table class="recent-entries-table">
                         <thead>
@@ -122,14 +224,71 @@
                     </table>
                 </div>
 
+                <!-- Limitations -->
+                <h3 class="mt-5" id="limitations">Limitations</h3>
+                <ul>
+                    <li><strong>Publication bias.</strong> Synergistic outcomes are reported more often than indifference or antagonism, so observed proportions over-represent favourable interactions.</li>
+                    <li><strong>Protocol heterogeneity.</strong> Inoculum size, growth medium and incubation time vary between primary studies; absolute MICs are therefore not strictly comparable across sources even when units agree.</li>
+                    <li><strong>Endpoint-only interpretation.</strong> The current release relies on MIC-based FIC indices; time-kill kinetics and isobologram analyses are out of scope.</li>
+                    <li><strong>In vitro evidence only.</strong> Pharmacokinetics, bioavailability and host-pathogen factors are not captured.</li>
+                    <li><strong>Curation lag.</strong> Newly published literature takes time to enter the database; users are encouraged to check the original DOI for the latest interpretation.</li>
+                </ul>
+
+                <!-- Versioning -->
+                <h3 class="mt-5" id="versioning">Versioning &amp; Updates</h3>
+                <p>
+                    Current release: <strong>PhytoSynergyDB v1.0</strong>. Last curation cycle: <strong>{{ last_curation_date }}</strong>.
+                    The database is updated on a rolling basis as new peer-reviewed studies are identified.
+                    Researchers citing a specific snapshot are encouraged to record the access date alongside
+                    the release version to ensure reproducibility.
+                </p>
+
+                <!-- FAQ -->
+                <h3 class="mt-5" id="faq">Frequently Asked Questions</h3>
+                <div class="accordion mb-5" id="aboutFaqAccordion">
+                    {% for item in about_faqs %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="aboutFaqHeading{{ forloop.counter }}">
+                            <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#aboutFaqCollapse{{ forloop.counter }}"
+                                    aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}"
+                                    aria-controls="aboutFaqCollapse{{ forloop.counter }}">
+                                {{ item.q }}
+                            </button>
+                        </h2>
+                        <div id="aboutFaqCollapse{{ forloop.counter }}"
+                             class="accordion-collapse collapse {% if forloop.first %}show{% endif %}"
+                             aria-labelledby="aboutFaqHeading{{ forloop.counter }}"
+                             data-bs-parent="#aboutFaqAccordion">
+                            <div class="accordion-body">{{ item.a }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
                 <!-- How to Cite -->
                 <h3 class="mt-5" id="citation">How to Cite</h3>
-                <p>If you use PhytoSynergyDB in your research, please cite:</p>
-                <div class="citation-box">
+                <p>If you use PhytoSynergyDB in your research, please cite the resource:</p>
+                <div class="citation-box mb-3">
                     <strong>Suggested citation:</strong>
-                    <code>PhytoSynergyDB: A Curated Database of Phytochemical-Antibiotic Synergies Against
-ESKAPE Pathogens. Available at: [URL]. Accessed: [Date].</code>
+                    <code>Sarkar A. et al. PhytoSynergyDB: A Curated Database of Phytochemical-Antibiotic Synergies Against ESKAPE Pathogens. v1.0 (2026). Available at: https://phytosynergydb.org. Accessed: {{ last_curation_date }}.</code>
                 </div>
+                <p>If you reuse derived chemical descriptors, please also cite the underlying chemistry sources:</p>
+                <ul>
+                    <li><strong>PubChem:</strong> Kim S. et al. <em>PubChem 2023 update.</em> Nucleic Acids Research 51(D1):D1373-D1380 (2023).</li>
+                    <li><strong>ClassyFire / ChemOnt:</strong> Djoumbou Feunang Y. et al. <em>ClassyFire: automated chemical classification with a comprehensive, computable taxonomy.</em> J. Cheminform. 8:61 (2016).</li>
+                    <li><strong>RDKit:</strong> Landrum G. et al. <em>RDKit: Open-source cheminformatics</em>, release 2024.03.1.</li>
+                </ul>
+
+                <!-- License -->
+                <h3 class="mt-5" id="license">License &amp; Reuse</h3>
+                <p>
+                    Curated data are released under <strong>Creative Commons Attribution 4.0 (CC-BY-4.0)</strong>:
+                    you are free to share and adapt the dataset for any purpose, including commercially,
+                    provided you give appropriate credit and indicate any changes. The source code of the
+                    PhytoSynergyDB web platform is released under the <strong>MIT License</strong> on
+                    <a href="https://github.com/argajitsarkr/phytosynergy-db-project" target="_blank" rel="noopener">GitHub</a>.
+                </p>
 
                 <!-- API Access -->
                 <h3 class="mt-5" id="api">Programmatic Access</h3>
@@ -139,16 +298,54 @@ ESKAPE Pathogens. Available at: [URL]. Accessed: [Date].</code>
                     See the <a href="{% url 'api_docs' %}">API documentation</a> for endpoints and usage.
                 </p>
 
+                <!-- Contribute -->
+                <h3 class="mt-5" id="contribute">Contribute Data</h3>
+                <p>
+                    PhytoSynergyDB grows through community contributions. Registered curators can add records
+                    one at a time, or upload an entire spreadsheet using the bulk importer with a
+                    downloadable template.
+                </p>
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    <a href="{% url 'data_entry' %}" class="btn btn-primary-custom">Add a single record</a>
+                    <a href="{% url 'bulk_import' %}" class="btn btn-outline-secondary">Bulk import (CSV / XLSX)</a>
+                    <a href="{% url 'bulk_import_template' %}" class="btn btn-outline-secondary">Download import template</a>
+                </div>
+
                 <!-- Contact -->
                 <h3 class="mt-5" id="contact">Contact</h3>
                 <p>
-                    For questions, collaborations, data corrections, or contributions, please reach out to the
-                    PhytoSynergyDB team. We welcome contributions from the scientific community.
+                    For questions, collaborations, data corrections, or contributions, please reach out to
+                    the PhytoSynergyDB team:
+                </p>
+                <ul>
+                    <li><strong>Email:</strong> <a href="mailto:contact@phytosynergydb.org">contact@phytosynergydb.org</a></li>
+                    <li><strong>GitHub issues:</strong> <a href="https://github.com/argajitsarkr/phytosynergy-db-project/issues" target="_blank" rel="noopener">phytosynergy-db-project / issues</a></li>
+                    <li><strong>Affiliation:</strong> MMI Laboratory, academic research group focused on antimicrobial resistance.</li>
+                </ul>
+
+                <!-- Terms -->
+                <h3 class="mt-5" id="terms">Terms &amp; Conditions</h3>
+                <p>
+                    PhytoSynergyDB is provided "as is", without warranty of any kind, express or implied.
+                    The curated data are intended for academic and research use. Users are responsible for
+                    verifying any record against its primary source before drawing clinical or regulatory
+                    conclusions. The maintainers accept no liability for any consequence arising from the
+                    use of the data or software. Use of the website constitutes acceptance of these terms.
+                </p>
+
+                <!-- Privacy -->
+                <h3 class="mt-5" id="privacy">Privacy Policy</h3>
+                <p>
+                    PhytoSynergyDB does not collect personally identifiable information from anonymous
+                    visitors. Aggregate, non-identifying view counters are stored to monitor usage of the
+                    public pages. Registered curators provide an email address only for authentication;
+                    this address is never shared with third parties. The site does not set advertising or
+                    tracking cookies.
                 </p>
 
                 <div class="text-center mt-5">
                     <a href="{% url 'database_search' %}" class="btn btn-primary-custom btn-lg">
-                        Explore the Database <i class="fas fa-arrow-right ms-1"></i>
+                        Explore the Database
                     </a>
                 </div>
             </div>
