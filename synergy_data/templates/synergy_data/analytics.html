@@ -9,7 +9,7 @@
 
     <!-- Page Header -->
     <div class="text-center mb-5">
-        <h1 class="fw-800" style="color: var(--primary);"><i class="fas fa-chart-bar me-2"></i>Analytics Dashboard</h1>
+        <h1 class="fw-800" style="color: var(--primary);"><img src="{% static 'synergy_data/icons/chart-bar.svg' %}" alt="" class="icon-svg icon-svg-lg me-2">Analytics Dashboard</h1>
         <p class="text-muted fs-5">Real-time visualizations of phytochemical-antibiotic synergy data</p>
     </div>
 
@@ -57,7 +57,7 @@
     <div class="row g-4 mb-4">
         <div class="col-lg-5">
             <div class="analytics-card">
-                <h5 class="analytics-card-title"><i class="fas fa-circle-half-stroke me-2"></i>Synergy Interpretation Distribution</h5>
+                <h5 class="analytics-card-title"><img src="{% static 'synergy_data/icons/unite.svg' %}" alt="" class="icon-svg icon-svg-md me-2">Synergy Interpretation Distribution</h5>
                 <div class="chart-container" style="position: relative; height: 350px;">
                     <canvas id="interpretationChart"></canvas>
                 </div>
@@ -65,7 +65,7 @@
         </div>
         <div class="col-lg-7">
             <div class="analytics-card">
-                <h5 class="analytics-card-title"><i class="fas fa-bacteria me-2"></i>Experiments by ESKAPE Pathogen</h5>
+                <h5 class="analytics-card-title"><img src="{% static 'synergy_data/icons/test-tube.svg' %}" alt="" class="icon-svg icon-svg-md me-2">Experiments by ESKAPE Pathogen</h5>
                 <div class="chart-container" style="position: relative; height: 350px;">
                     <canvas id="eskapeChart"></canvas>
                 </div>
@@ -77,7 +77,7 @@
     <div class="row g-4 mb-4">
         <div class="col-lg-6">
             <div class="analytics-card">
-                <h5 class="analytics-card-title"><i class="fas fa-leaf me-2"></i>Top 10 Phytochemicals by Synergy Count</h5>
+                <h5 class="analytics-card-title"><img src="{% static 'synergy_data/icons/plant.svg' %}" alt="" class="icon-svg icon-svg-md me-2">Top 10 Phytochemicals by Synergy Count</h5>
                 <div class="chart-container" style="position: relative; height: 380px;">
                     <canvas id="topPhytoChart"></canvas>
                 </div>
@@ -85,7 +85,7 @@
         </div>
         <div class="col-lg-6">
             <div class="analytics-card">
-                <h5 class="analytics-card-title"><i class="fas fa-capsules me-2"></i>Top 10 Antibiotics by Synergy Count</h5>
+                <h5 class="analytics-card-title"><img src="{% static 'synergy_data/icons/pill.svg' %}" alt="" class="icon-svg icon-svg-md me-2">Top 10 Antibiotics by Synergy Count</h5>
                 <div class="chart-container" style="position: relative; height: 380px;">
                     <canvas id="topAbxChart"></canvas>
                 </div>
@@ -97,7 +97,7 @@
     <div class="row g-4 mb-4">
         <div class="col-lg-6">
             <div class="analytics-card">
-                <h5 class="analytics-card-title"><i class="fas fa-calendar-alt me-2"></i>Publication Year Trend</h5>
+                <h5 class="analytics-card-title"><img src="{% static 'synergy_data/icons/calendar-dots.svg' %}" alt="" class="icon-svg icon-svg-md me-2">Publication Year Trend</h5>
                 <div class="chart-container" style="position: relative; height: 350px;">
                     <canvas id="yearTrendChart"></canvas>
                 </div>
@@ -105,7 +105,7 @@
         </div>
         <div class="col-lg-6">
             <div class="analytics-card">
-                <h5 class="analytics-card-title"><i class="fas fa-chart-area me-2"></i>FIC Index Distribution</h5>
+                <h5 class="analytics-card-title"><img src="{% static 'synergy_data/icons/presentation-chart.svg' %}" alt="" class="icon-svg icon-svg-md me-2">FIC Index Distribution</h5>
                 <div class="chart-container" style="position: relative; height: 350px;">
                     <canvas id="ficHistChart"></canvas>
                 </div>
@@ -117,7 +117,7 @@
     <div class="row g-4 mb-4">
         <div class="col-12">
             <div class="analytics-card">
-                <h5 class="analytics-card-title"><i class="fas fa-th me-2"></i>Synergy Heatmap - Average FIC Index (Phytochemical × Antibiotic)</h5>
+                <h5 class="analytics-card-title"><img src="{% static 'synergy_data/icons/grid-nine.svg' %}" alt="" class="icon-svg icon-svg-md me-2">Synergy Heatmap - Average FIC Index (Phytochemical × Antibiotic)</h5>
                 <p class="text-muted small mb-3">Top 15 phytochemicals (rows) × Top 10 antibiotics (columns). Green = synergistic (low FIC), Red = antagonistic (high FIC), Gray = no data.</p>
                 {% if heatmap_grid %}
                 <div class="table-responsive">
@@ -173,7 +173,7 @@
                 </div>
                 {% else %}
                 <div class="text-center py-5 text-muted">
-                    <i class="fas fa-database fa-3x mb-3"></i>
+                    <img src="{% static 'synergy_data/icons/chart-bar.svg' %}" alt="" class="icon-svg icon-svg-xl mb-3">
                     <p>Not enough data to generate heatmap. Add more experiments to see the visualization.</p>
                 </div>
                 {% endif %}
