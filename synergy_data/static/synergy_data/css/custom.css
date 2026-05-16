@@ -781,7 +781,15 @@ a:hover { color: var(--accent); }
 .rc-data-point { text-align: center; min-width: 0; overflow: hidden; }
 .rc-badge { text-align: right; }
 .rc-footer { grid-column: 1 / 5; grid-row: 2; display: flex; gap: 1.25rem; }
-.rc-actions { grid-column: 5 / 7; grid-row: 2; text-align: right; }
+.rc-actions {
+    grid-column: 5 / 7;
+    grid-row: 2;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.4rem;
+}
 
 .rc-title {
     margin-bottom: 0;
@@ -841,12 +849,15 @@ a:hover { color: var(--accent); }
     padding: 0.3rem 0.65rem;
 }
 .rc-actions .btn-outline-secondary {
-    border-color: var(--border-medium);
-    color: var(--text-secondary);
+    border-color: var(--primary);
+    color: var(--primary);
+    background: transparent;
 }
-.rc-actions .btn-outline-secondary:hover {
-    border-color: var(--accent);
-    color: var(--accent);
+.rc-actions .btn-outline-secondary:hover,
+.rc-actions .btn-outline-secondary:focus {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #ffffff;
 }
 .rc-actions .btn-primary {
     background: var(--primary);
