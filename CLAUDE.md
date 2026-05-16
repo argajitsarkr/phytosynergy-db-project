@@ -282,6 +282,12 @@ docker compose restart web             # nginx + db stay up; only web restarts
 - **Real path:** `/home/mmilab/Desktop/Database/phytosynergy-project/`
 - **Wrong path** previously documented: `~/phytosynergy-db-project` (does not exist on the server).
 
+### 10. PhytoSynergyDB is a CLOSED, EXPERT-CURATED database - no public submissions
+- **Rule:** PhytoSynergyDB is maintained in-house by the authoring team. Public users have **read-only** access (search, download, REST API). The Data Entry and Bulk Import views exist for internal curators only and are gated behind `@login_required`.
+- **What this means for UI copy:** NEVER add user-facing text that invites the general public to contribute, submit, or upload data. No "Contribute Data" buttons, no "How can I contribute?" FAQs, no community-submission CTAs anywhere on the public site (home, about, footer, API docs, etc.).
+- **Acceptable language:** describe the resource as "curated", "expert-curated", or "manually extracted from peer-reviewed literature by the authors". Do not describe it as "community-contributed" or "crowd-sourced".
+- **Where to check before committing:** about.html, home.html, base.html (footer), and `home_page` / `about_page` view contexts (FAQ entries). Grep for `contribut`, `submit your`, `community`, `crowd` and rephrase any matches.
+
 ---
 
 ## Typography (Navbar - GrantSetu style)
@@ -315,6 +321,9 @@ Imported via the single Google Fonts URL at the top of `custom.css`. Do NOT add 
 
 | Date | Commit | Description |
 |------|--------|-------------|
+| 2026-05-16 | - | Strip "contribute / submit data" copy from the public site (about page Programmatic Access + Contribute + Contact sections removed, home Step 04 reworded, footer "Contribute Data" link removed, FAQ entries in `home_page` and `about_page` views rewritten to state the DB is closed/expert-curated). Added rule #10 to CLAUDE.md: PhytoSynergyDB is a closed expert-curated resource, no public submissions. |
+| 2026-05-16 | `d7061b5` | Expand About page: live stats strip, Scope, Data Model (6 schema cards), expanded Methodology (PubChem + RDKit cards), Limitations, Versioning, FAQ accordion, License & Reuse, Terms, Privacy, sticky in-page TOC. New view context on `about_page` (stats + about_faqs). New CSS: `.about-toc`, `.about-stats-strip`, `.stat-mini`, `.schema-card`. Removed em-dashes throughout. |
+| 2026-05-16 | `b46b4d8` | Remove FontAwesome / SVG icons from navbar links and dropdown items; keep brand logo image + text only. |
 | 2026-05-01 | - | Rebuild home page in NUUK / GrantSetu editorial style (blue palette kept). Sections: left-aligned hero with label pill + giant display heading + 3 mini-stats; about with 2x2 hover-fill grid-band; ESKAPE pathogen cards refined; recent entries table in 2px black border; dark "Process" 4-cell band (added Cite & Share step); dark stats band (4 cols); FAQ accordion with schema.org JSON-LD; full-bleed primary-blue final CTA. New CSS classes: `.label-pill`, `.heading-display`, `.hero-nuuk`, `.btn-nuuk-primary/secondary/link/arrow`, `.section-band`, `.section-dark`, `.grid-band` (2x2 + 1x4), `.stats-dark-band`, `.faq-row`, `.cta-band`, `.btn-cta-white/outline-white`. New view context: `synergy_share`, `faq_data`. |
 | 2026-04-30 | - | Apply GrantSetu navbar fonts (Inter + Roboto Mono); add Typography section + em-dash hard rule (#6 strengthened) + rules #7-9 (Docker rebuild required, collectstatic+nginx restart, server path) to CLAUDE.md |
 | 2026-04-30 | `651ebde` | Restyle navbar to GrantSetu look: 72px height, 2px black border, uppercase mono links, fast-forward `color-palette-redesign` into `main` and delete the redesign branch |

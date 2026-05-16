@@ -231,10 +231,11 @@ def home_page(request):
          'a': 'The public API is rate-limited per IP at a research-friendly threshold. '
               'For computational pipelines or large-batch requests, contact us so we '
               'can issue a higher-limit token.'},
-        {'q': 'How can I contribute data?',
-         'a': 'Sign up for a researcher account, then use Data Entry for single rows or '
-              'Bulk Import for an XLSX/CSV upload. Submissions are reviewed against the '
-              'original source before publication.'},
+        {'q': 'Is the database open for public submissions?',
+         'a': 'No. PhytoSynergyDB is a closed, expert-curated resource maintained by '
+              'the authoring team. Records are added in-house after manual extraction '
+              'from peer-reviewed publications; public users have read-only access to '
+              'the search, download and API features.'},
     ]
 
     context = {
@@ -270,10 +271,10 @@ def about_page(request):
          'a': 'All MIC values are normalised to a single declared unit (default µg/mL) '
               'during curation. The FIC index is unit-free because it is a ratio, but '
               'we record the original units alongside each value for traceability.'},
-        {'q': 'Can I submit my own data?',
-         'a': 'Yes. Registered curators can use the single-row Data Entry form or the '
-              'bulk CSV / XLSX importer. A downloadable template with the canonical '
-              'column headers is available from the Bulk Import page.'},
+        {'q': 'Is the database open for public submissions?',
+         'a': 'No. PhytoSynergyDB is a closed, expert-curated resource maintained by '
+              'the authoring team. Records are added in-house after manual extraction '
+              'from peer-reviewed publications; public users have read-only access.'},
         {'q': 'How are duplicate experiments resolved?',
          'a': 'A composite key of (phytochemical, antibiotic, pathogen, source) is '
               'enforced. If a row matches an existing experiment on all four fields '
