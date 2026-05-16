@@ -1086,6 +1086,18 @@ a:hover { color: var(--accent); }
     word-break: break-all;
 }
 
+/* Inline SVG icon sizing (Phosphor set) */
+.icon-svg {
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.15em;
+    flex-shrink: 0;
+}
+.icon-svg-sm { width: 14px; height: 14px; }
+.icon-svg-md { width: 18px; height: 18px; }
+.icon-svg-lg { width: 24px; height: 24px; }
+.icon-svg-xl { width: 40px; height: 40px; }
+
 /* About page - sticky TOC */
 .about-toc {
     position: sticky;

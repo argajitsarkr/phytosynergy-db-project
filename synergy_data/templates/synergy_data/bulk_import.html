@@ -2,20 +2,21 @@
 
 {% block title %}Bulk Import - PhytoSynergyDB{% endblock %}
 
+{% load static %}
 {% block content %}
 <div class="data-entry-container">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 style="color: var(--text-primary); font-weight: 800; margin-bottom: 0.25rem;">
-                <i class="fas fa-file-csv me-2" style="color: var(--accent);"></i>Bulk Import
+                <img src="{% static 'synergy_data/icons/file-csv.svg' %}" alt="" class="icon-svg icon-svg-lg me-2">Bulk Import
             </h2>
             <p class="text-muted mb-0">
                 Upload a CSV or Excel (.xlsx) file to import multiple synergy experiments at once.
             </p>
         </div>
         <a href="{% url 'bulk_import_template' %}" class="btn btn-outline-custom btn-sm">
-            <i class="fas fa-download me-1"></i> Download XLSX Template
+            <img src="{% static 'synergy_data/icons/cloud-arrow-down.svg' %}" alt="" class="icon-svg icon-svg-sm me-1"> Download XLSX Template
         </a>
     </div>
 
@@ -31,7 +32,7 @@
 
     <!-- Data Quality Rule -->
     <div class="alert alert-info border-0" style="background: var(--primary-light); color: var(--primary-dark);">
-        <i class="fas fa-shield-alt me-2"></i>
+        <img src="{% static 'synergy_data/icons/lock.svg' %}" alt="" class="icon-svg icon-svg-md me-2">
         <strong>Data Quality Rule:</strong> Every row must have either <strong>all 4 MIC values</strong>
         (for auto-FIC calculation) or a <strong>FIC index</strong>. Rows without quantitative synergy data
         (e.g., disk diffusion only, zone diameters, % inhibition) will be rejected. Literal
@@ -42,7 +43,7 @@
     <!-- Upload Form -->
     <div class="data-entry-card mb-4">
         <div class="card-header">
-            <i class="fas fa-upload me-2"></i> Upload Data File
+            <img src="{% static 'synergy_data/icons/monitor-arrow-up.svg' %}" alt="" class="icon-svg icon-svg-md me-2"> Upload Data File
         </div>
         <div class="card-body p-4">
             <form method="post" enctype="multipart/form-data">
@@ -66,7 +67,7 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary-custom">
-                    <i class="fas fa-check-circle me-2"></i> Validate &amp; Preview
+                    <img src="{% static 'synergy_data/icons/info.svg' %}" alt="" class="icon-svg icon-svg-md me-2"> Validate &amp; Preview
                 </button>
             </form>
 
@@ -124,7 +125,7 @@
         <div class="col-md-4">
             <div class="data-entry-card" style="border-left: 4px solid var(--success);">
                 <div class="card-body p-3 d-flex align-items-center">
-                    <i class="fas fa-check-circle fa-2x me-3" style="color: var(--success);"></i>
+                    <img src="{% static 'synergy_data/icons/info.svg' %}" alt="" class="icon-svg icon-svg-xl me-3" style="filter: hue-rotate(90deg);">
                     <div>
                         <div class="fw-bold fs-4" style="color: var(--success);">{{ valid_count }}</div>
                         <div class="text-muted small">Valid rows</div>
@@ -135,7 +136,7 @@
         <div class="col-md-4">
             <div class="data-entry-card" style="border-left: 4px solid #e65100;">
                 <div class="card-body p-3 d-flex align-items-center">
-                    <i class="fas fa-exclamation-triangle fa-2x me-3" style="color: #e65100;"></i>
+                    <img src="{% static 'synergy_data/icons/info.svg' %}" alt="" class="icon-svg icon-svg-xl me-3">
                     <div>
                         <div class="fw-bold fs-4" style="color: #e65100;">{{ warning_count }}</div>
                         <div class="text-muted small">Rows with warnings (importable)</div>
@@ -146,7 +147,7 @@
         <div class="col-md-4">
             <div class="data-entry-card" style="border-left: 4px solid var(--danger);">
                 <div class="card-body p-3 d-flex align-items-center">
-                    <i class="fas fa-times-circle fa-2x me-3" style="color: var(--danger);"></i>
+                    <img src="{% static 'synergy_data/icons/trash-simple.svg' %}" alt="" class="icon-svg icon-svg-xl me-3">
                     <div>
                         <div class="fw-bold fs-4" style="color: var(--danger);">{{ error_count }}</div>
                         <div class="text-muted small">Rejected rows (will be skipped)</div>
@@ -166,7 +167,7 @@
     {% if known_papers %}
     <div class="alert alert-warning" role="alert">
         <h6 class="alert-heading mb-2">
-            <i class="fas fa-info-circle me-2"></i>
+            <img src="{% static 'synergy_data/icons/info.svg' %}" alt="" class="icon-svg icon-svg-md me-2">
             {{ known_papers|length }} paper{{ known_papers|length|pluralize }} in this upload already exist{{ known_papers|length|pluralize:"s," }} in the database
         </h6>
         <div class="small mb-2">
@@ -189,7 +190,7 @@
     <!-- Rows preview table -->
     <div class="data-entry-card mb-4">
         <div class="card-header">
-            <i class="fas fa-table me-2"></i> Row-by-row preview
+            <img src="{% static 'synergy_data/icons/table.svg' %}" alt="" class="icon-svg icon-svg-md me-2"> Row-by-row preview
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -273,21 +274,21 @@
         <input type="hidden" name="import_data_json" value="{{ import_data_json }}">
         <div class="d-flex gap-3 mb-4">
             <button type="submit" class="btn btn-primary-custom btn-lg">
-                <i class="fas fa-database me-2"></i>
+                <img src="{% static 'synergy_data/icons/table.svg' %}" alt="" class="icon-svg icon-svg-md me-2">
                 Confirm Import ({{ importable_count }} row{{ importable_count|pluralize }})
             </button>
             <a href="{% url 'bulk_import' %}" class="btn btn-outline-custom btn-lg">
-                <i class="fas fa-redo me-2"></i> Start Over
+                <img src="{% static 'synergy_data/icons/arrows-clockwise.svg' %}" alt="" class="icon-svg icon-svg-md me-2"> Start Over
             </a>
         </div>
     </form>
     {% else %}
     <div class="alert alert-danger border-0">
-        <i class="fas fa-exclamation-circle me-2"></i>
+        <img src="{% static 'synergy_data/icons/info.svg' %}" alt="" class="icon-svg icon-svg-md me-2">
         No rows are importable. Fix the errors listed above and re-upload the file.
     </div>
     <a href="{% url 'bulk_import' %}" class="btn btn-outline-custom">
-        <i class="fas fa-redo me-2"></i> Start Over
+        <img src="{% static 'synergy_data/icons/arrows-clockwise.svg' %}" alt="" class="icon-svg icon-svg-md me-2"> Start Over
     </a>
     {% endif %}
 

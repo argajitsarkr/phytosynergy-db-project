@@ -50,9 +50,9 @@
                             Explore
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'database_search' %}">Browse Database</a></li>
-                            <li><a class="dropdown-item" href="{% url 'database_search' %}?interpretation=Synergy">Synergistic Pairs</a></li>
-                            <li><a class="dropdown-item" href="{% url 'database_search' %}?interpretation=Antagonism">Antagonistic Pairs</a></li>
+                            <li><a class="dropdown-item" href="{% url 'database_search' %}"><img src="{% static 'synergy_data/icons/magnifying-glass.svg' %}" alt="" class="icon-svg icon-svg-sm me-2">Browse Database</a></li>
+                            <li><a class="dropdown-item" href="{% url 'database_search' %}?interpretation=Synergy"><img src="{% static 'synergy_data/icons/tag.svg' %}" alt="" class="icon-svg icon-svg-sm me-2">Synergistic Pairs</a></li>
+                            <li><a class="dropdown-item" href="{% url 'database_search' %}?interpretation=Antagonism"><img src="{% static 'synergy_data/icons/tag.svg' %}" alt="" class="icon-svg icon-svg-sm me-2">Antagonistic Pairs</a></li>
                         </ul>
                     </li>
                     <li class="nav-item">
@@ -70,17 +70,17 @@
                 <ul class="navbar-nav mb-2 mb-lg-0 align-items-lg-center gap-2">
                     {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'data_entry' %}">Data Entry</a>
+                        <a class="nav-link" href="{% url 'data_entry' %}"><img src="{% static 'synergy_data/icons/plus-circle.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">Data Entry</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'bulk_import' %}">CSV Import</a>
+                        <a class="nav-link" href="{% url 'bulk_import' %}"><img src="{% static 'synergy_data/icons/file-csv.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">CSV Import</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link nav-btn-login" href="{% url 'logout' %}">Logout</a>
+                        <a class="nav-link nav-btn-login" href="{% url 'logout' %}"><img src="{% static 'synergy_data/icons/sign-out.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">Logout</a>
                     </li>
                     {% else %}
                     <li class="nav-item">
-                        <a class="nav-link nav-btn-login" href="{% url 'login' %}">Log In</a>
+                        <a class="nav-link nav-btn-login" href="{% url 'login' %}"><img src="{% static 'synergy_data/icons/user.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">Log In</a>
                     </li>
                     {% endif %}
                 </ul>
@@ -192,7 +192,7 @@
                         <i class="fab fa-x-twitter"></i>
                     </a>
                     <a href="mailto:contact@phytosynergydb.org" aria-label="Email">
-                        <i class="fas fa-envelope"></i>
+                        <img src="{% static 'synergy_data/icons/mailbox.svg' %}" alt="Email" class="icon-svg icon-svg-md">
                     </a>
                 </div>
             </div>

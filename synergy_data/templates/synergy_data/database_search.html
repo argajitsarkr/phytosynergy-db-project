@@ -11,7 +11,7 @@
         <form action="{% url 'database_search' %}" method="get">
             <div class="search-bar-wrapper">
                 <input type="text" name="query" value="{{ search_query }}" placeholder="Search by phytochemical, antibiotic, or pathogen...">
-                <button type="submit"><i class="fas fa-search"></i></button>
+                <button type="submit"><img src="{% static 'synergy_data/icons/magnifying-glass.svg' %}" alt="Search" class="icon-svg icon-svg-md"></button>
             </div>
         </form>
     </div>
@@ -143,7 +143,7 @@
             <div class="d-flex gap-2">
                 <span class="results-count-text">{{ total_results }} results</span>
                 <a href="{% url 'download_data' %}{% if search_query %}?query={{ search_query }}{% endif %}" class="btn btn-sm btn-outline-custom">
-                    <i class="fas fa-download me-1"></i>Export CSV
+                    <img src="{% static 'synergy_data/icons/cloud-arrow-down.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">Export CSV
                 </a>
             </div>
         {% endif %}
@@ -202,13 +202,13 @@
                 <div class="rc-footer">
                     {% if experiment.moa_observed %}
                     <div class="rc-footer-item">
-                        <i class="fas fa-atom"></i>
+                        <img src="{% static 'synergy_data/icons/flask.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">
                         {{ experiment.moa_observed|truncatechars:80 }}
                     </div>
                     {% endif %}
                     {% if experiment.phytochemical.pubchem_cid %}
                     <div class="rc-footer-item">
-                        <i class="fas fa-link"></i>
+                        <img src="{% static 'synergy_data/icons/link.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">
                         PubChem: {{ experiment.phytochemical.pubchem_cid }}
                     </div>
                     {% endif %}
@@ -256,7 +256,7 @@
                     {% endwith %}
                     {% if experiment.phytochemical.chemical_class %}
                     <span class="chem-class-badge" title="ClassyFire: {{ experiment.phytochemical.chemical_superclass|default:'' }} > {{ experiment.phytochemical.chemical_class }} > {{ experiment.phytochemical.chemical_subclass|default:'' }}">
-                        <i class="fas fa-tag me-1"></i>{{ experiment.phytochemical.chemical_class }}
+                        <img src="{% static 'synergy_data/icons/tag.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">{{ experiment.phytochemical.chemical_class }}
                     </span>
                     {% endif %}
                 </div>
@@ -270,7 +270,7 @@
                             data-compound="{{ experiment.phytochemical.compound_name }}"
                             data-cid="{{ experiment.phytochemical.pubchem_cid|default:'' }}"
                             data-mw="{{ experiment.phytochemical.molecular_weight|default:'' }}">
-                        <i class="fas fa-cube me-1"></i>3D
+                        <img src="{% static 'synergy_data/icons/cube.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">3D
                     </button>
                     {% elif experiment.phytochemical.pubchem_cid %}
                     <a href="https://pubchem.ncbi.nlm.nih.gov/compound/{{ experiment.phytochemical.pubchem_cid }}#section=3D-Conformer" target="_blank" class="btn btn-sm btn-outline-secondary">3D Structure</a>
@@ -285,19 +285,19 @@
                             data-antibiotic="{{ experiment.antibiotic.antibiotic_name }}"
                             data-pathogen="{{ experiment.pathogen }}"
                             data-notes="{{ experiment.notes }}">
-                        <i class="fas fa-sticky-note me-1"></i>Notes
+                        <img src="{% static 'synergy_data/icons/note.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">Notes
                     </button>
                     {% endif %}
                     {% if user.is_authenticated %}
                     <a href="{% url 'edit_entry' experiment.pk %}" class="btn btn-sm btn-outline-warning" title="Edit this entry">
-                        <i class="fas fa-pencil-alt me-1"></i>Edit
+                        <img src="{% static 'synergy_data/icons/pencil.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">Edit
                     </a>
                     {% endif %}
                 </div>
             </div>
         {% empty %}
             <div class="text-center p-5 rounded" style="background: var(--bg-section); border: 1px solid var(--border-light);">
-                <i class="fas fa-search" style="font-size: 2.5rem; color: var(--text-muted); margin-bottom: 1rem; display: block;"></i>
+                <img src="{% static 'synergy_data/icons/magnifying-glass.svg' %}" alt="" class="icon-svg icon-svg-xl" style="opacity: 0.4; margin-bottom: 1rem;">
                 <h4 style="color: var(--text-secondary);">No Results Found</h4>
                 <p class="text-muted">Your search did not match any synergistic experiments. Try a different query or adjust filters.</p>
                 <a href="{% url 'database_search' %}" class="btn btn-primary-custom mt-2">Browse All Entries</a>
@@ -377,7 +377,7 @@
             </div>
             <div class="modal-footer">
                 <a href="#" id="molViewerPubchemLink" target="_blank" class="btn btn-sm btn-outline-custom">
-                    <i class="fas fa-external-link-alt me-1"></i>View on PubChem
+                    <img src="{% static 'synergy_data/icons/link.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">View on PubChem
                 </a>
                 <button type="button" class="btn btn-sm btn-primary-custom" data-bs-dismiss="modal">Close</button>
             </div>
