@@ -10,9 +10,6 @@
         <p class="search-label">Search our database of phytochemical-antibiotic synergies:</p>
         <form action="{% url 'database_search' %}" method="get">
             <div class="search-bar-wrapper">
-                <div class="search-category-btn">
-                    <i class="fas fa-leaf"></i> All Categories <i class="fas fa-caret-down"></i>
-                </div>
                 <input type="text" name="query" value="{{ search_query }}" placeholder="Search by phytochemical, antibiotic, or pathogen...">
                 <button type="submit"><i class="fas fa-search"></i></button>
             </div>
@@ -144,7 +141,7 @@
         </div>
         {% if total_results %}
             <div class="d-flex gap-2">
-                <span class="badge results-count-badge synergy-badge">{{ total_results }} results</span>
+                <span class="results-count-text">{{ total_results }} results</span>
                 <a href="{% url 'download_data' %}{% if search_query %}?query={{ search_query }}{% endif %}" class="btn btn-sm btn-outline-custom">
                     <i class="fas fa-download me-1"></i>Export CSV
                 </a>
@@ -281,6 +278,16 @@
                     {% if experiment.source.doi %}
                     <a href="https://doi.org/{{ experiment.source.doi }}" target="_blank" class="btn btn-sm btn-primary">Source Paper</a>
                     {% endif %}
+                    {% if experiment.notes %}
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-view-notes"
+                            data-bs-toggle="modal" data-bs-target="#notesModal"
+                            data-compound="{{ experiment.phytochemical.compound_name }}"
+                            data-antibiotic="{{ experiment.antibiotic.antibiotic_name }}"
+                            data-pathogen="{{ experiment.pathogen }}"
+                            data-notes="{{ experiment.notes }}">
+                        <i class="fas fa-sticky-note me-1"></i>Notes
+                    </button>
+                    {% endif %}
                     {% if user.is_authenticated %}
                     <a href="{% url 'edit_entry' experiment.pk %}" class="btn btn-sm btn-outline-warning" title="Edit this entry">
                         <i class="fas fa-pencil-alt me-1"></i>Edit
@@ -332,6 +339,27 @@
     {% endif %}
 </div>
 
+<!-- Notes Modal -->
+<div class="modal fade" id="notesModal" tabindex="-1" aria-labelledby="notesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="notesModalLabel">Curator Notes</h5>
+                    <small class="text-muted" id="notesModalSubtitle"></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="notesModalBody" style="white-space: pre-wrap; line-height: 1.6; margin: 0;"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-primary-custom" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 3D Molecular Viewer Modal -->
 <div class="modal fade" id="molViewerModal" tabindex="-1" aria-labelledby="molViewerLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -363,6 +391,18 @@
 <script>
 (function() {
     var viewer = null;
+
+    document.querySelectorAll('.btn-view-notes').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var compound = this.getAttribute('data-compound') || '';
+            var antibiotic = this.getAttribute('data-antibiotic') || '';
+            var pathogen = this.getAttribute('data-pathogen') || '';
+            var notes = this.getAttribute('data-notes') || '';
+            document.getElementById('notesModalSubtitle').textContent =
+                compound + ' + ' + antibiotic + ' vs ' + pathogen;
+            document.getElementById('notesModalBody').textContent = notes;
+        });
+    });
 
     document.querySelectorAll('.btn-view3d').forEach(function(btn) {
         btn.addEventListener('click', function() {
