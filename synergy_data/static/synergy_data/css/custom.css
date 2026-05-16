@@ -564,8 +564,8 @@ a:hover { color: var(--accent); }
    10. BADGES
    ============================================================ */
 .synergy-badge {
-    background-color: var(--success-bg);
-    color: var(--success-text);
+    background-color: #E8ECF5;
+    color: #0D2366;
     font-weight: 600;
     font-size: 0.75rem;
     padding: 0.25em 0.65em;
@@ -2396,18 +2396,18 @@ select:focus {
    sentence-case nav, gentle radii, no thick black borders.
    ============================================================ */
 :root {
-    --rzp-blue: #3395FF;
-    --rzp-blue-hover: #0B6FCB;
-    --rzp-blue-tint: #EAF3FF;
+    --rzp-blue: #0D2366;
+    --rzp-blue-hover: #08163F;
+    --rzp-blue-tint: #E8ECF5;
     --rzp-ink: #0D2366;
     --rzp-body: #525870;
     --rzp-hairline: #E7EAF3;
     --rzp-surface-tint: #F6F8FB;
 
-    --primary: #3395FF;
-    --primary-dark: #0B6FCB;
-    --primary-hover: #0B6FCB;
-    --primary-light: #EAF3FF;
+    --primary: #0D2366;
+    --primary-dark: #08163F;
+    --primary-hover: #1A3680;
+    --primary-light: #E8ECF5;
     --dark: #0D2366;
     --darker: #0D2366;
     --text-primary: #0D2366;
