@@ -103,6 +103,94 @@ def get_or_create_case_insensitive(model, field_name, value):
             return model.objects.get(**lookup)
 
 
+# Gram stain by genus for the common antibacterial test organisms. Used to
+# auto-fill Pathogen.gram_stain when a curator doesn't supply it explicitly.
+GRAM_STAIN_BY_GENUS = {
+    # Gram-positive
+    'staphylococcus': 'Gram-positive',
+    'streptococcus': 'Gram-positive',
+    'enterococcus': 'Gram-positive',
+    'bacillus': 'Gram-positive',
+    'listeria': 'Gram-positive',
+    'clostridium': 'Gram-positive',
+    'clostridioides': 'Gram-positive',
+    'corynebacterium': 'Gram-positive',
+    'mycobacterium': 'Gram-positive',
+    'micrococcus': 'Gram-positive',
+    'lactobacillus': 'Gram-positive',
+    # Gram-negative
+    'escherichia': 'Gram-negative',
+    'klebsiella': 'Gram-negative',
+    'pseudomonas': 'Gram-negative',
+    'acinetobacter': 'Gram-negative',
+    'enterobacter': 'Gram-negative',
+    'salmonella': 'Gram-negative',
+    'shigella': 'Gram-negative',
+    'proteus': 'Gram-negative',
+    'serratia': 'Gram-negative',
+    'neisseria': 'Gram-negative',
+    'haemophilus': 'Gram-negative',
+    'helicobacter': 'Gram-negative',
+    'vibrio': 'Gram-negative',
+    'campylobacter': 'Gram-negative',
+    'bacteroides': 'Gram-negative',
+    'citrobacter': 'Gram-negative',
+    'morganella': 'Gram-negative',
+    'stenotrophomonas': 'Gram-negative',
+    'burkholderia': 'Gram-negative',
+}
+
+
+def derive_gram_stain(genus):
+    """Best-effort Gram stain from a genus name. Returns None if unknown."""
+    if not genus:
+        return None
+    return GRAM_STAIN_BY_GENUS.get(genus.strip().lower())
+
+
+def resolve_pathogen(full_name, gram_stain=None):
+    """get_or_create a Pathogen from a full name, filling gram_stain if blank.
+
+    An explicit gram_stain wins; otherwise we derive it from the genus.
+    """
+    genus, species, strain = parse_pathogen_name(full_name)
+    pathogen, _ = Pathogen.objects.get_or_create(
+        genus=genus, species=species, strain=strain
+    )
+    if not pathogen.gram_stain:
+        resolved = (gram_stain or '').strip() or derive_gram_stain(genus)
+        if resolved:
+            pathogen.gram_stain = resolved
+            pathogen.save(update_fields=['gram_stain'])
+    return pathogen
+
+
+def resolve_antibiotic(name, class_name=None):
+    """get_or_create an Antibiotic (case-insensitive) and link its class.
+
+    The AntibioticClass FK is only filled when currently blank, so we never
+    clobber a class a curator set deliberately.
+    """
+    antibiotic = get_or_create_case_insensitive(Antibiotic, 'antibiotic_name', name)
+    class_name = (class_name or '').strip()
+    if class_name and antibiotic.antibiotic_class is None:
+        antibiotic.antibiotic_class = get_or_create_case_insensitive(
+            AntibioticClass, 'class_name', class_name
+        )
+        antibiotic.save(update_fields=['antibiotic_class'])
+    return antibiotic
+
+
+def link_plant_source(plant_name, phytochemical):
+    """get_or_create a Plant and associate the phytochemical with it (M2M)."""
+    plant_name = (plant_name or '').strip()
+    if not plant_name:
+        return None
+    plant = get_or_create_case_insensitive(Plant, 'scientific_name', plant_name)
+    plant.phytochemicals.add(phytochemical)
+    return plant
+
+
 def _normalize_doi(doi):
     """Normalize DOI for case-insensitive comparison: strip URL prefix, lowercase, trim."""
     if not doi:
@@ -413,10 +501,9 @@ def data_entry_view(request):
             if source_updated:
                 source.save()
 
-            # 2. Resolve Pathogen (parse name, then get_or_create)
-            genus, species, strain = parse_pathogen_name(cd['pathogen_full_name'])
-            pathogen, _ = Pathogen.objects.get_or_create(
-                genus=genus, species=species, strain=strain
+            # 2. Resolve Pathogen (parse name, set gram stain)
+            pathogen = resolve_pathogen(
+                cd['pathogen_full_name'], gram_stain=cd.get('gram_stain')
             )
 
             # 3. Resolve Phytochemical (case-insensitive)
@@ -427,9 +514,12 @@ def data_entry_view(request):
             # 3b. Auto-enrich phytochemical with PubChem + ClassyFire data
             enrichment_status = enrich_phytochemical(phytochemical)
 
-            # 4. Resolve Antibiotic (case-insensitive)
-            antibiotic = get_or_create_case_insensitive(
-                Antibiotic, 'antibiotic_name', cd['antibiotic_name'].strip()
+            # 3c. Link plant source (optional)
+            link_plant_source(cd.get('plant_source'), phytochemical)
+
+            # 4. Resolve Antibiotic (case-insensitive) + link class
+            antibiotic = resolve_antibiotic(
+                cd['antibiotic_name'].strip(), class_name=cd.get('antibiotic_class')
             )
 
             # 5. Auto-calculate FIC if not provided
@@ -458,6 +548,7 @@ def data_entry_view(request):
                 mic_units=cd.get('mic_units') or '\u00b5g/mL',
                 fic_index=fic_index,
                 interpretation=interpretation,
+                assay_method=cd.get('assay_method') or 'checkerboard',
                 moa_observed=cd.get('moa_observed', ''),
                 notes=cd.get('notes', ''),
             )
@@ -530,9 +621,8 @@ def edit_entry_view(request, pk):
                 source.save()
 
             # 2. Resolve Pathogen
-            genus, species, strain = parse_pathogen_name(cd['pathogen_full_name'])
-            pathogen, _ = Pathogen.objects.get_or_create(
-                genus=genus, species=species, strain=strain
+            pathogen = resolve_pathogen(
+                cd['pathogen_full_name'], gram_stain=cd.get('gram_stain')
             )
 
             # 3. Resolve Phytochemical
@@ -543,9 +633,12 @@ def edit_entry_view(request, pk):
             # 3b. Auto-enrich
             enrichment_status = enrich_phytochemical(phytochemical)
 
-            # 4. Resolve Antibiotic
-            antibiotic = get_or_create_case_insensitive(
-                Antibiotic, 'antibiotic_name', cd['antibiotic_name'].strip()
+            # 3c. Link plant source (optional)
+            link_plant_source(cd.get('plant_source'), phytochemical)
+
+            # 4. Resolve Antibiotic + link class
+            antibiotic = resolve_antibiotic(
+                cd['antibiotic_name'].strip(), class_name=cd.get('antibiotic_class')
             )
 
             # 5. Auto-calculate FIC if not provided
@@ -573,6 +666,7 @@ def edit_entry_view(request, pk):
             experiment.mic_units = cd.get('mic_units') or '\u00b5g/mL'
             experiment.fic_index = fic_index
             experiment.interpretation = interpretation
+            experiment.assay_method = cd.get('assay_method') or 'checkerboard'
             experiment.moa_observed = cd.get('moa_observed', '')
             experiment.notes = cd.get('notes', '')
             experiment.save()
@@ -596,14 +690,22 @@ def edit_entry_view(request, pk):
         if experiment.pathogen.strain:
             pathogen_str += f" {experiment.pathogen.strain}"
 
+        existing_plant = experiment.phytochemical.source_plants.first()
         form = SynergyEntryForm(initial={
             'source_doi': experiment.source.doi or '',
             'publication_year': experiment.source.publication_year,
             'article_title': experiment.source.article_title or '',
             'journal': experiment.source.journal or '',
             'pathogen_full_name': pathogen_str,
+            'gram_stain': experiment.pathogen.gram_stain or '',
             'phytochemical_name': experiment.phytochemical.compound_name,
+            'plant_source': existing_plant.scientific_name if existing_plant else '',
             'antibiotic_name': experiment.antibiotic.antibiotic_name,
+            'antibiotic_class': (
+                experiment.antibiotic.antibiotic_class.class_name
+                if experiment.antibiotic.antibiotic_class else ''
+            ),
+            'assay_method': experiment.assay_method or 'checkerboard',
             'mic_phyto_alone': experiment.mic_phyto_alone,
             'mic_abx_alone': experiment.mic_abx_alone,
             'mic_phyto_in_combo': experiment.mic_phyto_in_combo,
@@ -967,12 +1069,10 @@ def bulk_import_view(request):
                             },
                         )
 
-                        # --- Pathogen (parse + get_or_create) ---
-                        genus, species, strain = parse_pathogen_name(row['pathogen_full_name'])
-                        pathogen, _ = Pathogen.objects.get_or_create(
-                            genus=genus,
-                            species=species,
-                            strain=strain,
+                        # --- Pathogen (parse + get_or_create, derive gram) ---
+                        pathogen = resolve_pathogen(
+                            row['pathogen_full_name'],
+                            gram_stain=row.get('gram_stain'),
                         )
 
                         # --- Phytochemical (case-insensitive) ---
@@ -986,9 +1086,13 @@ def bulk_import_view(request):
                             Phytochemical, 'compound_name', row['phytochemical_name']
                         )
 
-                        # --- Antibiotic (case-insensitive) ---
-                        antibiotic = get_or_create_case_insensitive(
-                            Antibiotic, 'antibiotic_name', row['antibiotic_name']
+                        # --- Plant source (optional M2M) ---
+                        link_plant_source(row.get('plant_source'), phytochemical)
+
+                        # --- Antibiotic (case-insensitive) + class ---
+                        antibiotic = resolve_antibiotic(
+                            row['antibiotic_name'],
+                            class_name=row.get('antibiotic_class'),
                         )
 
                         # --- Duplicate check ---
@@ -1031,6 +1135,7 @@ def bulk_import_view(request):
                             mic_units=mic_units,
                             fic_index=fic_index,
                             interpretation=interpretation,
+                            assay_method=(row.get('assay_method') or 'checkerboard'),
                             moa_observed=row.get('moa_observed') or '',
                             notes=row.get('notes') or '',
                         )

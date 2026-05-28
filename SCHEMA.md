@@ -1,4 +1,4 @@
-# PhytoSynergyDB — System Architecture & Database Schema
+# PhytoSynergyDB - System Architecture & Database Schema
 
 **For Manuscript Reference**
 
@@ -15,11 +15,11 @@ PhytoSynergyDB is a web-based, curated relational database dedicated to synergis
 | **Backend Framework** | Django | 4.2 | Web application framework, ORM, routing, authentication |
 | **Programming Language** | Python | 3.12 | Server-side logic, data processing |
 | **Database** | PostgreSQL | 15 | Relational data storage with ACID compliance |
-| **Frontend** | HTML5, CSS3, JavaScript | — | User interface, responsive design |
+| **Frontend** | HTML5, CSS3, JavaScript | - | User interface, responsive design |
 | **CSS Framework** | Bootstrap | 5 | Responsive grid, UI components |
 | **Web Server** | Nginx | 1.25 | Reverse proxy, static file serving |
 | **WSGI Server** | Gunicorn | 23.0 | Python WSGI HTTP server |
-| **Containerization** | Docker + Docker Compose | — | Deployment orchestration |
+| **Containerization** | Docker + Docker Compose | - | Deployment orchestration |
 
 ### 1.2 Architecture Diagram
 
@@ -201,7 +201,7 @@ PhytoSynergyDB is a web-based, curated relational database dedicated to synergis
 | `strain` | VARCHAR(100) | NULLABLE | Specific strain identifier (e.g., "ATCC 27853", "MTCC 2488") |
 | `gram_stain` | VARCHAR(20) | NULLABLE | Gram staining classification ("Gram-positive" or "Gram-negative") |
 
-**Unique constraint:** (`genus`, `species`, `strain`) — prevents duplicate strain entries.
+**Unique constraint:** (`genus`, `species`, `strain`) - prevents duplicate strain entries.
 
 **Normalization:** Empty strain strings are normalized to NULL on save to maintain unique constraint integrity.
 
@@ -219,7 +219,7 @@ PhytoSynergyDB is a web-based, curated relational database dedicated to synergis
 | `article_title` | TEXT | NULLABLE | Title of the scientific article |
 | `journal` | VARCHAR(255) | NULLABLE | Name of the journal |
 
-**Data provenance:** Every experiment record links to its source publication via DOI, ensuring full traceability and reproducibility — a critical requirement for scientific databases.
+**Data provenance:** Every experiment record links to its source publication via DOI, ensuring full traceability and reproducibility - a critical requirement for scientific databases.
 
 ---
 
@@ -283,10 +283,10 @@ When all four MIC values are provided, the FIC index is automatically calculated
 
 The schema follows a **star schema** pattern: `SynergyExperiment` is the central fact table, with dimension tables (`Phytochemical`, `Antibiotic`, `Pathogen`, `Source`) linked via foreign keys. This design:
 
-1. **Eliminates redundancy** — compound and pathogen data stored once, referenced many times
-2. **Enables multi-dimensional queries** — filter/aggregate across any dimension
-3. **Supports data integrity** — foreign key constraints prevent orphaned records
-4. **Facilitates normalization** — case-insensitive lookups prevent duplicate entities
+1. **Eliminates redundancy** - compound and pathogen data stored once, referenced many times
+2. **Enables multi-dimensional queries** - filter/aggregate across any dimension
+3. **Supports data integrity** - foreign key constraints prevent orphaned records
+4. **Facilitates normalization** - case-insensitive lookups prevent duplicate entities
 
 ---
 
@@ -521,9 +521,9 @@ The CSV export includes all fields from the star schema denormalized into a flat
 
 ```json
 {
-  "count": "integer — total matching records",
-  "limit": "integer — page size",
-  "offset": "integer — starting position",
+  "count": "integer - total matching records",
+  "limit": "integer - page size",
+  "offset": "integer - starting position",
   "results": [
     {
       "id": "integer",
@@ -607,7 +607,7 @@ The CSV export includes all fields from the star schema denormalized into a flat
 |-----------|-------------------|---------|
 | PubChem CID | NCBI PubChem | Chemical properties, bioassays, 3D structures |
 | InChI Key | IUPAC InChI | Unambiguous compound identification |
-| SMILES | — | Computational chemistry, molecular docking |
+| SMILES | - | Computational chemistry, molecular docking |
 | DrugBank ID | DrugBank | Drug pharmacology, targets, interactions |
 | DOI | CrossRef/DataCite | Publication access and verification |
 | PMID | NCBI PubMed | Publication indexing and retrieval |

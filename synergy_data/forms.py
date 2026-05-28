@@ -87,6 +87,39 @@ class SynergyEntryForm(forms.Form):
         }),
     )
 
+    antibiotic_class = forms.CharField(
+        max_length=100,
+        required=False,
+        label="Antibiotic Class",
+        help_text="e.g., Fluoroquinolone, Beta-lactam (optional)",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Fluoroquinolone',
+        }),
+    )
+
+    plant_source = forms.CharField(
+        max_length=255,
+        required=False,
+        label="Plant Source",
+        help_text="Scientific name of the source plant, e.g., Berberis vulgaris (optional)",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Berberis vulgaris',
+        }),
+    )
+
+    gram_stain = forms.ChoiceField(
+        choices=[
+            ('', '--- Auto-derive from genus ---'),
+            ('Gram-positive', 'Gram-positive'),
+            ('Gram-negative', 'Gram-negative'),
+        ],
+        required=False,
+        label="Gram Stain",
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+
     # --- MIC values (all optional -- papers often have partial data) ---
     mic_phyto_alone = forms.DecimalField(
         max_digits=10,
@@ -166,6 +199,20 @@ class SynergyEntryForm(forms.Form):
         + list(SynergyExperiment.InterpretationChoices.choices),
         required=False,
         label="Interpretation",
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+
+    assay_method = forms.ChoiceField(
+        choices=[
+            ('checkerboard', 'Checkerboard'),
+            ('time_kill', 'Time-Kill'),
+            ('disk_diffusion', 'Disk Diffusion'),
+            ('broth_microdilution', 'Broth Microdilution'),
+            ('other', 'Other'),
+        ],
+        required=False,
+        initial='checkerboard',
+        label="Assay Method",
         widget=forms.Select(attrs={'class': 'form-select'}),
     )
 

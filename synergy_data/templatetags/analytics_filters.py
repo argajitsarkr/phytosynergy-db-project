@@ -17,7 +17,7 @@ def heatmap_color(fic_value):
     except (TypeError, ValueError):
         return '#f0f0f0'
 
-    # Clamp to 0–5 range for coloring
+    # Clamp to 0-5 range for coloring
     v = max(0.0, min(v, 5.0))
 
     # Define color stops: (fic_value, R, G, B)

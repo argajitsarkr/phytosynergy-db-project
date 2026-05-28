@@ -1,4 +1,4 @@
-# PhytoSynergyDB — Project Changelog
+# PhytoSynergyDB - Project Changelog
 
 > Curated database of phytochemical-antibiotic synergies against ESKAPE pathogens.
 > Deployed via Docker Compose (Nginx + Gunicorn + Django 4.2 + PostgreSQL 15) on Dell PowerEdge R730.
@@ -19,7 +19,7 @@
 
 ---
 
-## Phase 4 — AI-Assisted Extraction + Analytics Dashboard (2026-03-24 – ongoing)
+## Phase 4 - AI-Assisted Extraction + Analytics Dashboard (2026-03-24 - ongoing)
 
 ### Enhancement 4: AI-Assisted PDF Data Extraction (`/extract/`)
 - **Login-required page** for curators to upload research paper PDFs
@@ -53,7 +53,7 @@
 | `2ae03fa` | 2026-03-25 | Revise analytics page to blue color palette |
 | `b90acd1` | 2026-03-25 | Revert site-wide CSS to original blue theme |
 
-### Enhancement 1: Schema Expansion — Plant Source + Cheminformatics
+### Enhancement 1: Schema Expansion - Plant Source + Cheminformatics
 - **Plant model** with M2M relationship to Phytochemical (scientific_name, common_name, family)
 - New Phytochemical fields: logp, num_rings, heavy_atom_count, lipinski_violations, is_drug_like
 - New SynergyExperiment field: assay_method (checkerboard, time-kill, disk diffusion, etc.)
@@ -67,7 +67,7 @@
 
 ---
 
-## Phase 3 — Production Hardening + UX Fixes (2026-03-06 – 2026-03-07)
+## Phase 3 - Production Hardening + UX Fixes (2026-03-06 - 2026-03-07)
 
 ### Production Safety Scripts
 - Automated DB backup, restore, and safe deploy scripts
@@ -98,7 +98,7 @@
 
 ---
 
-## Phase 2 — Major Redesign + Features (2026-03-03 – 2026-03-05)
+## Phase 2 - Major Redesign + Features (2026-03-03 - 2026-03-05)
 
 ### DrugBank-Inspired Redesign
 - Full UI overhaul: Black + Blue minimalistic palette
@@ -130,7 +130,7 @@
 
 ---
 
-## Phase 1 — Initial Build + Deployment (2025-08-14 – 2026-03-03)
+## Phase 1 - Initial Build + Deployment (2025-08-14 - 2026-03-03)
 
 ### Project Creation
 - Django 4.2 project with `synergy_data` app
@@ -155,7 +155,7 @@
 |--------|------|-------------|
 | `ea97e93` | 2025-08-14 | Initial commit of PhytoSynergyDB project |
 | `156099c` | 2026-01-19 | Add Docker configuration for production deployment |
-| `ac81c72` | 2026-02-22 | Complete website build — all 4 pages, data import, production config |
+| `ac81c72` | 2026-02-22 | Complete website build - all 4 pages, data import, production config |
 | `a917b5a` | 2026-03-03 | Add home page redesign, data entry system |
 
 ---

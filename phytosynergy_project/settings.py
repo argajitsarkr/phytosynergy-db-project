@@ -20,7 +20,7 @@ DEBUG = os.environ.get('DEBUG', '1') == '1' # Defaults to True for development
 # --- CORRECTED ALLOWED_HOSTS AND CSRF LOGIC ---
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
-# CSRF trusted origins — needed for Cloudflare Tunnel, Railway, or any reverse proxy
+# CSRF trusted origins - needed for Cloudflare Tunnel, Railway, or any reverse proxy
 CSRF_TRUSTED_ORIGINS = []
 
 csrf_env = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
