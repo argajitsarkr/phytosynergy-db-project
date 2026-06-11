@@ -40,6 +40,18 @@ services:
       - web
     restart: always
 
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --config /etc/cloudflared/config.yml run
+    volumes:
+      # Tunnel config (committed, no secrets) and the credentials JSON
+      # (mounted from the host, never committed).
+      - ./cloudflared.yml:/etc/cloudflared/config.yml:ro
+      - /home/mmilab/.cloudflared/38203e22-6472-4cbf-9e33-fad6e510d7d0.json:/etc/cloudflared/38203e22-6472-4cbf-9e33-fad6e510d7d0.json:ro
+    depends_on:
+      - nginx
+    restart: always
+
 volumes:
   postgres_data:
   static_volume:

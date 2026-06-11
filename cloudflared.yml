@@ -1,0 +1,18 @@
+# Cloudflare Tunnel config for the dedicated PhytoSynergyDB tunnel.
+# Runs inside the phytosynergy docker-compose as the `tunnel` service.
+# Ingress points at the nginx service on the compose network (nginx:80).
+#
+# Tunnel: phytosynergy (38203e22-6472-4cbf-9e33-fad6e510d7d0)
+# The credentials JSON is mounted in from the host (~/.cloudflared) and is
+# NOT committed to the repo. This file holds no secrets.
+
+tunnel: 38203e22-6472-4cbf-9e33-fad6e510d7d0
+credentials-file: /etc/cloudflared/38203e22-6472-4cbf-9e33-fad6e510d7d0.json
+
+ingress:
+  - hostname: phytosynergydb.in
+    service: http://nginx:80
+  - hostname: www.phytosynergydb.in
+    service: http://nginx:80
+  # Catch-all (required). Anything not matched above gets a 404.
+  - service: http_status:404
