@@ -8,8 +8,8 @@
 ## Project Overview
 
 **App:** PhytoSynergyDB - curated database of phytochemical-antibiotic synergy experiments against ESKAPE pathogens.
-**Stack:** Django 4.2 LTS · PostgreSQL 15 · Gunicorn · Nginx · Docker Compose · ngrok tunnel
-**Host:** Dell PowerEdge R730, 84 GB RAM (self-hosted, ngrok public URL)
+**Stack:** Django 4.2 LTS · PostgreSQL 15 · Gunicorn · Nginx · Docker Compose · Cloudflare Tunnel
+**Host:** Dell PowerEdge R730, 84 GB RAM (self-hosted, public domain `https://phytosynergydb.in`)
 **Repo:** `https://github.com/argajitsarkr/phytosynergy-db-project.git`
 **Active branch:** `main` (only branch; `color-palette-redesign` was merged & deleted on 2026-04-30)
 **Server path:** `/home/mmilab/Desktop/Database/phytosynergy-project/` (NOT `~/phytosynergy-db-project`)
@@ -230,8 +230,9 @@ docker compose restart web             # nginx + db stay up; only web restarts
 | `DATABASE_URL` | Postgres connection string - `postgres://user:pass@db:5432/phytosynergy_db` |
 | `DJANGO_SECRET_KEY` | Django secret key |
 | `DEBUG` | `0` for production, `1` for dev |
-| `ALLOWED_HOSTS` | Comma-separated; include server IP, `localhost`, ngrok wildcard |
-| `CSRF_TRUSTED_ORIGINS` | Must include `https://*.ngrok-free.dev` for ngrok to work |
+| `ALLOWED_HOSTS` | Comma-separated; include `phytosynergydb.in`, `www.phytosynergydb.in`, server IP, `localhost`, `127.0.0.1` |
+| `CSRF_TRUSTED_ORIGINS` | Must include `https://phytosynergydb.in,https://www.phytosynergydb.in` |
+| `SECURE_HSTS_SECONDS` | `31536000` in production (enabled now that the domain is dedicated) |
 
 ---
 
@@ -321,6 +322,8 @@ Imported via the single Google Fonts URL at the top of `custom.css`. Do NOT add 
 
 | Date | Commit | Description |
 |------|--------|-------------|
+| 2026-06-12 | `ea50e54` `9b4e914` `dd22d5d` | Migrate ngrok -> dedicated Cloudflare Tunnel on the new domain `phytosynergydb.in` (purchased from Hostinger; nameservers moved to Cloudflare). Removed the ngrok `tunnel` service from docker-compose; added a `cloudflared` container running a dedicated tunnel (`phytosynergy`, id `38203e22-6472-4cbf-9e33-fad6e510d7d0`) with ingress -> `nginx:80` (config in `cloudflared.yml`, no secrets; creds JSON mounted from `/home/mmilab/.cloudflared/`, never committed). Container runs as `user: root` so it can read the 0400 creds file (mirrors the grantsetu host systemd tunnel) - the `nonroot` default user hit `permission denied`. Updated `ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS` to the new domain; enabled HSTS (`SECURE_HSTS_SECONDS=31536000`, includeSubDomains) now that the domain is dedicated. nginx `server_name` -> `phytosynergydb.in www.phytosynergydb.in`. Added `phytosynergydb-worker/` (Cloudflare Worker passthrough that redirects to a GitHub Pages maintenance page on origin-down statuses incl. 530, plus the offline page) - NOT yet deployed. GOTCHA: `cloudflared tunnel route dns` created junk `*.grantsetu.in` records because the existing `cert.pem` is scoped to the grantsetu.in zone; DNS for the new zone was created by hand in the Cloudflare dashboard as proxied CNAMEs to `<tunnel-id>.cfargotunnel.com` instead. Verified live: `curl -I https://phytosynergydb.in` -> HTTP/2 200, HSTS header present, 4 tunnel connections registered. |
+| 2026-06-09 | - | Security & publication hardening pass (code only; secrets remediation left to the maintainer). settings.py: DEBUG now defaults to 0 (fail closed); SECRET_KEY raises in production if unset (dev fallback only when DEBUG); ALLOWED_HOSTS defaults to localhost,127.0.0.1 not '*'; added production-only block (SECURE_PROXY_SSL_HEADER for the nginx+tunnel chain, SECURE_SSL_REDIRECT, SESSION/CSRF_COOKIE_SECURE, SESSION_COOKIE_HTTPONLY, nosniff, X_FRAME_OPTIONS DENY, Referrer-Policy; HSTS off by default with a comment - shared ngrok domain); added LOGGING to stdout. nginx.conf: forward X-Forwarded-Proto via a map fallback, add security headers, gzip, static caching, server_tokens off. Wired the existing health_check view to /health/. Reworded the false "API is rate-limited" home FAQ to describe the real pagination cap. Added MIT LICENSE file (code MIT, data CC-BY-4.0 note) to back the README badge / About claim. Fixed README Django badge 5.2 -> 4.2 LTS. KNOWN OPEN ITEM: docker-compose.yml still has live secrets committed and in git history (DB password, DJANGO_SECRET_KEY, ngrok authtoken) - must be rotated, moved to .env, and purged from history / repo made private. py_compile clean; full `manage.py check` to be run in Docker by maintainer. |
 | 2026-05-29 | - | Fix data-loss: `assay_method`, `antibiotic_class`, `plant_source` and `gram_stain` were accepted by the import template/COLUMN_MAP (and partly the form) but never written. Added `resolve_pathogen` (auto-derives gram stain from genus via GRAM_STAIN_BY_GENUS, explicit value wins), `resolve_antibiotic` (links AntibioticClass, fills only when blank) and `link_plant_source` (get_or_create Plant + M2M) helpers in views.py. Added the four fields to SynergyEntryForm + data_entry.html and wired them through data_entry_view, edit_entry_view (incl. pre-populate on edit) and bulk_import_view. No migration needed - columns already existed. Also swept all remaining em/en dashes from CHANGELOG.md, SCHEMA.md, SITE_REPORT.md, DEPLOYMENT.md, the settings.py comment, and two analytics files (rule #6); only CLAUDE.md rule text retains them by design. `manage.py check` clean. |
 | 2026-05-17 | `19b71a6` | Analytics: drop chart-bar icon from main "Analytics Dashboard" heading. |
 | 2026-05-17 | `83f32d7` | Analytics dashboard: swap remaining FontAwesome icons for Phosphor SVGs (chart-bar, unite, test-tube, plant, pill, calendar-dots, presentation-chart, grid-nine). Added `pill.svg` for Top Antibiotics. |
