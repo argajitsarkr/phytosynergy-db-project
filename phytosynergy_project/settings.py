@@ -55,6 +55,12 @@ if RAILWAY_PUBLIC_DOMAIN:
 # so search engines always index the one canonical https + apex-domain form.
 SITE_URL = os.environ.get('SITE_URL', 'https://phytosynergydb.in').rstrip('/')
 
+# Optional search-engine ownership-verification tokens. When set, they render
+# as <meta> tags in <head> so Google Search Console / Bing Webmaster Tools can
+# confirm ownership (the DNS-TXT method works too and needs no token here).
+GOOGLE_SITE_VERIFICATION = os.environ.get('GOOGLE_SITE_VERIFICATION', '')
+BING_SITE_VERIFICATION = os.environ.get('BING_SITE_VERIFICATION', '')
+
 
 # ==============================================================================
 # APPLICATION DEFINITION

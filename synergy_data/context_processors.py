@@ -6,9 +6,14 @@ from .models import Antibiotic, Phytochemical, SiteViewCounter, SynergyExperimen
 
 
 def seo(request):
-    """Expose the canonical site URL to every template for SEO tags
-    (canonical link, Open Graph / Twitter URLs, JSON-LD)."""
-    return {'SITE_URL': settings.SITE_URL}
+    """Expose the canonical site URL and search-engine verification tokens to
+    every template for SEO tags (canonical link, Open Graph / Twitter URLs,
+    JSON-LD, ownership-verification meta tags)."""
+    return {
+        'SITE_URL': settings.SITE_URL,
+        'GOOGLE_SITE_VERIFICATION': settings.GOOGLE_SITE_VERIFICATION,
+        'BING_SITE_VERIFICATION': settings.BING_SITE_VERIFICATION,
+    }
 
 
 def view_counter(request):
