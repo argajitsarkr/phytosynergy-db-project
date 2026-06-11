@@ -294,4 +294,48 @@
     </div>
 </section>
 
+<!-- Dataset structured data for Google Dataset Search -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "Dataset",
+  "name": "PhytoSynergyDB - Phytochemical-Antibiotic Synergy Database",
+  "description": "A free, expert-curated database of phytochemical-antibiotic synergy experiments against ESKAPE pathogens. Each record captures FIC index, MIC values (alone and in combination), assay method, mechanism of action, and the peer-reviewed source (DOI/PMID), supporting antimicrobial resistance research.",
+  "url": "{{ SITE_URL }}/",
+  "sameAs": "{{ SITE_URL }}/database/",
+  "keywords": [
+    "phytochemical-antibiotic synergy",
+    "FIC index",
+    "ESKAPE pathogens",
+    "antimicrobial resistance",
+    "minimum inhibitory concentration",
+    "natural products",
+    "drug combination"
+  ],
+  "creator": {
+    "@type": "Organization",
+    "name": "PhytoSynergyDB",
+    "url": "{{ SITE_URL }}/"
+  },
+  "isAccessibleForFree": true,
+  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "measurementTechnique": [
+    "Checkerboard assay",
+    "Time-kill assay",
+    "Broth microdilution",
+    "Disk diffusion"
+  ],
+  "variableMeasured": [
+    "Fractional Inhibitory Concentration (FIC) index",
+    "Minimum Inhibitory Concentration (MIC)",
+    "Mechanism of action"
+  ],
+  "distribution": {
+    "@type": "DataDownload",
+    "encodingFormat": "text/csv",
+    "contentUrl": "{{ SITE_URL }}/database/download/"
+  }
+}
+</script>
+
 {% endblock %}

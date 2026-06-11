@@ -5,8 +5,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}PhytoSynergyDB{% endblock %}</title>
-    <meta name="description" content="PhytoSynergyDB - A curated database of phytochemical-antibiotic synergies against ESKAPE pathogens for antimicrobial resistance research.">
+
+    <!-- Primary SEO meta -->
+    <title>{% block title %}PhytoSynergyDB - Phytochemical-Antibiotic Synergy Database against ESKAPE Pathogens{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}PhytoSynergyDB is a free, expert-curated database of phytochemical-antibiotic synergy experiments - FIC index, MIC values, mechanism of action and source - against ESKAPE pathogens for antimicrobial resistance research.{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}phytochemical antibiotic synergy, FIC index, ESKAPE pathogens, antimicrobial resistance, MIC database, drug combination, natural products, antibacterial{% endblock %}">
+    <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}">
+    <meta name="author" content="PhytoSynergyDB">
+    <meta name="theme-color" content="#0D2366">
+    <link rel="canonical" href="{% block canonical %}{{ SITE_URL }}{{ request.path }}{% endblock %}">
+
+    <!-- Open Graph (Facebook, LinkedIn, etc.) -->
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:site_name" content="PhytoSynergyDB">
+    <meta property="og:title" content="{% block og_title %}{% block og_title_text %}PhytoSynergyDB - Phytochemical-Antibiotic Synergy Database{% endblock %}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}A free, expert-curated database of phytochemical-antibiotic synergy experiments against ESKAPE pathogens for antimicrobial resistance research.{% endblock %}">
+    <meta property="og:url" content="{{ SITE_URL }}{{ request.path }}">
+    <meta property="og:image" content="{% block og_image %}{{ SITE_URL }}{% static 'synergy_data/images/hero-background-light.jpg' %}{% endblock %}">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}PhytoSynergyDB - Phytochemical-Antibiotic Synergy Database{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}A free, expert-curated database of phytochemical-antibiotic synergy experiments against ESKAPE pathogens.{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ SITE_URL }}{% static 'synergy_data/images/hero-background-light.jpg' %}{% endblock %}">
 
     <!-- 1. Main Framework CSS -->
     {% bootstrap_css %}
@@ -191,7 +213,7 @@
                     <a href="https://twitter.com/" target="_blank" rel="noopener" aria-label="X / Twitter">
                         <i class="fab fa-x-twitter"></i>
                     </a>
-                    <a href="mailto:contact@phytosynergydb.org" aria-label="Email">
+                    <a href="mailto:contact@phytosynergydb.in" aria-label="Email">
                         <img src="{% static 'synergy_data/icons/mailbox.svg' %}" alt="Email" class="icon-svg icon-svg-md">
                     </a>
                 </div>
@@ -212,6 +234,39 @@
     </script>
 
     {% block extra_js %}{% endblock %}
+
+    <!-- Sitewide structured data: Organization + WebSite (enables sitelinks search box) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "{{ SITE_URL }}/#organization",
+          "name": "PhytoSynergyDB",
+          "url": "{{ SITE_URL }}/",
+          "logo": "{{ SITE_URL }}{% static 'synergy_data/images/logo.png' %}",
+          "description": "An expert-curated database of phytochemical-antibiotic synergy experiments against ESKAPE pathogens for antimicrobial resistance research.",
+          "sameAs": ["https://github.com/argajitsarkr/phytosynergy-db-project"]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "{{ SITE_URL }}/#website",
+          "url": "{{ SITE_URL }}/",
+          "name": "PhytoSynergyDB",
+          "publisher": { "@id": "{{ SITE_URL }}/#organization" },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "{{ SITE_URL }}/database/?query={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        }
+      ]
+    }
+    </script>
 
 </body>
 </html>

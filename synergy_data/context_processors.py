@@ -1,7 +1,14 @@
 # synergy_data/context_processors.py
+from django.conf import settings
 from django.db.models import F
 
 from .models import Antibiotic, Phytochemical, SiteViewCounter, SynergyExperiment
+
+
+def seo(request):
+    """Expose the canonical site URL to every template for SEO tags
+    (canonical link, Open Graph / Twitter URLs, JSON-LD)."""
+    return {'SITE_URL': settings.SITE_URL}
 
 
 def view_counter(request):

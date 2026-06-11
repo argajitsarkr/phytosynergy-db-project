@@ -49,6 +49,13 @@ if RAILWAY_PUBLIC_DOMAIN:
     CSRF_TRUSTED_ORIGINS.append('https://' + RAILWAY_PUBLIC_DOMAIN)
 
 
+# --- CANONICAL PUBLIC URL (SEO) ---
+# Absolute base URL of the public site, no trailing slash. Used to build
+# canonical links, Open Graph / Twitter tags, robots.txt and the XML sitemap
+# so search engines always index the one canonical https + apex-domain form.
+SITE_URL = os.environ.get('SITE_URL', 'https://phytosynergydb.in').rstrip('/')
+
+
 # ==============================================================================
 # APPLICATION DEFINITION
 # ==============================================================================
@@ -88,6 +95,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'synergy_data.context_processors.view_counter',
+                'synergy_data.context_processors.seo',
             ],
         },
     },
