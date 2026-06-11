@@ -8,9 +8,10 @@ urlpatterns = [
     # Any request for '/admin/' goes to the admin site.
     path('admin/', admin.site.urls),
 
-    # SEO endpoints (must live at the site root).
+    # SEO + AI-crawler endpoints (must live at the site root).
     path('robots.txt', seo_views.robots_txt, name='robots_txt'),
     path('sitemap.xml', seo_views.sitemap_xml, name='sitemap_xml'),
+    path('llms.txt', seo_views.llms_txt, name='llms_txt'),
 
     # Any other request (like the homepage) is handed off to our app's URL file.
     path('', include('synergy_data.urls')),
