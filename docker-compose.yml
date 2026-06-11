@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15
@@ -42,6 +40,9 @@ services:
 
   tunnel:
     image: cloudflare/cloudflared:latest
+    # Run as root so it can read the host credentials JSON (mode 0400,
+    # owned by mmilab) without weakening the secret's permissions.
+    user: root
     command: tunnel --config /etc/cloudflared/config.yml run
     volumes:
       # Tunnel config (committed, no secrets) and the credentials JSON
