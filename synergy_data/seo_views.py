@@ -2,9 +2,17 @@
 """Lightweight SEO + AI-crawler endpoints: robots.txt, an XML sitemap, and
 an llms.txt site map for large language models.
 
+Crawler policy (set by robots.txt below):
+  * Search engines and AI *answer/citation* bots may read and cite the public
+    pages (this drives visibility and sends users back to the site).
+  * AI *training* crawlers are disallowed (the curated data is not for model
+    training).
+  * The bulk-data endpoints (full CSV export and the JSON API) are off-limits
+    to all crawlers so the dataset cannot be vacuumed and shown without
+    attribution.
+
 Hand-rolled (no django.contrib.sitemaps / sites framework) because the public
-site has a small, fixed set of indexable pages and no per-record detail URLs,
-so a dependency-free view keeps things simple and avoids an extra migration.
+site has a small, fixed set of indexable pages and no per-record detail URLs.
 """
 from django.conf import settings
 from django.http import HttpResponse
@@ -20,32 +28,43 @@ SITEMAP_PAGES = [
     ('api_docs', '0.6', 'monthly'),
 ]
 
-# Paths kept out of every crawler's index (private, admin, raw JSON API).
+# Paths kept out of every crawler's index: private/admin pages plus the
+# bulk-data endpoints (JSON API and the CSV export query) so the full dataset
+# is not scraped wholesale.
 DISALLOW_PATHS = [
     '/admin/',
     '/accounts/',
     '/data-entry/',
     '/bulk-import/',
     '/api/v1/',
+    '/*export=',
 ]
 
-# AI / LLM crawlers we explicitly welcome so the database can be cited by
-# assistants and answer engines (training + retrieval + on-demand fetch).
-AI_CRAWLERS = [
+# Content-Signal rights declaration: permit search indexing and use in AI
+# answers (citation/grounding), but reserve rights against model training.
+CONTENT_SIGNAL = 'search=yes,ai-input=yes,ai-train=no'
+
+# AI assistants that read a page on demand and cite it with a link back -
+# good for visibility, so they get the same access as search engines.
+AI_CITE_CRAWLERS = [
+    'OAI-SearchBot',    # OpenAI / ChatGPT search index
+    'ChatGPT-User',     # OpenAI on-demand fetch from ChatGPT
+    'PerplexityBot',    # Perplexity index (cites with links)
+    'Perplexity-User',  # Perplexity on-demand fetch
+    'Claude-Web',       # Anthropic on-demand fetch
+]
+
+# AI crawlers used for model training / bulk ingestion - fully disallowed.
+AI_TRAIN_CRAWLERS = [
     'GPTBot',            # OpenAI (training)
-    'OAI-SearchBot',     # OpenAI (search index)
-    'ChatGPT-User',      # OpenAI (on-demand fetch from ChatGPT)
-    'Google-Extended',   # Google Gemini / Vertex AI (training token)
     'ClaudeBot',         # Anthropic (training)
-    'anthropic-ai',      # Anthropic (legacy)
-    'Claude-Web',        # Anthropic (on-demand fetch)
-    'PerplexityBot',     # Perplexity (index)
-    'Perplexity-User',   # Perplexity (on-demand fetch)
-    'CCBot',             # Common Crawl (feeds many LLMs)
-    'Applebot-Extended', # Apple Intelligence
+    'anthropic-ai',      # Anthropic (legacy training)
+    'Google-Extended',   # Google Gemini / Vertex AI (training token)
+    'CCBot',             # Common Crawl (feeds many training sets)
     'Amazonbot',         # Amazon
+    'Applebot-Extended', # Apple Intelligence (training)
     'Bytespider',        # ByteDance
-    'Meta-ExternalAgent',# Meta AI
+    'meta-externalagent',# Meta AI
     'cohere-ai',         # Cohere
 ]
 
@@ -55,24 +74,30 @@ def _abs(path):
     return settings.SITE_URL + path
 
 
-def _agent_block(user_agent):
-    """One robots.txt stanza: allow the public site, keep private paths out."""
-    lines = ["User-agent: {0}".format(user_agent), "Allow: /"]
+def _allow_group(user_agents):
+    """A robots.txt group that allows the public site but keeps private and
+    bulk-data paths out, with the content-signal rights declaration."""
+    lines = ["User-agent: {0}".format(ua) for ua in user_agents]
+    lines.append("Content-Signal: " + CONTENT_SIGNAL)
+    lines.append("Allow: /")
     lines += ["Disallow: {0}".format(p) for p in DISALLOW_PATHS]
     return lines
 
 
 def robots_txt(request):
-    """Allow crawling of public pages by both search engines and AI crawlers;
-    keep private/admin/API-JSON out of the index; advertise the sitemap."""
+    """Welcome search engines and AI citation bots to read/cite public pages;
+    disallow AI training crawlers; keep bulk-data endpoints off-limits."""
     lines = []
-    # Default rules for all other crawlers (classic search engines included).
-    lines += _agent_block('*')
+    # Default group for all other crawlers (classic search engines included).
+    lines += _allow_group(['*'])
     lines.append("")
-    # Explicitly welcome named AI / LLM crawlers.
-    for bot in AI_CRAWLERS:
-        lines += _agent_block(bot)
-        lines.append("")
+    # AI answer/citation bots: same access as search engines (drive traffic).
+    lines += _allow_group(AI_CITE_CRAWLERS)
+    lines.append("")
+    # AI training / bulk-ingestion crawlers: fully disallowed.
+    lines += ["User-agent: {0}".format(ua) for ua in AI_TRAIN_CRAWLERS]
+    lines.append("Disallow: /")
+    lines.append("")
     lines.append("Sitemap: " + _abs(reverse('sitemap_xml')))
     lines.append("")
     return HttpResponse("\n".join(lines), content_type="text/plain")
@@ -114,19 +139,20 @@ def llms_txt(request):
 > observed mechanism of action, and source. It supports antimicrobial
 > resistance (AMR) research. Data is free to reuse under CC-BY-4.0.
 
+## Usage policy
+
+You may read these pages and cite PhytoSynergyDB in answers, always with a
+link back to the relevant page. Please do not use the content for AI model
+training, and do not redistribute the full dataset; link users to the site
+instead.
+
 ## Key pages
 
 - [Home]({s}/): Overview, ESKAPE summary, and live statistics.
 - [Browse the database]({s}/database/): Search and filter synergy experiments by compound, antibiotic, pathogen, chemical class, and FIC interpretation (Synergy / Additive / Indifference / Antagonism).
-- [Download dataset (CSV)]({s}/database/download/): Full database or any filtered subset as CSV.
 - [Analytics]({s}/analytics/): Top compounds and antibiotics, FIC interpretation breakdown, ESKAPE coverage, synergy heatmap.
 - [About and methodology]({s}/about/): Scope, data model, curation methodology, FIC standards, limitations, licensing, and citation.
-
-## Programmatic access (REST API, JSON)
-
-- [API documentation]({s}/api/docs/): Endpoint reference and parameters.
-- Experiments: {s}/api/v1/experiments/ - paginated, filterable list of synergy experiments (JSON).
-- Statistics: {s}/api/v1/statistics/ - aggregate counts and summaries (JSON).
+- [API documentation]({s}/api/docs/): How to access data programmatically.
 
 ## Interpreting the data
 
