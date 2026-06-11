@@ -1,0 +1,17 @@
+# Cloudflare Tunnel config for PhytoSynergyDB.
+# Copy this to /etc/cloudflared/config.yml on the server and replace
+# <TUNNEL_ID> with the id printed by `cloudflared tunnel create phytosynergydb`.
+#
+# nginx publishes port 80 on the host (ports: "80:80" in docker-compose.yml),
+# so the tunnel points at http://localhost:80.
+
+tunnel: <TUNNEL_ID>
+credentials-file: /home/mmilab/.cloudflared/<TUNNEL_ID>.json
+
+ingress:
+  - hostname: phytosynergydb.in
+    service: http://localhost:80
+  - hostname: www.phytosynergydb.in
+    service: http://localhost:80
+  # Catch-all (required). Anything not matched above gets a 404.
+  - service: http_status:404

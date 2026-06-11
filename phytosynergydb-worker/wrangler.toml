@@ -1,0 +1,11 @@
+name = "phytosynergydb-downtime"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+routes = [
+  { pattern = "phytosynergydb.in/*",     zone_name = "phytosynergydb.in" },
+  { pattern = "www.phytosynergydb.in/*",  zone_name = "phytosynergydb.in" },
+]
+
+[vars]
+FALLBACK_URL = "https://argajitsarkr.github.io/phytosynergydb-offline/"

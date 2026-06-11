@@ -10,15 +10,30 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # CORE SECURITY & PRODUCTION SETTINGS
 # ==============================================================================
 
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'a-default-secret-key-for-development')
-# In production, ensure DJANGO_SECRET_KEY is set in the environment variables.
+# DEBUG is False by default (fail closed). Set DEBUG=1 in the environment for
+# local development only - never in production.
+DEBUG = os.environ.get('DEBUG', '0') == '1'
 
-# DEBUG is False in production, but True if we're running locally.
-DEBUG = os.environ.get('DEBUG', '1') == '1' # Defaults to True for development
+# SECRET_KEY: a throwaway key is allowed ONLY when DEBUG is on. In production
+# (DEBUG off) the process must refuse to start without a real key set in the
+# environment, so a missing key can never silently fall back to a known value.
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'django-insecure-dev-only-key-do-not-use-in-production'
+    else:
+        raise RuntimeError(
+            'DJANGO_SECRET_KEY environment variable must be set in production.'
+        )
 
 
-# --- CORRECTED ALLOWED_HOSTS AND CSRF LOGIC ---
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+# --- ALLOWED_HOSTS AND CSRF LOGIC ---
+# Defaults to localhost only (fail closed); the deployment must set ALLOWED_HOSTS
+# explicitly. Never defaults to '*'.
+ALLOWED_HOSTS = [
+    h.strip() for h in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+    if h.strip()
+]
 
 # CSRF trusted origins - needed for Cloudflare Tunnel, Railway, or any reverse proxy
 CSRF_TRUSTED_ORIGINS = []
@@ -139,3 +154,77 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'data_entry'
 LOGOUT_REDIRECT_URL = 'home'
+
+
+# ==============================================================================
+# SECURITY HARDENING (production only)
+# ==============================================================================
+# These are only enforced when DEBUG is off so they never get in the way of
+# local HTTP development. The app runs behind nginx + a TLS-terminating tunnel
+# (ngrok / Cloudflare), so Django must trust the proxy's X-Forwarded-Proto
+# header to know the original request was HTTPS.
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+    # Redirect any plain-HTTP request to HTTPS. Disable with SECURE_SSL_REDIRECT=0
+    # if your proxy already guarantees HTTPS and you hit redirect loops.
+    SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', '1') == '1'
+
+    # Cookies only travel over HTTPS and are not readable from JavaScript.
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+
+    # Misc hardening headers.
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_REFERRER_POLICY = 'same-origin'
+
+    # HSTS: enabled via SECURE_HSTS_SECONDS env var (set to 31536000 in
+    # docker-compose.yml now that phytosynergydb.in is a dedicated domain).
+    # To disable temporarily, set SECURE_HSTS_SECONDS=0 in the environment.
+    SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', '0'))
+    if SECURE_HSTS_SECONDS:
+        SECURE_HSTS_INCLUDE_SUBDOMAINS = (
+            os.environ.get('SECURE_HSTS_INCLUDE_SUBDOMAINS', '1') == '1'
+        )
+        SECURE_HSTS_PRELOAD = os.environ.get('SECURE_HSTS_PRELOAD', '0') == '1'
+
+
+# ==============================================================================
+# LOGGING
+# ==============================================================================
+# Log to stdout/stderr so `docker compose logs web` captures everything. Without
+# this, application errors in production are swallowed silently.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name}: {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': os.environ.get('DJANGO_LOG_LEVEL', 'INFO'),
+            'propagate': False,
+        },
+        'synergy_data': {
+            'handlers': ['console'],
+            'level': os.environ.get('APP_LOG_LEVEL', 'INFO'),
+            'propagate': False,
+        },
+    },
+}

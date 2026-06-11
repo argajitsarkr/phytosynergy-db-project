@@ -22,9 +22,11 @@ services:
     environment:
       - DATABASE_URL=postgres://postgres:E6fgO4KM7xDkXbysGVLhFEflgZuEZu14xKoBxh5G7FA@db:5432/phytosynergy_db
       - DJANGO_SECRET_KEY=aky@!o6_4fyp%ox59q^xfe0*#^6n83(dz)rjs!c34j-+ul3%u^
-      - DEBUG=0 # Set to 0 for production
-      - ALLOWED_HOSTS=192.168.1.35,localhost,.ngrok-free.dev
-      - CSRF_TRUSTED_ORIGINS=https://*.ngrok-free.dev
+      - DEBUG=0
+      - ALLOWED_HOSTS=phytosynergydb.in,www.phytosynergydb.in,192.168.1.35,localhost,127.0.0.1
+      - CSRF_TRUSTED_ORIGINS=https://phytosynergydb.in,https://www.phytosynergydb.in
+      - SECURE_HSTS_SECONDS=31536000
+      - SECURE_HSTS_INCLUDE_SUBDOMAINS=1
     restart: always
 
   nginx:
@@ -36,13 +38,6 @@ services:
       - static_volume:/app/staticfiles
     depends_on:
       - web
-    restart: always
-
-  tunnel:
-    image: ngrok/ngrok:latest
-    command: http http://nginx:80 --authtoken 3AUvwzWxeI6MbFALgawzcamAZaG_KkEZkQESdjaCYpwr1AM2
-    depends_on:
-      - nginx
     restart: always
 
 volumes:
