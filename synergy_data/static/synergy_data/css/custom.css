@@ -3225,3 +3225,230 @@ h1, h2, h3, h4, h5, h6 { color: var(--rzp-ink); letter-spacing: -0.01em; }
         text-align: center;
     }
 }
+
+/* ==========================================================================
+   Database search v2 (clean Untitled-UI-style list)
+   ========================================================================== */
+.db2 { padding: 2rem 0 3.5rem; }
+
+/* Header */
+.db2-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+.db2-title {
+    font-family: var(--font-nav-display);
+    font-weight: 800;
+    font-size: 1.9rem;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    margin: 0 0 0.3rem;
+    line-height: 1.15;
+}
+.db2-subtitle { color: var(--text-secondary); font-size: 0.95rem; margin: 0; }
+.db2-header-actions { display: flex; gap: 0.6rem; flex-shrink: 0; }
+
+/* Buttons */
+.db2-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    padding: 0.5rem 0.9rem;
+    border: 1px solid var(--border-light);
+    background: #fff;
+    color: var(--text-primary);
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+.db2-btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+.db2-btn-dark { background: var(--primary); color: #fff; border-color: var(--primary); }
+.db2-btn-dark:hover { filter: brightness(1.15); color: #fff; }
+
+/* Filter bar */
+.db2-filterbar {
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+}
+.db2-filter-row { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.db2-select {
+    flex: 1 1 175px;
+    min-width: 150px;
+    font-size: 0.85rem;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    background: #fff;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+.db2-select:focus { outline: none; border-color: var(--primary); }
+.db2-morefilters {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.55rem 0.9rem;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    background: #fff;
+    color: var(--text-primary);
+    cursor: pointer;
+    white-space: nowrap;
+}
+.db2-morefilters.active, .db2-morefilters:hover { border-color: var(--primary); color: var(--primary); }
+.db2-search-row { display: flex; gap: 0.6rem; margin-top: 0.75rem; }
+.db2-search-input {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 0.5rem 0.85rem;
+    background: #fff;
+}
+.db2-search-input:focus-within { border-color: var(--primary); }
+.db2-search-input input {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-size: 0.9rem;
+    background: transparent;
+    color: var(--text-primary);
+}
+.db2-morefilters-panel {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--border-light);
+}
+
+/* Results meta */
+.db2-resultsbar { margin-bottom: 0.5rem; }
+.db2-resultscount { font-size: 0.85rem; color: var(--text-secondary); }
+
+/* Results list */
+.db2-list { display: flex; flex-direction: column; }
+.db2-row {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1.5rem 0.25rem;
+    border-bottom: 1px solid var(--border-light);
+    transition: background 0.12s ease;
+}
+.db2-row:first-child { border-top: 1px solid var(--border-light); }
+.db2-row:hover { background: var(--bg-section); }
+.db2-row-main { flex: 1; min-width: 0; }
+.db2-row-aside {
+    flex: 0 0 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.6rem;
+    text-align: right;
+}
+
+.db2-eyebrow { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+.db2-row-title {
+    font-family: var(--font-nav-display);
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--text-primary);
+    margin: 0 0 0.45rem;
+    line-height: 1.3;
+}
+.db2-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.7rem;
+}
+.db2-rating-sep { color: var(--text-muted); }
+.db2-rating-interp { color: var(--text-secondary); font-weight: 500; }
+
+.db2-meta { display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem; margin-bottom: 0.6rem; }
+.db2-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+.db2-mics { font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.6rem; }
+.db2-mic-label { font-weight: 600; color: var(--text-primary); margin-right: 0.4rem; }
+.db2-mic-pair { margin-right: 0.9rem; white-space: nowrap; }
+
+.db2-moa {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    margin: 0.5rem 0;
+    line-height: 1.45;
+}
+.db2-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.85rem; }
+
+/* Right-side FIC headline */
+.db2-fic-headline { display: flex; flex-direction: column; align-items: flex-end; }
+.db2-fic-num {
+    font-family: var(--font-nav-display);
+    font-weight: 800;
+    font-size: 1.65rem;
+    color: var(--primary);
+    line-height: 1;
+}
+.db2-fic-cap {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.25rem;
+}
+
+/* Empty state */
+.db2-empty {
+    text-align: center;
+    padding: 3.5rem 1.5rem;
+    background: var(--bg-section);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+}
+.db2-empty .icon-svg-xl { opacity: 0.4; margin-bottom: 1rem; }
+.db2-empty h4 { color: var(--text-secondary); }
+.db2-empty p { color: var(--text-muted); }
+
+/* Responsive: stack aside above content on small screens */
+@media (max-width: 767px) {
+    .db2-row { flex-direction: column; gap: 0.75rem; }
+    .db2-row-aside {
+        flex: none;
+        flex-direction: row-reverse;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        order: -1;
+        text-align: left;
+    }
+    .db2-title { font-size: 1.5rem; }
+    .db2-header-actions { width: 100%; }
+}
