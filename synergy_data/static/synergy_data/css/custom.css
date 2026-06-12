@@ -3003,7 +3003,7 @@ h1, h2, h3, h4, h5, h6 { color: var(--rzp-ink); letter-spacing: -0.01em; }
    FOOTER (GrantSetu-style, dark)
    ============================================================ */
 .site-footer-dark {
-    background: #000000 !important;
+    background: #0A1733 !important;
     color: rgba(255,255,255,0.65);
     padding: 4rem 0 1.5rem;
     border-top: none !important;
