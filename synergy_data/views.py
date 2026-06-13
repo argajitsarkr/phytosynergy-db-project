@@ -315,10 +315,12 @@ def home_page(request):
          'a': 'Cite the database URL plus the original publication DOI for each '
               'experiment you reference. A formal citation entry will be issued on the '
               'first major release; until then, please cite by URL and access date.'},
-        {'q': 'Is the API rate-limited?',
-         'a': 'The public API is rate-limited per IP at a research-friendly threshold. '
-              'For computational pipelines or large-batch requests, contact us so we '
-              'can issue a higher-limit token.'},
+        {'q': 'How much data can the API return at once?',
+         'a': 'The public API is paginated: each request returns up to 500 records '
+              '(default 100) via the limit and offset parameters. Iterate with '
+              'offset to retrieve the full result set. For large computational '
+              'pipelines, the full database is also available as a single CSV from '
+              'the Download page.'},
         {'q': 'Is the database open for public submissions?',
          'a': 'No. PhytoSynergyDB is a closed, expert-curated resource maintained by '
               'the authoring team. Records are added in-house after manual extraction '

@@ -8,6 +8,9 @@ urlpatterns = [
     # Home page
     path('', views.home_page, name='home'),
 
+    # Health check (for uptime monitors / container probes)
+    path('health/', views.health_check, name='health_check'),
+
     # Database search and download
     path('database/', views.database_search_page, name='database_search'),
     path('database/download/', views.download_data, name='download_data'),

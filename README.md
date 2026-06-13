@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
-[![Django Version](https://img.shields.io/badge/django-5.2-green.svg)](https://www.djangoproject.com/)
+[![Django Version](https://img.shields.io/badge/django-4.2_LTS-green.svg)](https://www.djangoproject.com/)
 [![Database](https://img.shields.io/badge/database-PostgreSQL-blue.svg)](https://www.postgresql.org/)
 
 PhytoSynergyDB is a specialized, open-source, and curated database dedicated to synergistic interactions between phytochemicals and conventional antibiotics against ESKAPE pathogens. This platform aims to accelerate antimicrobial resistance (AMR) research by providing a centralized, structured, and searchable repository of high-quality experimental data.
