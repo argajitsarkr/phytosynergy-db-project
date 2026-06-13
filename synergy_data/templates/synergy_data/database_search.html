@@ -5,247 +5,386 @@
 {% block meta_description %}Search and filter curated phytochemical-antibiotic synergy experiments by compound, antibiotic, ESKAPE pathogen, chemical class and FIC interpretation. Export any result set as CSV.{% endblock %}
 {% block og_title %}Browse the Phytochemical-Antibiotic Synergy Database{% endblock %}
 
-{% block content %}
-<div class="dbt">
-  <div class="container">
-
-    <!-- Page head -->
-    <div class="dbt-head">
-      <div>
-        <h1 class="dbt-h-title">Browse Database</h1>
-        <p class="dbt-h-sub">Curated phytochemical-antibiotic synergy experiments against ESKAPE pathogens.</p>
-      </div>
-      {% if total_results %}
-      <div class="dbt-h-actions">
-        <button type="button" class="dbt-action" id="dbtShare"><img src="{% static 'synergy_data/icons/link.svg' %}" alt="" class="icon-svg icon-svg-sm">Share</button>
-        <a href="{% url 'download_data' %}{% if search_query %}?query={{ search_query }}{% endif %}" class="dbt-action"><img src="{% static 'synergy_data/icons/cloud-arrow-down.svg' %}" alt="" class="icon-svg icon-svg-sm">Export CSV</a>
-      </div>
-      {% endif %}
+{% block search_banner %}
+<!-- Global Search Banner -->
+<div class="global-search-banner">
+    <div class="container">
+        <p class="search-label">Search our database of phytochemical-antibiotic synergies:</p>
+        <form action="{% url 'database_search' %}" method="get">
+            <div class="search-bar-wrapper">
+                <input type="text" name="query" value="{{ search_query }}" placeholder="Search by phytochemical, antibiotic, or pathogen...">
+                <button type="submit"><img src="{% static 'synergy_data/icons/magnifying-glass.svg' %}" alt="Search" class="icon-svg icon-svg-md"></button>
+            </div>
+        </form>
     </div>
+</div>
+{% endblock %}
 
-    <!-- Filter bar -->
-    <form method="GET" action="{% url 'database_search' %}" id="filterForm" class="dbt-filters">
-      <div class="dbt-search">
-        <img src="{% static 'synergy_data/icons/magnifying-glass.svg' %}" alt="" class="icon-svg icon-svg-sm dbt-search-icon">
-        <input type="text" name="query" value="{{ search_query }}" placeholder="Search phytochemical, antibiotic, or pathogen...">
-        <button type="submit" class="dbt-search-btn">Search</button>
-      </div>
+{% block content %}
+<div class="search-page-container">
 
-      <div class="dbt-chips">
-        <select name="interpretation" class="dbt-chip" onchange="this.form.submit()">
-          <option value="">Interpretation</option>
-          <option value="Synergy" {% if selected_interpretation == 'Synergy' %}selected{% endif %}>Synergy</option>
-          <option value="Additive" {% if selected_interpretation == 'Additive' %}selected{% endif %}>Additive</option>
-          <option value="Indifference" {% if selected_interpretation == 'Indifference' %}selected{% endif %}>Indifference</option>
-          <option value="Antagonism" {% if selected_interpretation == 'Antagonism' %}selected{% endif %}>Antagonism</option>
-        </select>
-        <select name="eskape" class="dbt-chip" onchange="this.form.submit()">
-          <option value="">ESKAPE pathogen</option>
-          <option value="Enterococcus" {% if selected_eskape == 'Enterococcus' %}selected{% endif %}>E. faecium</option>
-          <option value="Staphylococcus" {% if selected_eskape == 'Staphylococcus' %}selected{% endif %}>S. aureus</option>
-          <option value="Klebsiella" {% if selected_eskape == 'Klebsiella' %}selected{% endif %}>K. pneumoniae</option>
-          <option value="Acinetobacter" {% if selected_eskape == 'Acinetobacter' %}selected{% endif %}>A. baumannii</option>
-          <option value="Pseudomonas" {% if selected_eskape == 'Pseudomonas' %}selected{% endif %}>P. aeruginosa</option>
-          <option value="Enterobacter" {% if selected_eskape == 'Enterobacter' %}selected{% endif %}>Enterobacter</option>
-        </select>
-        <select name="pathogen" class="dbt-chip" onchange="this.form.submit()">
-          <option value="">Pathogen (strain)</option>
-          {% for p in pathogens %}<option value="{{ p.id }}" {% if p.id|stringformat:"s" == selected_pathogen %}selected{% endif %}>{{ p }}</option>{% endfor %}
-        </select>
-        <select name="antibiotic" class="dbt-chip" onchange="this.form.submit()">
-          <option value="">Antibiotic</option>
-          {% for a in antibiotics %}<option value="{{ a.id }}" {% if a.id|stringformat:"s" == selected_antibiotic %}selected{% endif %}>{{ a.antibiotic_name }}</option>{% endfor %}
-        </select>
-        <select name="mechanism" class="dbt-chip" onchange="this.form.submit()">
-          <option value="">Mechanism</option>
-          {% for m in mechanisms %}<option value="{{ m }}" {% if m == selected_mechanism %}selected{% endif %}>{{ m }}</option>{% endfor %}
-        </select>
-        <select name="chemical_class" class="dbt-chip" onchange="this.form.submit()">
-          <option value="">Chemical class</option>
-          {% for cc in chemical_classes %}<option value="{{ cc }}" {% if cc == selected_chemical_class %}selected{% endif %}>{{ cc }}</option>{% endfor %}
-        </select>
-        <a href="{% url 'database_search' %}" class="dbt-clear">Clear</a>
-      </div>
+    <!-- DrugBank-style Filter Sections -->
+    <form method="GET" action="{% url 'database_search' %}" id="filterForm">
+        <!-- Preserve search query -->
+        <input type="hidden" name="query" value="{{ search_query }}">
+
+        <div class="filter-section">
+            <div class="row">
+                <!-- Filter by Interpretation -->
+                <div class="col-lg-6 mb-3 mb-lg-0">
+                    <div class="filter-section-label">Filter by Interpretation</div>
+                    <div class="filter-pills">
+                        <label class="filter-pill {% if selected_interpretation == 'Synergy' %}active{% endif %}">
+                            <input type="radio" name="interpretation" value="Synergy" hidden {% if selected_interpretation == 'Synergy' %}checked{% endif %} onchange="this.form.submit()">
+                            Synergy
+                        </label>
+                        <label class="filter-pill {% if selected_interpretation == 'Additive' %}active{% endif %}">
+                            <input type="radio" name="interpretation" value="Additive" hidden {% if selected_interpretation == 'Additive' %}checked{% endif %} onchange="this.form.submit()">
+                            Additive
+                        </label>
+                        <label class="filter-pill {% if selected_interpretation == 'Indifference' %}active{% endif %}">
+                            <input type="radio" name="interpretation" value="Indifference" hidden {% if selected_interpretation == 'Indifference' %}checked{% endif %} onchange="this.form.submit()">
+                            Indifference
+                        </label>
+                        <label class="filter-pill {% if selected_interpretation == 'Antagonism' %}active{% endif %}">
+                            <input type="radio" name="interpretation" value="Antagonism" hidden {% if selected_interpretation == 'Antagonism' %}checked{% endif %} onchange="this.form.submit()">
+                            Antagonism
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Filter by ESKAPE Pathogen -->
+                <div class="col-lg-6">
+                    <div class="filter-section-label">Filter by ESKAPE Pathogen</div>
+                    <div class="filter-pills">
+                        <label class="filter-pill {% if selected_eskape == 'Enterococcus' %}active{% endif %}">
+                            <input type="radio" name="eskape" value="Enterococcus" hidden {% if selected_eskape == 'Enterococcus' %}checked{% endif %} onchange="this.form.submit()">
+                            E. faecium
+                        </label>
+                        <label class="filter-pill {% if selected_eskape == 'Staphylococcus' %}active{% endif %}">
+                            <input type="radio" name="eskape" value="Staphylococcus" hidden {% if selected_eskape == 'Staphylococcus' %}checked{% endif %} onchange="this.form.submit()">
+                            S. aureus
+                        </label>
+                        <label class="filter-pill {% if selected_eskape == 'Klebsiella' %}active{% endif %}">
+                            <input type="radio" name="eskape" value="Klebsiella" hidden {% if selected_eskape == 'Klebsiella' %}checked{% endif %} onchange="this.form.submit()">
+                            K. pneumoniae
+                        </label>
+                        <label class="filter-pill {% if selected_eskape == 'Acinetobacter' %}active{% endif %}">
+                            <input type="radio" name="eskape" value="Acinetobacter" hidden {% if selected_eskape == 'Acinetobacter' %}checked{% endif %} onchange="this.form.submit()">
+                            A. baumannii
+                        </label>
+                        <label class="filter-pill {% if selected_eskape == 'Pseudomonas' %}active{% endif %}">
+                            <input type="radio" name="eskape" value="Pseudomonas" hidden {% if selected_eskape == 'Pseudomonas' %}checked{% endif %} onchange="this.form.submit()">
+                            P. aeruginosa
+                        </label>
+                        <label class="filter-pill {% if selected_eskape == 'Enterobacter' %}active{% endif %}">
+                            <input type="radio" name="eskape" value="Enterobacter" hidden {% if selected_eskape == 'Enterobacter' %}checked{% endif %} onchange="this.form.submit()">
+                            Enterobacter
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Filters Row -->
+            <div class="row mt-3">
+                <div class="col-md-3">
+                    <select name="pathogen" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">Any Pathogen (with strain)</option>
+                        {% for p in pathogens %}
+                            <option value="{{ p.id }}" {% if p.id|stringformat:"s" == selected_pathogen %}selected{% endif %}>{{ p }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="antibiotic" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">Any Antibiotic</option>
+                        {% for a in antibiotics %}
+                            <option value="{{ a.id }}" {% if a.id|stringformat:"s" == selected_antibiotic %}selected{% endif %}>{{ a.antibiotic_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="mechanism" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">Any Mechanism</option>
+                        {% for m in mechanisms %}
+                             <option value="{{ m }}" {% if m == selected_mechanism %}selected{% endif %}>{{ m }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="chemical_class" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">Any Chemical Class</option>
+                        {% for cc in chemical_classes %}
+                            <option value="{{ cc }}" {% if cc == selected_chemical_class %}selected{% endif %}>{{ cc }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Filter Actions -->
+            <div class="filter-actions">
+                <a href="{% url 'database_search' %}" class="btn-filter-clear">Clear</a>
+                <button type="submit" class="btn-filter-apply">Apply Filter</button>
+            </div>
+        </div>
     </form>
 
-    <!-- Table -->
-    {% if total_results %}
-    <div class="dbt-card">
-      <div class="dbt-tablewrap">
-        <table class="dbt-table">
-          <thead>
-            <tr>
-              <th class="dbt-th-phyto">Phytochemical</th>
-              <th>Antibiotic</th>
-              <th>Pathogen</th>
-              <th class="dbt-th-num">FIC</th>
-              <th>Interpretation</th>
-              <th>Assay</th>
-              <th class="dbt-th-num">Year</th>
-              <th class="dbt-th-act">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for experiment in results %}
-            <tr class="dbt-row" data-row="{{ forloop.counter }}">
-              <td class="dbt-phyto">{{ experiment.phytochemical.compound_name }}</td>
-              <td>{{ experiment.antibiotic.antibiotic_name }}</td>
-              <td class="dbt-muted"><em>{{ experiment.pathogen }}</em></td>
-              <td class="dbt-num dbt-fic">{% if experiment.fic_index %}{{ experiment.fic_index|floatformat:2 }}{% else %}-{% endif %}</td>
-              <td>
-                {% if experiment.interpretation == 'Synergy' %}<span class="dbt-tag dbt-tag-synergy"><span class="dbt-dot"></span>Synergy</span>
-                {% elif experiment.interpretation == 'Additive' %}<span class="dbt-tag dbt-tag-additive"><span class="dbt-dot"></span>Additive</span>
-                {% elif experiment.interpretation == 'Antagonism' %}<span class="dbt-tag dbt-tag-antagonism"><span class="dbt-dot"></span>Antagonism</span>
-                {% elif experiment.interpretation %}<span class="dbt-tag dbt-tag-other"><span class="dbt-dot"></span>{{ experiment.interpretation }}</span>
-                {% else %}<span class="dbt-muted">-</span>{% endif %}
-              </td>
-              <td class="dbt-muted">{{ experiment.get_assay_method_display|default:"-" }}</td>
-              <td class="dbt-num dbt-muted">{{ experiment.source.publication_year|default:"-" }}</td>
-              <td class="dbt-act">
-                <button type="button" class="dbt-viewlink" data-toggle-row="{{ forloop.counter }}" aria-expanded="false">View Details</button>
-              </td>
-            </tr>
-            <tr class="dbt-detailrow" data-detail="{{ forloop.counter }}" hidden>
-              <td colspan="8">
-                <div class="dbt-detail">
+    <!-- Results Header -->
+    <div class="results-header d-flex justify-content-between align-items-center mb-3 mt-4">
+        <div>
+            {% if search_query %}
+                <h4>Results for "{{ search_query }}"</h4>
+            {% else %}
+                <h4>Search Results</h4>
+            {% endif %}
+            {% if total_results %}
+                <p class="text-muted mb-0" style="font-size: 0.88rem;">Showing <strong>{{ page_obj.start_index }}-{{ page_obj.end_index }}</strong> of <strong>{{ total_results }}</strong> synergistic pairs <span class="text-muted">(page {{ page_obj.number }} of {{ paginator.num_pages }})</span></p>
+            {% endif %}
+        </div>
+        {% if total_results %}
+            <div class="d-flex gap-2">
+                <span class="results-count-text">{{ total_results }} results</span>
+                <a href="{% url 'download_data' %}{% if search_query %}?query={{ search_query }}{% endif %}" class="btn btn-sm btn-outline-custom">
+                    <img src="{% static 'synergy_data/icons/cloud-arrow-down.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">Export CSV
+                </a>
+            </div>
+        {% endif %}
+    </div>
 
-                  <div class="dbt-detail-section">
-                    <div class="dbt-detail-h">Synergy metrics</div>
-                    <div class="dbt-kvgrid">
-                      <div class="dbt-kv"><span class="dbt-k">FIC index</span><span class="dbt-v">{% if experiment.fic_index %}{{ experiment.fic_index|floatformat:2 }}{% else %}N/A{% endif %}</span></div>
-                      <div class="dbt-kv"><span class="dbt-k">Interpretation</span><span class="dbt-v">{{ experiment.interpretation|default:"N/A" }}</span></div>
-                      <div class="dbt-kv"><span class="dbt-k">MIC phyto (alone &rarr; combo)</span><span class="dbt-v">{{ experiment.mic_phyto_alone|floatformat:2|default:"-" }} &rarr; {{ experiment.mic_phyto_in_combo|floatformat:2|default:"-" }} {{ experiment.mic_units }}</span></div>
-                      <div class="dbt-kv"><span class="dbt-k">MIC antibiotic (alone &rarr; combo)</span><span class="dbt-v">{{ experiment.mic_abx_alone|floatformat:2|default:"-" }} &rarr; {{ experiment.mic_abx_in_combo|floatformat:2|default:"-" }} {{ experiment.mic_units }}</span></div>
+    <!-- Results List -->
+    <div class="results-list">
+        {% for experiment in results %}
+            <div class="result-card">
+                <!-- Main Title Area -->
+                <div class="rc-main">
+                    <h5 class="rc-title">{{ experiment.phytochemical.compound_name }}</h5>
+                    <span class="rc-subtitle">
+                        + {{ experiment.antibiotic.antibiotic_name }} vs <em>{{ experiment.pathogen }}</em>
+                    </span>
+                </div>
+
+                <!-- FIC Index -->
+                <div class="rc-data-point">
+                    <span class="rc-value">{% if experiment.fic_index %}{{ experiment.fic_index|floatformat:2 }}{% else %}N/A{% endif %}</span>
+                    <span class="rc-label">FIC Index</span>
+                </div>
+
+                <!-- MIC Antibiotic -->
+                <div class="rc-data-point">
+                    <span class="rc-value">{% if experiment.mic_abx_in_combo %}{{ experiment.mic_abx_in_combo|floatformat:2 }}{% else %}-{% endif %}</span>
+                    <span class="rc-label">MIC Abx Combo</span>
+                </div>
+
+                <!-- MIC Phytochemical -->
+                <div class="rc-data-point">
+                    <span class="rc-value">{% if experiment.mic_phyto_in_combo %}{{ experiment.mic_phyto_in_combo|floatformat:2 }}{% else %}-{% endif %}</span>
+                    <span class="rc-label">MIC Phyto Combo</span>
+                </div>
+
+                <!-- Publication Year -->
+                <div class="rc-data-point">
+                    <span class="rc-value">{% if experiment.source.publication_year %}{{ experiment.source.publication_year }}{% else %}-{% endif %}</span>
+                    <span class="rc-label">Year</span>
+                </div>
+
+                <!-- Synergy Badge -->
+                <div class="rc-badge">
+                    {% if experiment.interpretation == 'Synergy' %}
+                        <span class="badge rounded-pill synergy-badge">Synergy</span>
+                    {% elif experiment.interpretation == 'Additive' %}
+                        <span class="badge rounded-pill additive-badge">Additive</span>
+                    {% elif experiment.interpretation == 'Antagonism' %}
+                        <span class="badge rounded-pill antagonism-badge">Antagonism</span>
+                    {% elif experiment.interpretation %}
+                        <span class="badge rounded-pill other-badge">{{ experiment.interpretation }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Footer with MoA and identifiers -->
+                <div class="rc-footer">
+                    {% if experiment.moa_observed %}
+                    <div class="rc-footer-item">
+                        <img src="{% static 'synergy_data/icons/flask.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">
+                        {{ experiment.moa_observed|truncatechars:80 }}
                     </div>
-                  </div>
-
-                  {% if experiment.phytochemical.molecular_weight or experiment.phytochemical.chemical_class or experiment.phytochemical.pubchem_cid %}
-                  <div class="dbt-detail-section">
-                    <div class="dbt-detail-h">Phytochemical properties</div>
-                    <div class="dbt-kvgrid">
-                      {% if experiment.phytochemical.pubchem_cid %}<div class="dbt-kv"><span class="dbt-k">PubChem CID</span><span class="dbt-v">{{ experiment.phytochemical.pubchem_cid }}</span></div>{% endif %}
-                      {% if experiment.phytochemical.molecular_formula %}<div class="dbt-kv"><span class="dbt-k">Formula</span><span class="dbt-v">{{ experiment.phytochemical.molecular_formula }}</span></div>{% endif %}
-                      {% if experiment.phytochemical.molecular_weight %}<div class="dbt-kv"><span class="dbt-k">Mol. weight</span><span class="dbt-v">{{ experiment.phytochemical.molecular_weight|floatformat:2 }}</span></div>{% endif %}
-                      {% if experiment.phytochemical.xlogp != None %}<div class="dbt-kv"><span class="dbt-k">XLogP</span><span class="dbt-v">{{ experiment.phytochemical.xlogp }}</span></div>{% endif %}
-                      {% if experiment.phytochemical.hbd != None %}<div class="dbt-kv"><span class="dbt-k">H-bond donors</span><span class="dbt-v">{{ experiment.phytochemical.hbd }}</span></div>{% endif %}
-                      {% if experiment.phytochemical.hba != None %}<div class="dbt-kv"><span class="dbt-k">H-bond acceptors</span><span class="dbt-v">{{ experiment.phytochemical.hba }}</span></div>{% endif %}
-                      {% if experiment.phytochemical.tpsa != None %}<div class="dbt-kv"><span class="dbt-k">TPSA</span><span class="dbt-v">{{ experiment.phytochemical.tpsa|floatformat:1 }}</span></div>{% endif %}
-                      {% with lipinski=experiment.phytochemical.passes_lipinski %}{% if lipinski != None %}<div class="dbt-kv"><span class="dbt-k">Drug-likeness</span><span class="dbt-v">{% if lipinski %}Drug-like (Ro5){% else %}Ro5 violation{% endif %}</span></div>{% endif %}{% endwith %}
-                      {% if experiment.phytochemical.chemical_class %}<div class="dbt-kv dbt-kv-wide"><span class="dbt-k">Chemical taxonomy</span><span class="dbt-v">{{ experiment.phytochemical.chemical_superclass|default:"" }}{% if experiment.phytochemical.chemical_superclass %} &rsaquo; {% endif %}{{ experiment.phytochemical.chemical_class }}{% if experiment.phytochemical.chemical_subclass %} &rsaquo; {{ experiment.phytochemical.chemical_subclass }}{% endif %}</span></div>{% endif %}
+                    {% endif %}
+                    {% if experiment.phytochemical.pubchem_cid %}
+                    <div class="rc-footer-item">
+                        <img src="{% static 'synergy_data/icons/link.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">
+                        PubChem: {{ experiment.phytochemical.pubchem_cid }}
                     </div>
-                  </div>
-                  {% endif %}
+                    {% endif %}
+                </div>
 
-                  {% if experiment.moa_observed %}
-                  <div class="dbt-detail-section">
-                    <div class="dbt-detail-h">Mechanism of action</div>
-                    <p class="dbt-para">{{ experiment.moa_observed }}</p>
-                  </div>
-                  {% endif %}
+                <!-- Lipinski Properties & Chemical Class -->
+                {% if experiment.phytochemical.molecular_weight or experiment.phytochemical.chemical_class %}
+                <div class="lipinski-bar">
+                    {% if experiment.phytochemical.molecular_weight %}
+                    <span class="lipinski-prop" title="Molecular Weight">
+                        <strong>MW</strong> {{ experiment.phytochemical.molecular_weight|floatformat:2 }}
+                    </span>
+                    {% endif %}
+                    {% if experiment.phytochemical.xlogp != None %}
+                    <span class="lipinski-prop" title="Partition Coefficient (LogP)">
+                        <strong>LogP</strong> {{ experiment.phytochemical.xlogp }}
+                    </span>
+                    {% endif %}
+                    {% if experiment.phytochemical.hbd != None %}
+                    <span class="lipinski-prop" title="Hydrogen Bond Donors">
+                        <strong>HBD</strong> {{ experiment.phytochemical.hbd }}
+                    </span>
+                    {% endif %}
+                    {% if experiment.phytochemical.hba != None %}
+                    <span class="lipinski-prop" title="Hydrogen Bond Acceptors">
+                        <strong>HBA</strong> {{ experiment.phytochemical.hba }}
+                    </span>
+                    {% endif %}
+                    {% if experiment.phytochemical.tpsa != None %}
+                    <span class="lipinski-prop" title="Topological Polar Surface Area">
+                        <strong>TPSA</strong> {{ experiment.phytochemical.tpsa|floatformat:1 }}
+                    </span>
+                    {% endif %}
+                    {% if experiment.phytochemical.molecular_formula %}
+                    <span class="lipinski-prop" title="Molecular Formula">
+                        <strong>Formula</strong> {{ experiment.phytochemical.molecular_formula }}
+                    </span>
+                    {% endif %}
+                    {% with lipinski=experiment.phytochemical.passes_lipinski %}
+                    {% if lipinski != None %}
+                    <span class="lipinski-verdict {% if lipinski %}lipinski-pass{% else %}lipinski-fail{% endif %}" title="Lipinski's Rule of Five: MW<500, LogP<5, HBD{% templatetag openvariable %}5, HBA{% templatetag openvariable %}10">
+                        {% if lipinski %}<i class="fas fa-check-circle"></i> Drug-like{% else %}<i class="fas fa-times-circle"></i> Ro5 Violation{% endif %}
+                    </span>
+                    {% endif %}
+                    {% endwith %}
+                    {% if experiment.phytochemical.chemical_class %}
+                    <span class="chem-class-badge" title="ClassyFire: {{ experiment.phytochemical.chemical_superclass|default:'' }} > {{ experiment.phytochemical.chemical_class }} > {{ experiment.phytochemical.chemical_subclass|default:'' }}">
+                        <img src="{% static 'synergy_data/icons/tag.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">{{ experiment.phytochemical.chemical_class }}
+                    </span>
+                    {% endif %}
+                </div>
+                {% endif %}
 
-                  {% if experiment.notes %}
-                  <div class="dbt-detail-section">
-                    <div class="dbt-detail-h">Curator notes</div>
-                    <p class="dbt-para">{{ experiment.notes }}</p>
-                  </div>
-                  {% endif %}
-
-                  <div class="dbt-detail-section">
-                    <div class="dbt-detail-h">Source</div>
-                    <p class="dbt-para">
-                      {% if experiment.source.article_title %}{{ experiment.source.article_title }}{% endif %}
-                      {% if experiment.source.journal %}<span class="dbt-muted"> - {{ experiment.source.journal }}{% if experiment.source.publication_year %}, {{ experiment.source.publication_year }}{% endif %}</span>{% endif %}
-                    </p>
-                  </div>
-
-                  <div class="dbt-detail-actions">
+                <!-- Action Buttons -->
+                <div class="rc-actions">
                     {% if experiment.phytochemical.canonical_smiles %}
                     <button type="button" class="btn btn-sm btn-outline-secondary btn-view3d"
                             data-smiles="{{ experiment.phytochemical.canonical_smiles }}"
                             data-compound="{{ experiment.phytochemical.compound_name }}"
                             data-cid="{{ experiment.phytochemical.pubchem_cid|default:'' }}"
                             data-mw="{{ experiment.phytochemical.molecular_weight|default:'' }}">
-                      <img src="{% static 'synergy_data/icons/cube.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">3D structure
+                        <img src="{% static 'synergy_data/icons/cube.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">3D
                     </button>
                     {% elif experiment.phytochemical.pubchem_cid %}
-                    <a href="https://pubchem.ncbi.nlm.nih.gov/compound/{{ experiment.phytochemical.pubchem_cid }}#section=3D-Conformer" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">3D structure</a>
+                    <a href="https://pubchem.ncbi.nlm.nih.gov/compound/{{ experiment.phytochemical.pubchem_cid }}#section=3D-Conformer" target="_blank" class="btn btn-sm btn-outline-secondary">3D Structure</a>
                     {% endif %}
-                    {% if experiment.source.doi %}<a href="https://doi.org/{{ experiment.source.doi }}" target="_blank" rel="noopener" class="btn btn-sm btn-primary">Source paper</a>{% endif %}
-                    {% if experiment.phytochemical.pubchem_cid %}<a href="https://pubchem.ncbi.nlm.nih.gov/compound/{{ experiment.phytochemical.pubchem_cid }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">PubChem</a>{% endif %}
-                    {% if user.is_authenticated %}<a href="{% url 'edit_entry' experiment.pk %}" class="btn btn-sm btn-outline-warning">Edit</a>{% endif %}
-                  </div>
-
+                    {% if experiment.source.doi %}
+                    <a href="https://doi.org/{{ experiment.source.doi }}" target="_blank" class="btn btn-sm btn-primary">Source Paper</a>
+                    {% endif %}
+                    {% if experiment.notes %}
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-view-notes"
+                            data-bs-toggle="modal" data-bs-target="#notesModal"
+                            data-compound="{{ experiment.phytochemical.compound_name }}"
+                            data-antibiotic="{{ experiment.antibiotic.antibiotic_name }}"
+                            data-pathogen="{{ experiment.pathogen }}"
+                            data-notes="{{ experiment.notes }}">
+                        <img src="{% static 'synergy_data/icons/note.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">Notes
+                    </button>
+                    {% endif %}
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'edit_entry' experiment.pk %}" class="btn btn-sm btn-outline-warning" title="Edit this entry">
+                        <img src="{% static 'synergy_data/icons/pencil.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">Edit
+                    </a>
+                    {% endif %}
                 </div>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+            </div>
+        {% empty %}
+            <div class="text-center p-5 rounded" style="background: var(--bg-section); border: 1px solid var(--border-light);">
+                <img src="{% static 'synergy_data/icons/magnifying-glass.svg' %}" alt="" class="icon-svg icon-svg-xl" style="opacity: 0.4; margin-bottom: 1rem;">
+                <h4 style="color: var(--text-secondary);">No Results Found</h4>
+                <p class="text-muted">Your search did not match any synergistic experiments. Try a different query or adjust filters.</p>
+                <a href="{% url 'database_search' %}" class="btn btn-primary-custom mt-2">Browse All Entries</a>
+            </div>
+        {% endfor %}
+    </div>
 
-      <!-- Footer bar -->
-      <div class="dbt-footer">
-        <span class="dbt-total">Total <strong>{{ total_results }}</strong></span>
-        {% if paginator.num_pages > 1 %}
-        <nav class="dbt-pager" aria-label="Results pagination">
-          <span class="dbt-pager-meta">Page {{ page_obj.number }} of {{ paginator.num_pages }} &middot; 25 per page</span>
-          <ul class="dbt-pager-list">
+    {% if paginator.num_pages > 1 %}
+    <nav class="psdb-pagination" aria-label="Results pagination">
+        <ul class="psdb-pagination-list">
             {% if page_obj.has_previous %}
-              <li><a href="?{% if preserved_qs %}{{ preserved_qs }}&{% endif %}page={{ page_obj.previous_page_number }}" class="dbt-page" aria-label="Previous">&lsaquo;</a></li>
+                <li><a href="?{% if preserved_qs %}{{ preserved_qs }}&{% endif %}page=1" class="psdb-page-link" aria-label="First">&laquo;</a></li>
+                <li><a href="?{% if preserved_qs %}{{ preserved_qs }}&{% endif %}page={{ page_obj.previous_page_number }}" class="psdb-page-link" aria-label="Previous">&lsaquo;</a></li>
             {% else %}
-              <li><span class="dbt-page disabled">&lsaquo;</span></li>
+                <li><span class="psdb-page-link disabled">&laquo;</span></li>
+                <li><span class="psdb-page-link disabled">&lsaquo;</span></li>
             {% endif %}
-            {% for num in paginator.page_range %}
-              {% if num == page_obj.number %}<li><span class="dbt-page active">{{ num }}</span></li>
-              {% elif num == 1 or num == paginator.num_pages or num >= page_obj.number|add:'-1' and num <= page_obj.number|add:'1' %}<li><a href="?{% if preserved_qs %}{{ preserved_qs }}&{% endif %}page={{ num }}" class="dbt-page">{{ num }}</a></li>
-              {% elif num == page_obj.number|add:'-2' or num == page_obj.number|add:'2' %}<li><span class="dbt-pager-gap">&hellip;</span></li>
-              {% endif %}
-            {% endfor %}
-            {% if page_obj.has_next %}
-              <li><a href="?{% if preserved_qs %}{{ preserved_qs }}&{% endif %}page={{ page_obj.next_page_number }}" class="dbt-page" aria-label="Next">&rsaquo;</a></li>
-            {% else %}
-              <li><span class="dbt-page disabled">&rsaquo;</span></li>
-            {% endif %}
-          </ul>
-        </nav>
-        {% endif %}
-      </div>
-    </div>
-    {% else %}
-    <div class="dbt-empty">
-      <img src="{% static 'synergy_data/icons/magnifying-glass.svg' %}" alt="" class="icon-svg icon-svg-xl">
-      <h4>No results found</h4>
-      <p>Your search did not match any synergistic experiments. Try a different query or adjust filters.</p>
-      <a href="{% url 'database_search' %}" class="btn btn-primary-custom mt-2">Browse all entries</a>
-    </div>
-    {% endif %}
 
-  </div>
+            {% for num in paginator.page_range %}
+                {% if num == page_obj.number %}
+                    <li><span class="psdb-page-link active">{{ num }}</span></li>
+                {% elif num == 1 or num == paginator.num_pages or num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
+                    <li><a href="?{% if preserved_qs %}{{ preserved_qs }}&{% endif %}page={{ num }}" class="psdb-page-link">{{ num }}</a></li>
+                {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+                    <li><span class="psdb-page-ellipsis">&hellip;</span></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li><a href="?{% if preserved_qs %}{{ preserved_qs }}&{% endif %}page={{ page_obj.next_page_number }}" class="psdb-page-link" aria-label="Next">&rsaquo;</a></li>
+                <li><a href="?{% if preserved_qs %}{{ preserved_qs }}&{% endif %}page={{ paginator.num_pages }}" class="psdb-page-link" aria-label="Last">&raquo;</a></li>
+            {% else %}
+                <li><span class="psdb-page-link disabled">&rsaquo;</span></li>
+                <li><span class="psdb-page-link disabled">&raquo;</span></li>
+            {% endif %}
+        </ul>
+        <div class="psdb-pagination-meta">Page {{ page_obj.number }} of {{ paginator.num_pages }} - 25 per page</div>
+    </nav>
+    {% endif %}
+</div>
+
+<!-- Notes Modal -->
+<div class="modal fade" id="notesModal" tabindex="-1" aria-labelledby="notesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="notesModalLabel">Curator Notes</h5>
+                    <small class="text-muted" id="notesModalSubtitle"></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="notesModalBody" style="white-space: pre-wrap; line-height: 1.6; margin: 0;"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-primary-custom" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- 3D Molecular Viewer Modal -->
 <div class="modal fade" id="molViewerModal" tabindex="-1" aria-labelledby="molViewerLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content mol-viewer-modal">
-      <div class="modal-header">
-        <div>
-          <h5 class="modal-title" id="molViewerLabel">3D Molecular Structure</h5>
-          <small class="text-muted" id="molViewerSubtitle"></small>
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content mol-viewer-modal">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="molViewerLabel">3D Molecular Structure</h5>
+                    <small class="text-muted" id="molViewerSubtitle"></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="mol-viewer-container" class="mol-viewer-container"></div>
+                <div class="mol-viewer-info" id="molViewerInfo"></div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" id="molViewerPubchemLink" target="_blank" class="btn btn-sm btn-outline-custom">
+                    <img src="{% static 'synergy_data/icons/link.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">View on PubChem
+                </a>
+                <button type="button" class="btn btn-sm btn-primary-custom" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body p-0">
-        <div id="mol-viewer-container" class="mol-viewer-container"></div>
-        <div class="mol-viewer-info" id="molViewerInfo"></div>
-      </div>
-      <div class="modal-footer">
-        <a href="#" id="molViewerPubchemLink" target="_blank" rel="noopener" class="btn btn-sm btn-outline-custom">
-          <img src="{% static 'synergy_data/icons/link.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">View on PubChem
-        </a>
-        <button type="button" class="btn btn-sm btn-primary-custom" data-bs-dismiss="modal">Close</button>
-      </div>
     </div>
-  </div>
 </div>
 
 {% endblock %}
@@ -253,73 +392,78 @@
 {% block extra_js %}
 <script>
 (function() {
-    document.querySelectorAll('.dbt-viewlink').forEach(function(btn) {
+    var viewer = null;
+
+    document.querySelectorAll('.btn-view-notes').forEach(function(btn) {
         btn.addEventListener('click', function() {
-            var id = this.getAttribute('data-toggle-row');
-            var detail = document.querySelector('.dbt-detailrow[data-detail="' + id + '"]');
-            if (!detail) return;
-            var isHidden = detail.hasAttribute('hidden');
-            if (isHidden) { detail.removeAttribute('hidden'); } else { detail.setAttribute('hidden', ''); }
-            this.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
-            this.classList.toggle('open', isHidden);
-            this.textContent = isHidden ? 'Hide Details' : 'View Details';
-            var row = document.querySelector('.dbt-row[data-row="' + id + '"]');
-            if (row) row.classList.toggle('expanded', isHidden);
+            var compound = this.getAttribute('data-compound') || '';
+            var antibiotic = this.getAttribute('data-antibiotic') || '';
+            var pathogen = this.getAttribute('data-pathogen') || '';
+            var notes = this.getAttribute('data-notes') || '';
+            document.getElementById('notesModalSubtitle').textContent =
+                compound + ' + ' + antibiotic + ' vs ' + pathogen;
+            document.getElementById('notesModalBody').textContent = notes;
         });
     });
 
-    var shareBtn = document.getElementById('dbtShare');
-    if (shareBtn) {
-        shareBtn.addEventListener('click', function() {
-            var url = window.location.href;
-            var orig = shareBtn.innerHTML;
-            var done = function() { shareBtn.textContent = 'Link copied'; setTimeout(function(){ shareBtn.innerHTML = orig; }, 1500); };
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(url).then(done, done);
-            } else {
-                var t = document.createElement('textarea'); t.value = url; document.body.appendChild(t); t.select();
-                try { document.execCommand('copy'); } catch (e) {} document.body.removeChild(t); done();
-            }
-        });
-    }
-
-    var viewer = null;
     document.querySelectorAll('.btn-view3d').forEach(function(btn) {
         btn.addEventListener('click', function() {
             var smiles = this.getAttribute('data-smiles');
             var compound = this.getAttribute('data-compound');
             var cid = this.getAttribute('data-cid');
             var mw = this.getAttribute('data-mw');
+
             document.getElementById('molViewerLabel').textContent = compound;
             var subtitle = '';
             if (cid) subtitle += 'PubChem CID: ' + cid;
-            if (mw) subtitle += (subtitle ? ' · ' : '') + 'MW: ' + mw;
+            if (mw) subtitle += (subtitle ? ' \u00b7 ' : '') + 'MW: ' + mw;
             document.getElementById('molViewerSubtitle').textContent = subtitle;
+
             var pubchemLink = document.getElementById('molViewerPubchemLink');
-            if (cid) { pubchemLink.href = 'https://pubchem.ncbi.nlm.nih.gov/compound/' + cid + '#section=3D-Conformer'; pubchemLink.style.display = ''; }
-            else { pubchemLink.style.display = 'none'; }
-            document.getElementById('molViewerInfo').innerHTML = '<span><i class="fas fa-flask me-1"></i>SMILES: <code>' + smiles.substring(0, 60) + (smiles.length > 60 ? '...' : '') + '</code></span>';
+            if (cid) {
+                pubchemLink.href = 'https://pubchem.ncbi.nlm.nih.gov/compound/' + cid + '#section=3D-Conformer';
+                pubchemLink.style.display = '';
+            } else {
+                pubchemLink.style.display = 'none';
+            }
+
+            var infoHtml = '<span><i class="fas fa-flask me-1"></i>SMILES: <code>' + smiles.substring(0, 60) + (smiles.length > 60 ? '...' : '') + '</code></span>';
+            document.getElementById('molViewerInfo').innerHTML = infoHtml;
+
             document.getElementById('mol-viewer-container').setAttribute('data-smiles', smiles);
-            new bootstrap.Modal(document.getElementById('molViewerModal')).show();
+
+            var modal = new bootstrap.Modal(document.getElementById('molViewerModal'));
+            modal.show();
         });
     });
 
     document.getElementById('molViewerModal').addEventListener('shown.bs.modal', function() {
         var container = document.getElementById('mol-viewer-container');
         var smiles = container.getAttribute('data-smiles');
+
         container.innerHTML = '';
-        viewer = $3Dmol.createViewer(container, { backgroundColor: '#f8f9fa', antialias: true });
+
+        viewer = $3Dmol.createViewer(container, {
+            backgroundColor: '#f8f9fa',
+            antialias: true
+        });
+
         try {
             viewer.addModel(smiles, 'smi');
             viewer.setStyle({}, {stick: {radius: 0.15, colorscheme: 'Jmol'}, sphere: {scale: 0.25, colorscheme: 'Jmol'}});
-            viewer.zoomTo(); viewer.spin('y', 1); viewer.render();
+            viewer.zoomTo();
+            viewer.spin('y', 1);
+            viewer.render();
         } catch(e) {
             container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#6A6A8E;"><div class="text-center"><i class="fas fa-exclamation-triangle" style="font-size:2rem;margin-bottom:0.5rem;display:block;"></i>Could not render this molecule.<br><small>Try viewing on PubChem instead.</small></div></div>';
         }
     });
 
     document.getElementById('molViewerModal').addEventListener('hidden.bs.modal', function() {
-        if (viewer) { viewer.clear(); viewer = null; }
+        if (viewer) {
+            viewer.clear();
+            viewer = null;
+        }
         document.getElementById('mol-viewer-container').innerHTML = '';
     });
 })();
