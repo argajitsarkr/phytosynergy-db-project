@@ -258,12 +258,19 @@ class SynergyEntryForm(forms.Form):
 
 
 # Canonical column order shown in the downloaded template.
+# Pathogen is split into genus / species / strain to prevent ambiguous
+# free-text entries (e.g. the "S. aureus" -> genus "S." bug). gram_stain and
+# pmid are new optional columns.
 BULK_CSV_COLUMNS = [
     'source_doi',
+    'pmid',
     'publication_year',
     'article_title',
     'journal',
-    'pathogen_full_name',
+    'pathogen_genus',
+    'pathogen_species',
+    'pathogen_strain',
+    'gram_stain',
     'phytochemical_name',
     'plant_source',
     'antibiotic_name',
@@ -288,6 +295,9 @@ COLUMN_MAP = {
     # Source / publication metadata
     'source_doi': 'source_doi',
     'doi': 'source_doi',
+    'pmid': 'pmid',
+    'pubmed': 'pmid',
+    'pubmed_id': 'pmid',
     'publication_year': 'publication_year',
     'year': 'publication_year',
     'article_title': 'article_title',
@@ -296,13 +306,22 @@ COLUMN_MAP = {
     'journal': 'journal',
     'journal_name': 'journal',
 
-    # Pathogen
+    # Pathogen (preferred: split genus / species / strain)
+    'pathogen_genus': 'pathogen_genus',
+    'genus': 'pathogen_genus',
+    'pathogen_species': 'pathogen_species',
+    'species': 'pathogen_species',
+    'pathogen_strain': 'pathogen_strain',
+    'strain': 'pathogen_strain',
+    'gram_stain': 'gram_stain',
+    'gram': 'gram_stain',
+    'gramstain': 'gram_stain',
+    # Legacy single-column pathogen (still accepted; composed if parts absent)
     'pathogen_full_name': 'pathogen_full_name',
     'pathogen_name': 'pathogen_full_name',
     'pathogen': 'pathogen_full_name',
     'organism': 'pathogen_full_name',
     'bacteria': 'pathogen_full_name',
-    'strain': 'pathogen_full_name',
 
     # Phytochemical
     'phytochemical_name': 'phytochemical_name',
@@ -422,13 +441,17 @@ class BulkCSVUploadForm(forms.Form):
                 "Ensure CSV files are UTF-8 encoded and XLSX files are valid Excel workbooks."
             )
 
-        required = {'source_doi', 'pathogen_full_name', 'phytochemical_name', 'antibiotic_name'}
         present = set(headers)
+        required = {'source_doi', 'phytochemical_name', 'antibiotic_name'}
         missing = required - present
+        # Pathogen may be given as split genus (preferred) or the legacy
+        # single full-name column.
+        if 'pathogen_genus' not in present and 'pathogen_full_name' not in present:
+            missing.add('pathogen_genus')
         if missing:
             raise forms.ValidationError(
                 f"Missing required columns: {', '.join(sorted(missing))}. "
-                "Accepted aliases include 'doi', 'pathogen', 'compound', 'antibiotic'. "
-                "Download the template to see the expected format."
+                "Accepted aliases include 'doi', 'genus'/'pathogen', 'compound', "
+                "'antibiotic'. Download the template to see the expected format."
             )
         return f

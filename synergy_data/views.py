@@ -865,7 +865,7 @@ _DECIMAL_FIELDS = (
     'mic_phyto_in_combo', 'mic_abx_in_combo',
     'fic_index',
 )
-_INTEGER_FIELDS = ('publication_year',)
+_INTEGER_FIELDS = ('publication_year', 'pmid')
 
 
 def _stage_row(row_num, raw_row):
@@ -884,15 +884,39 @@ def _stage_row(row_num, raw_row):
         else:
             clean[key] = _clean_value(val, 'text')
 
+    # Compose the pathogen full name from split genus/species/strain columns
+    # when they are provided (preferred). Falls back to the legacy single
+    # pathogen_full_name column for older sheets.
+    genus = clean.get('pathogen_genus')
+    if genus and not clean.get('pathogen_full_name'):
+        parts = [genus, clean.get('pathogen_species'), clean.get('pathogen_strain')]
+        clean['pathogen_full_name'] = ' '.join(p for p in parts if p).strip()
+
     # Required fields
     required = ('source_doi', 'pathogen_full_name', 'phytochemical_name', 'antibiotic_name')
     missing_required = [f for f in required if not clean.get(f)]
     if missing_required:
+        label = {'pathogen_full_name': 'pathogen (genus + species)'}
         return {
             'status': 'error',
             'row_num': row_num,
             'data': clean,
-            'reason': f"Missing required fields: {', '.join(missing_required)}",
+            'reason': "Missing required fields: "
+                      + ', '.join(label.get(f, f) for f in missing_required),
+            'fic': None,
+            'interpretation': None,
+        }
+
+    # Reject abbreviated genera (e.g. "S." for Staphylococcus) - the cause of
+    # the malformed-genus data. The genus is the first token of the full name.
+    first_token = clean['pathogen_full_name'].split()[0]
+    if len(first_token) <= 2 and first_token.endswith('.'):
+        return {
+            'status': 'error',
+            'row_num': row_num,
+            'data': clean,
+            'reason': f"Genus '{first_token}' is abbreviated - use the full genus "
+                      f"name (e.g. 'Staphylococcus', not 'S.').",
             'fic': None,
             'interpretation': None,
         }
@@ -985,10 +1009,14 @@ def bulk_import_template(request):
 
     example = {
         'source_doi': '10.1016/j.phymed.2023.154789',
+        'pmid': '',
         'publication_year': 2023,
         'article_title': 'Synergistic activity of berberine with ciprofloxacin against S. aureus',
         'journal': 'Phytomedicine',
-        'pathogen_full_name': 'Staphylococcus aureus ATCC 25923',
+        'pathogen_genus': 'Staphylococcus',
+        'pathogen_species': 'aureus',
+        'pathogen_strain': 'ATCC 25923',
+        'gram_stain': '',
         'phytochemical_name': 'Berberine',
         'plant_source': 'Berberis vulgaris',
         'antibiotic_name': 'Ciprofloxacin',
@@ -1006,6 +1034,21 @@ def bulk_import_template(request):
     }
     for col_idx, header in enumerate(BULK_CSV_COLUMNS, start=1):
         ws.cell(row=2, column=col_idx, value=example.get(header, ''))
+
+    # Dropdown (data-validation) lists to cut down typos.
+    from openpyxl.worksheet.datavalidation import DataValidation
+    dropdowns = {
+        'gram_stain': '"Gram-positive,Gram-negative"',
+        'interpretation': '"Synergy,Additive,Indifference,Antagonism"',
+        'assay_method': '"checkerboard,time_kill,disk_diffusion,broth_microdilution,other"',
+    }
+    for field, formula in dropdowns.items():
+        if field not in BULK_CSV_COLUMNS:
+            continue
+        col_letter = openpyxl.utils.get_column_letter(BULK_CSV_COLUMNS.index(field) + 1)
+        dv = DataValidation(type="list", formula1=formula, allow_blank=True)
+        ws.add_data_validation(dv)
+        dv.add(f"{col_letter}2:{col_letter}1000")
 
     # Reasonable default widths
     for col_idx in range(1, len(BULK_CSV_COLUMNS) + 1):
@@ -1065,6 +1108,7 @@ def bulk_import_view(request):
                         source, _ = Source.objects.get_or_create(
                             doi=row.get('source_doi'),
                             defaults={
+                                'pmid': row.get('pmid'),
                                 'publication_year': row.get('publication_year'),
                                 'article_title': row.get('article_title') or None,
                                 'journal': row.get('journal') or None,
