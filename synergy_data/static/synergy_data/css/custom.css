@@ -134,6 +134,13 @@ a:hover { color: var(--accent); }
     top: 0;
     z-index: 9999;
     transition: box-shadow var(--transition-base);
+    /* Promote the sticky navbar to its own compositing layer. A sticky/fixed
+       element that is NOT layer-promoted is the classic trigger for Chromium
+       leaving content below it (the dark Process/stats bands) unpainted until a
+       hover/drag forces a repaint. Isolating it here is the reliable fix. */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
 }
 .navbar-custom.scrolled { box-shadow: var(--shadow-md); }
 .navbar-custom > .container { min-height: 72px; }
