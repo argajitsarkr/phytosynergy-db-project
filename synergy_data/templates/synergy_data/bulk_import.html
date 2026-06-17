@@ -169,7 +169,7 @@
 
     <!-- Summary -->
     <div class="row g-3 mb-4">
-        <div class="col-md-4">
+        <div class="col-md-3 col-6">
             <div class="data-entry-card" style="border-left: 4px solid var(--success);">
                 <div class="card-body p-3 d-flex align-items-center">
                     <img src="{% static 'synergy_data/icons/info.svg' %}" alt="" class="icon-svg icon-svg-xl me-3" style="filter: hue-rotate(90deg);">
@@ -180,7 +180,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3 col-6">
             <div class="data-entry-card" style="border-left: 4px solid #e65100;">
                 <div class="card-body p-3 d-flex align-items-center">
                     <img src="{% static 'synergy_data/icons/info.svg' %}" alt="" class="icon-svg icon-svg-xl me-3">
@@ -191,7 +191,18 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3 col-6">
+            <div class="data-entry-card" style="border-left: 4px solid #1565c0;">
+                <div class="card-body p-3 d-flex align-items-center">
+                    <img src="{% static 'synergy_data/icons/info.svg' %}" alt="" class="icon-svg icon-svg-xl me-3" style="filter: hue-rotate(180deg);">
+                    <div>
+                        <div class="fw-bold fs-4" style="color: #1565c0;">{{ duplicate_count }}</div>
+                        <div class="text-muted small">Already in DB (will be skipped)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
             <div class="data-entry-card" style="border-left: 4px solid var(--danger);">
                 <div class="card-body p-3 d-flex align-items-center">
                     <img src="{% static 'synergy_data/icons/trash-simple.svg' %}" alt="" class="icon-svg icon-svg-xl me-3">
@@ -205,10 +216,10 @@
     </div>
 
     <div class="alert alert-secondary border-0 py-2 small">
-        <strong>{{ importable_count }}</strong> row{{ importable_count|pluralize }} ready to import,
-        <strong>{{ warning_count }}</strong> with warnings,
-        <strong>{{ error_count }}</strong> will be skipped.
-        Total parsed: {{ total_count }}.
+        <strong>{{ importable_count }}</strong> new row{{ importable_count|pluralize }} ready to import
+        ({{ warning_count }} with warnings),
+        <strong>{{ duplicate_count }}</strong> already in the database,
+        <strong>{{ error_count }}</strong> rejected. Total parsed: {{ total_count }}.
     </div>
 
     {% if known_papers %}
@@ -218,8 +229,11 @@
             {{ known_papers|length }} paper{{ known_papers|length|pluralize }} in this upload already exist{{ known_papers|length|pluralize:"s," }} in the database
         </h6>
         <div class="small mb-2">
-            Rows from already-known papers will still be imported (real replicates from the same paper are valid).
-            Byte-identical re-entries are skipped automatically. Review the list below before confirming.
+            New compound/antibiotic/pathogen combinations from these papers will still be imported
+            (genuine additional experiments from the same paper are valid). Rows whose exact
+            compound + antibiotic + pathogen + paper combination is already on file are marked
+            <span class="badge" style="background:#1565c0;">In DB</span> below and skipped automatically.
+            Review the list before confirming.
         </div>
         <ul class="mb-0 small" style="padding-left: 1.25rem;">
             {% for p in known_papers %}
@@ -264,6 +278,7 @@
                         <tr style="
                             {% if row.status == 'valid' %}background:#e8f5e9;
                             {% elif row.status == 'warning' %}background:#fff8e1;
+                            {% elif row.status == 'duplicate' %}background:#e3f2fd;
                             {% else %}background:#ffebee;{% endif %}">
                             <td><strong>{{ row.row_num }}</strong></td>
                             <td>
@@ -271,6 +286,8 @@
                                 <span class="badge" style="background:#2e7d32;">Valid</span>
                                 {% elif row.status == 'warning' %}
                                 <span class="badge" style="background:#e65100;">Warning</span>
+                                {% elif row.status == 'duplicate' %}
+                                <span class="badge" style="background:#1565c0;">In DB</span>
                                 {% else %}
                                 <span class="badge" style="background:#c62828;">Rejected</span>
                                 {% endif %}

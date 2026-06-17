@@ -1035,6 +1035,40 @@ def _stage_row(row_num, raw_row):
     }
 
 
+def _row_already_imported(clean):
+    """Read-only check: is this row already in the database?
+
+    Mirrors the confirm-step duplicate key (phytochemical + antibiotic +
+    pathogen + source) WITHOUT creating any FK rows, so it is safe to call
+    during the preview pass. Returns False as soon as any FK is missing - a
+    row referencing a not-yet-seen paper/compound/etc. cannot be a duplicate.
+    """
+    source = Source.objects.filter(doi=clean.get('source_doi')).first()
+    if source is None:
+        return False
+
+    name = (clean.get('phytochemical_name') or '').strip()
+    phyto = Phytochemical.objects.filter(compound_name__iexact=name).first()
+    if phyto is None:
+        return False
+
+    abx_name = (clean.get('antibiotic_name') or '').strip()
+    abx = Antibiotic.objects.filter(antibiotic_name__iexact=abx_name).first()
+    if abx is None:
+        return False
+
+    genus, species, strain = parse_pathogen_name(clean.get('pathogen_full_name') or '')
+    pathogen = Pathogen.objects.filter(
+        genus=genus, species=species, strain=strain
+    ).first()
+    if pathogen is None:
+        return False
+
+    return SynergyExperiment.objects.filter(
+        phytochemical=phyto, antibiotic=abx, pathogen=pathogen, source=source,
+    ).exists()
+
+
 @login_required
 def bulk_import_template(request):
     """Download a blank XLSX template for bulk import, pre-filled with one
@@ -1275,8 +1309,16 @@ def bulk_import_view(request):
         for offset, raw_row in enumerate(raw_rows, start=2):  # row 1 is header
             staged.append(_stage_row(offset, raw_row))
 
+        # Flag rows that already exist in the DB so the preview reflects what
+        # Confirm will actually do (those rows are skipped, not re-imported).
+        for s in staged:
+            if s['status'] in ('valid', 'warning') and _row_already_imported(s['data']):
+                s['status'] = 'duplicate'
+                s['reason'] = 'Already in the database - will be skipped'
+
         valid_count = sum(1 for s in staged if s['status'] == 'valid')
         warning_count = sum(1 for s in staged if s['status'] == 'warning')
+        duplicate_count = sum(1 for s in staged if s['status'] == 'duplicate')
         error_count = sum(1 for s in staged if s['status'] == 'error')
 
         # Build the template-friendly view + a JSON blob for the confirm step.
@@ -1291,9 +1333,9 @@ def bulk_import_view(request):
                 'interpretation': s['interpretation'],
                 'data': s['data'],
             })
-            # Only non-error rows need to survive the JSON round-trip -
-            # errors are shown in preview but never imported.
-            if s['status'] != 'error':
+            # Only importable rows survive the JSON round-trip. Errors and
+            # already-in-DB duplicates are shown in preview but never imported.
+            if s['status'] in ('valid', 'warning'):
                 payload_data = {k: ('' if v is None else str(v)) for k, v in s['data'].items()}
                 # Surface the computed FIC/interpretation so the confirm step
                 # doesn't need to recalculate if the input FIC was blank.
@@ -1350,6 +1392,7 @@ def bulk_import_view(request):
             'preview_rows': preview_rows,
             'valid_count': valid_count,
             'warning_count': warning_count,
+            'duplicate_count': duplicate_count,
             'error_count': error_count,
             'importable_count': valid_count + warning_count,
             'total_count': len(staged),
