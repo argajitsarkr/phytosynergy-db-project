@@ -20,13 +20,60 @@
         </a>
     </div>
 
-    {% if messages %}
-    <div class="mb-4">
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags|default:'info' }} border-0 py-2 mb-2">
-            {{ message }}
+    {# Page-level messages are rendered once in base.html; do not repeat them here. #}
+
+    {% if import_result %}
+    <!-- Import result summary (one clean card instead of per-row alerts) -->
+    <div class="data-entry-card mb-4" style="border-top: 4px solid var(--primary);">
+        <div class="card-header d-flex align-items-center">
+            <img src="{% static 'synergy_data/icons/info.svg' %}" alt="" class="icon-svg icon-svg-md me-2"> Import Summary
         </div>
-        {% endfor %}
+        <div class="card-body p-3">
+            <div class="d-flex flex-wrap gap-2 mb-2">
+                <span class="badge rounded-pill" style="background:#2e7d32; font-size:0.85rem;">
+                    {{ import_result.imported }} imported
+                </span>
+                {% if import_result.skipped_duplicate %}
+                <span class="badge rounded-pill text-dark" style="background:#e0e0e0; font-size:0.85rem;">
+                    {{ import_result.skipped_duplicate }} duplicate{{ import_result.skipped_duplicate|pluralize }} skipped
+                </span>
+                {% endif %}
+                {% if import_result.skipped_invalid %}
+                <span class="badge rounded-pill" style="background:#e65100; font-size:0.85rem;">
+                    {{ import_result.skipped_invalid }} invalid skipped
+                </span>
+                {% endif %}
+                {% if import_result.errors %}
+                <span class="badge rounded-pill" style="background:#c62828; font-size:0.85rem;">
+                    {{ import_result.errors|length }} error{{ import_result.errors|pluralize }}
+                </span>
+                {% endif %}
+            </div>
+
+            {% if import_result.imported %}
+            <p class="text-muted small mb-2">
+                Run <code>python manage.py enrich_phytochemicals</code> on the server to backfill
+                chemistry data (PubChem, ClassyFire) for the new compounds.
+            </p>
+            {% endif %}
+
+            {% if import_result.errors %}
+            <details {% if not import_result.imported %}open{% endif %}>
+                <summary class="fw-semibold small text-danger" style="cursor:pointer;">
+                    Show {{ import_result.errors|length }} row error{{ import_result.errors|pluralize }}
+                </summary>
+                <div class="mt-2" style="max-height:220px; overflow-y:auto;">
+                    <table class="table table-sm mb-0" style="font-size:0.78rem;">
+                        <tbody>
+                            {% for err in import_result.errors %}
+                            <tr><td class="text-danger" style="border:0;">{{ err }}</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </details>
+            {% endif %}
+        </div>
     </div>
     {% endif %}
 

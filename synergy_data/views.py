@@ -802,6 +802,57 @@ def _safe_decimal(value):
     return _clean_value(value, field_type='decimal')
 
 
+# Controlled vocabulary for SynergyExperiment.assay_method (must match models.py).
+VALID_ASSAY_METHODS = {
+    'checkerboard', 'time_kill', 'disk_diffusion', 'broth_microdilution', 'other',
+}
+# Keyword -> canonical code, checked in order against free-text descriptions.
+_ASSAY_KEYWORD_MAP = [
+    ('checkerboard', 'checkerboard'),
+    ('time', 'time_kill'),
+    ('kill', 'time_kill'),
+    ('disk', 'disk_diffusion'),
+    ('disc', 'disk_diffusion'),
+    ('diffusion', 'disk_diffusion'),
+    ('broth', 'broth_microdilution'),
+    ('microdilution', 'broth_microdilution'),
+    ('microbroth', 'broth_microdilution'),
+]
+
+
+def normalize_assay_method(raw_value, notes=''):
+    """Map a free-text or oversized assay_method into a valid controlled code.
+
+    The DB column is varchar(50) with a fixed choice list. Imports sometimes
+    carry a long methodology sentence (e.g. "Checkerboard microbroth dilution
+    (8x8 matrix, MH broth ...)") which overflows the column. This collapses such
+    text to a canonical code by keyword match (falling back to 'other') and, when
+    the original text was discarded, preserves it by prepending to ``notes``.
+
+    Returns (code, notes) - both ready to assign directly to the model.
+    """
+    value = (str(raw_value).strip() if raw_value is not None else '')
+    notes = notes or ''
+    if not value:
+        return 'checkerboard', notes
+
+    lowered = value.lower()
+    if lowered in VALID_ASSAY_METHODS:
+        return lowered, notes
+
+    code = 'other'
+    for keyword, mapped in _ASSAY_KEYWORD_MAP:
+        if keyword in lowered:
+            code = mapped
+            break
+
+    # Preserve the original description so curated detail is not lost.
+    prefix = f"Assay method: {value}"
+    if prefix not in notes:
+        notes = f"{prefix}\n{notes}".strip() if notes else prefix
+    return code, notes
+
+
 def _parse_upload_to_rows(uploaded_file):
     """Parse either a CSV or XLSX upload into a list of dicts keyed by
     canonical column names. Returns (rows, total_row_count)."""
@@ -1074,6 +1125,9 @@ def bulk_import_view(request):
     """
     context = {'form': BulkCSVUploadForm()}
 
+    # Surface the outcome of a just-completed import as one summary card.
+    context['import_result'] = request.session.pop('bulk_import_result', None)
+
     if request.method == 'POST':
         action = request.POST.get('action', 'validate')
 
@@ -1169,6 +1223,10 @@ def bulk_import_view(request):
                         if interpretation not in ['Synergy', 'Additive', 'Indifference', 'Antagonism']:
                             interpretation = auto_interpret_fic(fic_index)
 
+                        assay_method, notes = normalize_assay_method(
+                            row.get('assay_method'), row.get('notes') or '',
+                        )
+
                         SynergyExperiment.objects.create(
                             phytochemical=phytochemical,
                             antibiotic=antibiotic,
@@ -1181,40 +1239,22 @@ def bulk_import_view(request):
                             mic_units=mic_units,
                             fic_index=fic_index,
                             interpretation=interpretation,
-                            assay_method=(row.get('assay_method') or 'checkerboard'),
+                            assay_method=assay_method,
                             moa_observed=row.get('moa_observed') or '',
-                            notes=row.get('notes') or '',
+                            notes=notes,
                         )
                         imported += 1
                 except Exception as e:
                     errors.append(f"Row {row_num}: {e}")
 
-            if imported:
-                messages.success(
-                    request, f"Successfully imported {imported} experiment(s)."
-                )
-                messages.info(
-                    request,
-                    "Run `python manage.py enrich_phytochemicals` on the server "
-                    "to backfill chemistry data (PubChem, ClassyFire) for the new compounds."
-                )
-            if skipped_duplicate:
-                messages.info(
-                    request,
-                    f"Skipped {skipped_duplicate} duplicate experiment(s) already in the database.",
-                )
-            if skipped_invalid:
-                messages.warning(
-                    request,
-                    f"Skipped {skipped_invalid} invalid row(s) that could not be imported.",
-                )
-            if errors:
-                for err in errors[:5]:
-                    messages.warning(request, err)
-                if len(errors) > 5:
-                    messages.warning(
-                        request, f"… and {len(errors) - 5} more error(s)."
-                    )
+            # Stash a single structured result for a clean summary card on the
+            # next GET, instead of emitting one full-width alert per row error.
+            request.session['bulk_import_result'] = {
+                'imported': imported,
+                'skipped_duplicate': skipped_duplicate,
+                'skipped_invalid': skipped_invalid,
+                'errors': errors,
+            }
             return redirect('bulk_import')
 
         # ── VALIDATE ACTION: parse file and show preview ──
