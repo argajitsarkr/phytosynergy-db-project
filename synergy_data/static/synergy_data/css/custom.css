@@ -2601,6 +2601,15 @@ h1, h2, h3, h4, h5, h6 { color: var(--rzp-ink); letter-spacing: -0.01em; }
 .section-dark, .stats-dark-band {
     background: var(--rzp-ink) !important;
     border-color: rgba(255,255,255,.08) !important;
+    /* Force each dark band onto its own compositing layer. Without this,
+       Chromium can leave the white text unpainted when these sections scroll
+       under the sticky, high-z-index navbar (combined with the hero's
+       backdrop-filter layers) - the text only appears once a hover forces a
+       repaint. translateZ(0) + backface-visibility keep them always painted. */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 }
 
 .grid-band, .grid-band-dark {
@@ -2885,10 +2894,11 @@ h1, h2, h3, h4, h5, h6 { color: var(--rzp-ink); letter-spacing: -0.01em; }
 
 /* Label pill against the dark hero: glassy, white text */
 .hero-nuuk .label-pill {
-    background: rgba(255,255,255,0.14) !important;
+    background: rgba(255,255,255,0.18) !important;
     color: #ffffff !important;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    /* backdrop-filter removed: its compositing layer triggered a Chromium
+       stale-paint bug that left the dark sections below unpainted until a
+       hover forced a repaint. A slightly more opaque solid fill reads the same. */
 }
 
 /* Hero mini-stats: white labels + white numbers, accent in light blue */
@@ -2911,10 +2921,9 @@ h1, h2, h3, h4, h5, h6 { color: var(--rzp-ink); letter-spacing: -0.01em; }
 
 /* Reco strip when it sits inside the dark hero: glassy pill row */
 .hero-nuuk .reco-strip {
-    background: rgba(255,255,255,0.10) !important;
+    background: rgba(255,255,255,0.14) !important;
     border-color: rgba(255,255,255,0.18) !important;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    /* backdrop-filter removed - see note on .hero-nuuk .label-pill above. */
     box-shadow: 0 6px 24px rgba(0,0,0,0.2);
 }
 .hero-nuuk .reco-strip .reco-label { color: #ffffff !important; }
