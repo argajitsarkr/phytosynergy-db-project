@@ -21,6 +21,14 @@
 
 ## Phase 4 - AI-Assisted Extraction + Analytics Dashboard (2026-03-24 - ongoing)
 
+### Enhancement 5: Chemical Similarity Search (`/similarity/`) - 2026-06-20
+- **Public page** where a researcher pastes a SMILES and gets the structurally most similar phytochemicals in the DB, ranked by **Tanimoto similarity** on 2048-bit **Morgan / ECFP4** fingerprints (radius 2).
+- Each hit shows the similarity score (with a bar), chemical class, molecular weight, and experiment/synergy counts, and deep-links to that compound's experiments via `database/?phytochemical=<id>`. The 3D structure viewer (3Dmol) is reused.
+- **Fingerprints are precomputed at curation time** and stored on the new `Phytochemical.morgan_fp` field (migration `0006`). New `manage.py compute_fingerprints` command (`--all` / `--name`) backfills them; they are also refreshed on save in the data-entry / edit views. Bulk import still does no in-request chemistry (run the command afterwards).
+- All RDKit logic is isolated in `synergy_data/similarity.py` with lazy imports, so the app boots without RDKit; the query path returns a clear error if RDKit is absent. The view also falls back to live fingerprinting from SMILES when `morgan_fp` is blank.
+- JSON API: `GET /api/v1/similarity/?smiles=&limit=&threshold=` plus an API-docs entry. Navbar Explore dropdown gains a "Similarity Search" link.
+- DEPLOY: run `migrate` then `compute_fingerprints` once to fingerprint the existing compounds.
+
 ### Enhancement 4: AI-Assisted PDF Data Extraction (`/extract/`)
 - **Login-required page** for curators to upload research paper PDFs
 - PyMuPDF extracts text → Google Gemini API structures it into JSON

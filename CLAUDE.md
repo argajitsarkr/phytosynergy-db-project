@@ -65,8 +65,9 @@ C:\Users\Arghya\Downloads\Projects\     ← GIT ROOT
 | URL | View | Auth | Notes |
 |-----|------|------|-------|
 | `/` | `home_page` | Public | Stats counters, ESKAPE summary |
-| `/database/` | `database_search_page` | Public | Filterable experiment table |
+| `/database/` | `database_search_page` | Public | Filterable experiment table (also accepts `?phytochemical=<id>`) |
 | `/database/download/` | `download_data` | Public | CSV export of filtered results |
+| `/similarity/` | `similarity_search_page` | Public | SMILES -> Tanimoto/ECFP4 structural similarity search |
 | `/about/` | `about_page` | Public | |
 | `/data-entry/` | `data_entry_view` | Login | Single-row form; calls `enrich_phytochemical` on save |
 | `/data-entry/edit/<pk>/` | `edit_entry_view` | Login | |
@@ -75,6 +76,7 @@ C:\Users\Arghya\Downloads\Projects\     ← GIT ROOT
 | `/analytics/` | `analytics_page` | Public | Chart.js dashboard |
 | `/api/v1/experiments/` | `api_experiments` | Public | JSON, paginated, filterable |
 | `/api/v1/statistics/` | `api_statistics` | Public | Aggregate stats JSON |
+| `/api/v1/similarity/` | `api_similarity` | Public | JSON, `?smiles=` Tanimoto/ECFP4 ranking |
 | `/api/docs/` | `api_docs` | Public | |
 | `/accounts/login/` | Django `LoginView` | - | Template: `synergy_data/login.html` |
 | `/accounts/logout/` | Django `LogoutView` | - | Redirects to `home` |
@@ -85,7 +87,7 @@ C:\Users\Arghya\Downloads\Projects\     ← GIT ROOT
 
 ```
 SynergyExperiment
-  ├── phytochemical → Phytochemical (compound_name, pubchem_cid, smiles, Lipinski, ClassyFire)
+  ├── phytochemical → Phytochemical (compound_name, pubchem_cid, smiles, Lipinski, ClassyFire, morgan_fp)
   ├── antibiotic    → Antibiotic (antibiotic_name, antibiotic_class → AntibioticClass)
   ├── pathogen      → Pathogen (genus, species, strain)  unique_together on all three
   ├── source        → Source (doi, pmid, publication_year, article_title, journal)
@@ -158,7 +160,37 @@ docker compose exec web python manage.py enrich_phytochemicals --name "Berberine
 
 # Batch-compute RDKit cheminformatics properties (logP, rings, Lipinski, etc.)
 docker compose exec web python manage.py compute_properties
+
+# Compute + store Morgan/ECFP4 fingerprints for chemical similarity search
+# (only compounds missing a fingerprint; run after every import/enrich cycle)
+docker compose exec web python manage.py compute_fingerprints
+
+# Force re-fingerprint everything, or just one compound
+docker compose exec web python manage.py compute_fingerprints --all
+docker compose exec web python manage.py compute_fingerprints --name "Berberine"
 ```
+
+---
+
+## Chemical Similarity Search (`/similarity/`)
+
+A researcher pastes a SMILES string and gets the structurally most similar
+phytochemicals in the DB, ranked by **Tanimoto similarity** on 2048-bit
+**Morgan / ECFP4** fingerprints (radius 2). Each hit links to its recorded
+synergy experiments via `database/?phytochemical=<id>`.
+
+- **Fingerprints are precomputed at curation time** and stored on
+  `Phytochemical.morgan_fp` (a 2048-char bit string). They are written by
+  `manage.py compute_fingerprints` and refreshed on save in `data_entry_view` /
+  `edit_entry_view` (via `similarity.update_fingerprint`). Bulk import does NOT
+  fingerprint (same no-network-in-request rule as enrichment) - run the command
+  after importing.
+- All fingerprint/Tanimoto logic lives in `synergy_data/similarity.py`. RDKit is
+  imported lazily there so the app still boots if RDKit is missing; the query
+  path then returns a clear "RDKit not installed" error instead of crashing.
+- The query view falls back to computing a compound's fingerprint live from its
+  SMILES when `morgan_fp` is blank, so search works even before the backfill is run.
+- JSON API: `GET /api/v1/similarity/?smiles=<SMILES>&limit=25&threshold=0.4`.
 
 ---
 
@@ -212,8 +244,11 @@ docker compose exec db pg_dump -U <db_user> phytosynergy_db > ~/phytosynergy_bac
 
 **After any bulk import:**
 ```bash
-docker compose exec web python manage.py enrich_phytochemicals
+docker compose exec web python manage.py enrich_phytochemicals   # backfill PubChem/ClassyFire + SMILES
+docker compose exec web python manage.py compute_fingerprints    # backfill ECFP4 fingerprints for similarity search
 ```
+
+> **NOTE:** The similarity-search feature adds migration `0006_phytochemical_morgan_fp`. On first deploy of that change run `docker compose exec web python manage.py migrate` and then `compute_fingerprints` once to fingerprint the existing compounds.
 
 **If the site freezes / gunicorn gets wedged:**
 ```bash
@@ -322,6 +357,7 @@ Imported via the single Google Fonts URL at the top of `custom.css`. Do NOT add 
 
 | Date | Commit | Description |
 |------|--------|-------------|
+| 2026-06-20 | - | **New feature: Chemical Similarity Search** (`/similarity/`). A researcher pastes a SMILES and gets the structurally most similar phytochemicals in the DB, ranked by Tanimoto similarity on 2048-bit Morgan/ECFP4 fingerprints (radius 2), each linked to its synergy experiments. New `synergy_data/similarity.py` (all RDKit logic, lazy imports so the app boots without RDKit; `compute_fingerprint`/`fp_to_bitstring`/`bitstring_to_fp`/`tanimoto`/`update_fingerprint`/`search_similar`). New `Phytochemical.morgan_fp` TextField + migration `0006`. New `manage.py compute_fingerprints` command (`--all`/`--name`) to backfill the stored bit strings; fingerprints are also refreshed on save in `data_entry_view`/`edit_entry_view`. View `similarity_search_page` + template `similarity_search.html` (SMILES bar, threshold/limit controls, example pills, ranked result cards with similarity bar, experiment/synergy counts, 3Dmol viewer reused). JSON API `GET /api/v1/similarity/?smiles=&limit=&threshold=` (`api_similarity`) + API-docs entry. Added a `phytochemical` filter to `_apply_search_filters` so result cards can deep-link to `database/?phytochemical=<id>`. Navbar Explore dropdown gains "Similarity Search". The query view falls back to live fingerprinting from SMILES when `morgan_fp` is blank, so search works before the backfill runs. DEPLOY: run `migrate` then `compute_fingerprints` once. `py_compile` clean; `manage.py check` to be run in Docker by the maintainer (RDKit/Django not installed in the dev shell). |
 | 2026-06-18 | - | Bulk import preview now detects duplicates up front. Previously the Validate/preview pass never ran the duplicate check (it only happened at Confirm), so re-uploading a sheet showed already-imported rows as "importable" and the known-papers banner falsely claimed "byte-identical re-entries are skipped". Added read-only `_row_already_imported()` (mirrors the confirm-step phyto+abx+pathogen+source key without creating FK rows); staging now flags existing rows with a new `duplicate` status, excludes them from `importable_count` and the confirm payload. Template: 4th summary card ("Already in DB"), blue "In DB" row badge + shading, honest summary line, and corrected known-papers banner copy. |
 | 2026-06-18 | - | Bulk import: fix `value too long for type character varying(50)` failures + clean up the error UI. Root cause: free-text/oversized `assay_method` values (e.g. a 100-char "Checkerboard microbroth dilution (...)" sentence) overflow the varchar(50) choices column. Added `normalize_assay_method()` + `VALID_ASSAY_METHODS`/keyword map in views.py: any non-vocabulary value is mapped to a valid code (keyword match, else `other`) and the original text is preserved by prepending `Assay method: ...` to `notes`; wired into the confirm step of `bulk_import_view`. UI: the page was rendering Django messages twice (base.html AND bulk_import.html both looped `messages`) and emitting one full-width alert per row error. Removed the duplicate loop in bulk_import.html; the confirm step now stashes a single structured `bulk_import_result` in the session, rendered as one compact "Import Summary" card (count pill badges + collapsible scrollable row-error list). Also produced a corrected `_FIXED.xlsx` for the maintainer's failing upload (assay_method -> `checkerboard`, long text moved to notes). |
 | 2026-06-13 | `791b7aa` | Database search page UI: tried two redesigns and reverted both back to the original card view at the maintainer's request. History only (no net change to the page): `e974d3d` (Untitled-UI card/list, reverted by `1a8b71e`), then `2e8d185` (dark DrugBank-style data table with inline expandable Details rows) and `1f9e6b9` (lighter clean-SaaS table), both reverted by `791b7aa`. The expandable-details table work is recoverable from those commits if revisited. Lesson: preview big visual changes (a mockup or local render) before deploying - the maintainer reverted each time after seeing it. |

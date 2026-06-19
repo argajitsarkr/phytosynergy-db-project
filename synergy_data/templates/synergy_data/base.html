@@ -75,6 +75,7 @@
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{% url 'database_search' %}"><img src="{% static 'synergy_data/icons/magnifying-glass.svg' %}" alt="" class="icon-svg icon-svg-sm me-2">Browse Database</a></li>
+                            <li><a class="dropdown-item" href="{% url 'similarity_search' %}"><img src="{% static 'synergy_data/icons/cube.svg' %}" alt="" class="icon-svg icon-svg-sm me-2">Similarity Search</a></li>
                             <li><a class="dropdown-item" href="{% url 'database_search' %}?interpretation=Synergy"><img src="{% static 'synergy_data/icons/tag.svg' %}" alt="" class="icon-svg icon-svg-sm me-2">Synergistic Pairs</a></li>
                             <li><a class="dropdown-item" href="{% url 'database_search' %}?interpretation=Antagonism"><img src="{% static 'synergy_data/icons/tag.svg' %}" alt="" class="icon-svg icon-svg-sm me-2">Antagonistic Pairs</a></li>
                         </ul>

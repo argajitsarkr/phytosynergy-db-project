@@ -41,6 +41,14 @@ class Phytochemical(models.Model):
     chemical_class = models.CharField(max_length=200, null=True, blank=True, verbose_name="Chemical Class")
     chemical_subclass = models.CharField(max_length=200, null=True, blank=True, verbose_name="Chemical Subclass")
 
+    # Morgan / ECFP4 fingerprint (radius 2, 2048-bit) stored as a bit string for
+    # chemical similarity search. Computed from canonical_smiles at curation time
+    # by `manage.py compute_fingerprints` (and on save in the data-entry views).
+    morgan_fp = models.TextField(
+        blank=True, null=True, verbose_name="Morgan/ECFP4 Fingerprint",
+        help_text="2048-bit ECFP4 (Morgan radius 2) fingerprint bit string, for similarity search",
+    )
+
     @property
     def passes_lipinski(self):
         """Check Lipinski's Rule of Five: MW < 500, LogP < 5, HBD ≤ 5, HBA ≤ 10."""

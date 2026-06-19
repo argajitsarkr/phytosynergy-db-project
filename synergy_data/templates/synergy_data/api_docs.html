@@ -137,6 +137,48 @@
 }</code>
                 </div>
 
+                <!-- Similarity Endpoint -->
+                <h3>Similarity Endpoint</h3>
+                <div class="citation-box mb-4">
+                    <strong>GET</strong> <code style="display: inline; background: none; border: none; padding: 0; margin: 0;">/api/v1/similarity/</code>
+                    <p class="mt-2 mb-0">Ranks database phytochemicals by Tanimoto similarity to a query structure, using 2048-bit Morgan/ECFP4 fingerprints.</p>
+                </div>
+
+                <h5>Query Parameters</h5>
+                <div class="citation-box mb-4">
+                    <code>smiles</code> (required) - query structure as a SMILES string<br>
+                    <code>limit</code> (optional) - max hits to return (default 25, capped at 100)<br>
+                    <code>threshold</code> (optional) - minimum Tanimoto similarity, 0.0 - 1.0 (default 0)
+                </div>
+
+                <h5>Example Request</h5>
+                <div class="citation-box mb-3">
+                    <code>GET /api/v1/similarity/?smiles=Cc1ccc(C(C)C)cc1O&threshold=0.4</code>
+                </div>
+
+                <h5>Response Format</h5>
+                <div class="citation-box mb-5">
+<code>{
+  "query_smiles": "Cc1ccc(C(C)C)cc1O",
+  "fingerprint": "Morgan/ECFP4 (radius 2, 2048-bit)",
+  "metric": "Tanimoto",
+  "threshold": 0.4,
+  "count": 3,
+  "results": [
+    {
+      "compound_name": "Carvacrol",
+      "pubchem_cid": 10364,
+      "inchi_key": "RECUKUPTGUEGMW-UHFFFAOYSA-N",
+      "smiles": "Cc1ccc(C(C)C)cc1O",
+      "chemical_class": "Phenols",
+      "tanimoto": 0.8421,
+      "experiment_count": 7,
+      "synergy_count": 5
+    }
+  ]
+}</code>
+                </div>
+
                 <!-- Usage Examples -->
                 <h3>Usage Examples</h3>
 

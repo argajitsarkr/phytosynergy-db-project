@@ -15,6 +15,9 @@ urlpatterns = [
     path('database/', views.database_search_page, name='database_search'),
     path('database/download/', views.download_data, name='download_data'),
 
+    # Chemical similarity search (SMILES -> Tanimoto / ECFP4)
+    path('similarity/', views.similarity_search_page, name='similarity_search'),
+
     # About page
     path('about/', views.about_page, name='about'),
 
@@ -32,6 +35,7 @@ urlpatterns = [
     # API endpoints
     path('api/v1/experiments/', views.api_experiments, name='api_experiments'),
     path('api/v1/statistics/', views.api_statistics, name='api_statistics'),
+    path('api/v1/similarity/', views.api_similarity, name='api_similarity'),
     path('api/docs/', views.api_docs, name='api_docs'),
 
     # Authentication

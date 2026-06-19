@@ -1,0 +1,259 @@
+{% extends 'synergy_data/base.html' %}
+{% load static %}
+
+{% block title %}Chemical Similarity Search (SMILES, Tanimoto/ECFP4) - PhytoSynergyDB{% endblock %}
+{% block meta_description %}Paste a SMILES string and find the structurally most similar phytochemicals in PhytoSynergyDB, ranked by Tanimoto similarity on Morgan/ECFP4 fingerprints, each linked to its recorded antibiotic synergy outcomes.{% endblock %}
+{% block og_title %}Chemical Similarity Search - PhytoSynergyDB{% endblock %}
+
+{% block search_banner %}
+<div class="global-search-banner">
+    <div class="container">
+        <p class="search-label">Find structurally similar phytochemicals by SMILES (Tanimoto similarity, Morgan/ECFP4 fingerprints):</p>
+        <form action="{% url 'similarity_search' %}" method="get">
+            <div class="search-bar-wrapper">
+                <input type="text" name="smiles" value="{{ query_smiles }}"
+                       spellcheck="false" autocapitalize="off" autocomplete="off"
+                       placeholder="Paste a SMILES, e.g. Cc1ccc(C(C)C)cc1O">
+                <button type="submit"><img src="{% static 'synergy_data/icons/magnifying-glass.svg' %}" alt="Search" class="icon-svg icon-svg-md"></button>
+            </div>
+            <div class="sim-controls">
+                <label class="sim-control">
+                    <span>Min. similarity</span>
+                    <select name="threshold">
+                        <option value="0" {% if threshold == 0.0 %}selected{% endif %}>Any</option>
+                        <option value="0.2" {% if threshold == 0.2 %}selected{% endif %}>0.20</option>
+                        <option value="0.4" {% if threshold == 0.4 %}selected{% endif %}>0.40</option>
+                        <option value="0.6" {% if threshold == 0.6 %}selected{% endif %}>0.60</option>
+                        <option value="0.8" {% if threshold == 0.8 %}selected{% endif %}>0.80</option>
+                    </select>
+                </label>
+                <label class="sim-control">
+                    <span>Max results</span>
+                    <select name="limit">
+                        <option value="10" {% if limit == 10 %}selected{% endif %}>10</option>
+                        <option value="25" {% if limit == 25 %}selected{% endif %}>25</option>
+                        <option value="50" {% if limit == 50 %}selected{% endif %}>50</option>
+                        <option value="100" {% if limit == 100 %}selected{% endif %}>100</option>
+                    </select>
+                </label>
+                <span class="sim-control-note">Searching {{ total_searchable }} fingerprinted compound{{ total_searchable|pluralize }}</span>
+            </div>
+        </form>
+        <div class="sim-examples">
+            <span class="sim-examples-label">Try an example:</span>
+            {% for ex in examples %}
+            <a class="sim-example-pill" href="{% url 'similarity_search' %}?smiles={{ ex.smiles|urlencode }}">{{ ex.name }}</a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="search-page-container">
+
+    {% if error %}
+    <div class="alert alert-danger" role="alert">
+        <strong>Could not run the search.</strong> {{ error }}
+    </div>
+    {% endif %}
+
+    {% if not searched and not error %}
+    <!-- First-visit explainer -->
+    <div class="sim-intro">
+        <h1 class="sim-intro-title">Chemical Similarity Search</h1>
+        <p class="sim-intro-lead">
+            Paste the <strong>SMILES</strong> of a phytochemical and we return the structurally
+            most similar compounds already curated in PhytoSynergyDB, ranked by
+            <strong>Tanimoto similarity</strong> on 2048-bit <strong>Morgan / ECFP4</strong>
+            fingerprints. Each hit links straight to its recorded antibiotic-synergy experiments.
+        </p>
+        <div class="sim-intro-steps">
+            <div class="sim-step"><span class="sim-step-num">1</span> Paste a SMILES string above</div>
+            <div class="sim-step"><span class="sim-step-num">2</span> We fingerprint it and score every database compound</div>
+            <div class="sim-step"><span class="sim-step-num">3</span> Browse ranked hits and their synergy outcomes</div>
+        </div>
+        <p class="sim-intro-note text-muted">
+            Tanimoto ranges from 0 (no shared substructure) to 1 (identical fingerprint).
+            A score above ~0.4 typically indicates meaningful structural relatedness.
+        </p>
+    </div>
+    {% endif %}
+
+    {% if searched and not error %}
+    <div class="results-header d-flex justify-content-between align-items-center mb-3 mt-2">
+        <div>
+            <h4 class="mb-1">Similarity results</h4>
+            <p class="text-muted mb-0" style="font-size: 0.88rem;">
+                Query SMILES <code class="sim-query-code">{{ query_smiles }}</code>
+                {% if results %}- {{ results|length }} hit{{ results|length|pluralize }}{% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="results-list">
+        {% for r in results %}
+        <div class="sim-result-card">
+            <div class="sim-rank">#{{ forloop.counter }}</div>
+
+            <div class="sim-main">
+                <h5 class="sim-compound">{{ r.phytochemical.compound_name }}</h5>
+                <div class="sim-tags">
+                    {% if r.phytochemical.chemical_class %}
+                    <span class="chem-class-badge" title="ClassyFire chemical class">
+                        <img src="{% static 'synergy_data/icons/tag.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">{{ r.phytochemical.chemical_class }}
+                    </span>
+                    {% endif %}
+                    {% if r.phytochemical.molecular_weight %}
+                    <span class="lipinski-prop" title="Molecular Weight"><strong>MW</strong> {{ r.phytochemical.molecular_weight|floatformat:1 }}</span>
+                    {% endif %}
+                    {% if r.phytochemical.molecular_formula %}
+                    <span class="lipinski-prop" title="Molecular Formula"><strong>Formula</strong> {{ r.phytochemical.molecular_formula }}</span>
+                    {% endif %}
+                    {% if r.phytochemical.pubchem_cid %}
+                    <span class="lipinski-prop" title="PubChem CID"><strong>CID</strong> {{ r.phytochemical.pubchem_cid }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="sim-score">
+                <div class="sim-percent {% if r.similarity >= 0.7 %}sim-strong{% elif r.similarity >= 0.4 %}sim-moderate{% else %}sim-weak{% endif %}">{{ r.percent }}%</div>
+                <div class="sim-bar">
+                    <div class="sim-bar-fill {% if r.similarity >= 0.7 %}sim-strong{% elif r.similarity >= 0.4 %}sim-moderate{% else %}sim-weak{% endif %}" style="width: {{ r.percent }}%;"></div>
+                </div>
+                <div class="sim-score-label">Tanimoto {{ r.similarity|floatformat:3 }}</div>
+            </div>
+
+            <div class="sim-stats">
+                <div class="sim-stat"><span class="sim-stat-num">{{ r.experiment_count }}</span><span class="sim-stat-label">experiment{{ r.experiment_count|pluralize }}</span></div>
+                <div class="sim-stat"><span class="sim-stat-num">{{ r.synergy_count }}</span><span class="sim-stat-label">synergistic</span></div>
+            </div>
+
+            <div class="sim-actions">
+                {% if r.experiment_count %}
+                <a href="{% url 'database_search' %}?phytochemical={{ r.phytochemical.id }}" class="btn btn-sm btn-primary">View experiments</a>
+                {% else %}
+                <span class="btn btn-sm btn-outline-secondary disabled">No experiments</span>
+                {% endif %}
+                {% if r.phytochemical.canonical_smiles %}
+                <button type="button" class="btn btn-sm btn-outline-secondary btn-view3d"
+                        data-smiles="{{ r.phytochemical.canonical_smiles }}"
+                        data-compound="{{ r.phytochemical.compound_name }}"
+                        data-cid="{{ r.phytochemical.pubchem_cid|default:'' }}"
+                        data-mw="{{ r.phytochemical.molecular_weight|default:'' }}">
+                    <img src="{% static 'synergy_data/icons/cube.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">3D
+                </button>
+                {% endif %}
+                {% if r.phytochemical.pubchem_cid %}
+                <a href="https://pubchem.ncbi.nlm.nih.gov/compound/{{ r.phytochemical.pubchem_cid }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
+                    <img src="{% static 'synergy_data/icons/link.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">PubChem
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center p-5 rounded" style="background: var(--bg-section); border: 1px solid var(--border-light);">
+            <img src="{% static 'synergy_data/icons/cube.svg' %}" alt="" class="icon-svg icon-svg-xl" style="opacity: 0.4; margin-bottom: 1rem;">
+            <h4 style="color: var(--text-secondary);">No compounds above the threshold</h4>
+            <p class="text-muted">No database phytochemical met the minimum similarity you set. Try lowering the minimum similarity, or check the SMILES is correct.</p>
+            <a href="{% url 'similarity_search' %}?smiles={{ query_smiles|urlencode }}" class="btn btn-primary-custom mt-2">Search with no threshold</a>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- 3D Molecular Viewer Modal -->
+<div class="modal fade" id="molViewerModal" tabindex="-1" aria-labelledby="molViewerLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content mol-viewer-modal">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="molViewerLabel">3D Molecular Structure</h5>
+                    <small class="text-muted" id="molViewerSubtitle"></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="mol-viewer-container" class="mol-viewer-container"></div>
+                <div class="mol-viewer-info" id="molViewerInfo"></div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" id="molViewerPubchemLink" target="_blank" class="btn btn-sm btn-outline-custom">
+                    <img src="{% static 'synergy_data/icons/link.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">View on PubChem
+                </a>
+                <button type="button" class="btn btn-sm btn-primary-custom" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    var viewer = null;
+
+    document.querySelectorAll('.btn-view3d').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var smiles = this.getAttribute('data-smiles');
+            var compound = this.getAttribute('data-compound');
+            var cid = this.getAttribute('data-cid');
+            var mw = this.getAttribute('data-mw');
+
+            document.getElementById('molViewerLabel').textContent = compound;
+            var subtitle = '';
+            if (cid) subtitle += 'PubChem CID: ' + cid;
+            if (mw) subtitle += (subtitle ? ' · ' : '') + 'MW: ' + mw;
+            document.getElementById('molViewerSubtitle').textContent = subtitle;
+
+            var pubchemLink = document.getElementById('molViewerPubchemLink');
+            if (cid) {
+                pubchemLink.href = 'https://pubchem.ncbi.nlm.nih.gov/compound/' + cid + '#section=3D-Conformer';
+                pubchemLink.style.display = '';
+            } else {
+                pubchemLink.style.display = 'none';
+            }
+
+            var infoHtml = '<span><i class="fas fa-flask me-1"></i>SMILES: <code>' + smiles.substring(0, 60) + (smiles.length > 60 ? '...' : '') + '</code></span>';
+            document.getElementById('molViewerInfo').innerHTML = infoHtml;
+
+            document.getElementById('mol-viewer-container').setAttribute('data-smiles', smiles);
+
+            var modal = new bootstrap.Modal(document.getElementById('molViewerModal'));
+            modal.show();
+        });
+    });
+
+    document.getElementById('molViewerModal').addEventListener('shown.bs.modal', function() {
+        var container = document.getElementById('mol-viewer-container');
+        var smiles = container.getAttribute('data-smiles');
+
+        container.innerHTML = '';
+
+        viewer = $3Dmol.createViewer(container, {
+            backgroundColor: '#f8f9fa',
+            antialias: true
+        });
+
+        try {
+            viewer.addModel(smiles, 'smi');
+            viewer.setStyle({}, {stick: {radius: 0.15, colorscheme: 'Jmol'}, sphere: {scale: 0.25, colorscheme: 'Jmol'}});
+            viewer.zoomTo();
+            viewer.spin('y', 1);
+            viewer.render();
+        } catch(e) {
+            container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#6A6A8E;"><div class="text-center"><i class="fas fa-exclamation-triangle" style="font-size:2rem;margin-bottom:0.5rem;display:block;"></i>Could not render this molecule.<br><small>Try viewing on PubChem instead.</small></div></div>';
+        }
+    });
+
+    document.getElementById('molViewerModal').addEventListener('hidden.bs.modal', function() {
+        if (viewer) {
+            viewer.clear();
+            viewer = null;
+        }
+        document.getElementById('mol-viewer-container').innerHTML = '';
+    });
+})();
+</script>
+{% endblock %}

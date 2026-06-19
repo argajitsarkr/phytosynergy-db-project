@@ -32,6 +32,7 @@ from .models import (
     SynergyExperiment,
 )
 from .pubchem_utils import enrich_phytochemical
+from . import similarity
 
 logger = logging.getLogger(__name__)
 
@@ -225,6 +226,7 @@ def _apply_search_filters(results, request):
     query = request.GET.get('query')
     pathogen_id = request.GET.get('pathogen')
     antibiotic_id = request.GET.get('antibiotic')
+    phytochemical_id = request.GET.get('phytochemical')
     mechanism = request.GET.get('mechanism')
     interpretation = request.GET.get('interpretation')
     eskape = request.GET.get('eskape')
@@ -243,6 +245,9 @@ def _apply_search_filters(results, request):
 
     if antibiotic_id:
         results = results.filter(antibiotic_id=antibiotic_id)
+
+    if phytochemical_id:
+        results = results.filter(phytochemical_id=phytochemical_id)
 
     if mechanism:
         results = results.filter(moa_observed__icontains=mechanism)
@@ -454,6 +459,80 @@ def database_search_page(request):
 
 
 # ==============================================================================
+# CHEMICAL SIMILARITY SEARCH (public)
+# ==============================================================================
+
+# A few well-known phytochemical SMILES offered as one-click examples on the
+# similarity search page.
+SIMILARITY_EXAMPLES = [
+    {'name': 'Quercetin', 'smiles': 'O=c1c(O)c(-c2ccc(O)c(O)c2)oc2cc(O)cc(O)c12'},
+    {'name': 'Berberine', 'smiles': 'COc1ccc2cc3[n+](cc2c1OC)CCc1cc2c(cc1-3)OCO2'},
+    {'name': 'Curcumin', 'smiles': 'O=C(/C=C/c1ccc(O)c(OC)c1)CC(=O)/C=C/c1ccc(O)c(OC)c1'},
+    {'name': 'Thymol', 'smiles': 'Cc1ccc(C(C)C)cc1O'},
+]
+
+
+def _searchable_phyto_qs():
+    """Phytochemicals that carry a SMILES (the searchable universe)."""
+    return (
+        Phytochemical.objects
+        .exclude(canonical_smiles__isnull=True)
+        .exclude(canonical_smiles__exact='')
+    )
+
+
+def similarity_search_page(request):
+    """Rank database phytochemicals by Tanimoto similarity (ECFP4) to a query SMILES."""
+    query_smiles = (request.GET.get('smiles') or '').strip()
+
+    try:
+        limit = min(max(int(request.GET.get('limit', 25)), 1), 100)
+    except (ValueError, TypeError):
+        limit = 25
+    try:
+        threshold = min(max(float(request.GET.get('threshold', 0)), 0.0), 1.0)
+    except (ValueError, TypeError):
+        threshold = 0.0
+
+    results = []
+    error = None
+    searched = bool(query_smiles)
+
+    if searched:
+        try:
+            ranked = similarity.search_similar(
+                query_smiles, limit=limit, threshold=threshold
+            )
+        except ValueError as exc:
+            error = str(exc)
+        except RuntimeError as exc:
+            error = str(exc)
+        else:
+            for r in ranked:
+                phyto = r['phytochemical']
+                exps = SynergyExperiment.objects.filter(phytochemical=phyto)
+                results.append({
+                    'phytochemical': phyto,
+                    'similarity': r['similarity'],
+                    'percent': round(r['similarity'] * 100, 1),
+                    'experiment_count': exps.count(),
+                    'synergy_count': exps.filter(interpretation='Synergy').count(),
+                })
+
+    context = {
+        'query_smiles': query_smiles,
+        'results': results,
+        'error': error,
+        'searched': searched,
+        'threshold': threshold,
+        'limit': limit,
+        'total_searchable': _searchable_phyto_qs().count(),
+        'examples': SIMILARITY_EXAMPLES,
+    }
+    return render(request, 'synergy_data/similarity_search.html', context)
+
+
+# ==============================================================================
 # DATA ENTRY PAGE (login-protected)
 # ==============================================================================
 
@@ -515,6 +594,10 @@ def data_entry_view(request):
 
             # 3b. Auto-enrich phytochemical with PubChem + ClassyFire data
             enrichment_status = enrich_phytochemical(phytochemical)
+
+            # 3b-ii. Compute the ECFP4 fingerprint for similarity search now that
+            # a canonical SMILES is (likely) available from enrichment.
+            similarity.update_fingerprint(phytochemical)
 
             # 3c. Link plant source (optional)
             link_plant_source(cd.get('plant_source'), phytochemical)
@@ -634,6 +717,9 @@ def edit_entry_view(request, pk):
 
             # 3b. Auto-enrich
             enrichment_status = enrich_phytochemical(phytochemical)
+
+            # 3b-ii. Refresh the ECFP4 fingerprint for similarity search.
+            similarity.update_fingerprint(phytochemical)
 
             # 3c. Link plant source (optional)
             link_plant_source(cd.get('plant_source'), phytochemical)
@@ -1597,6 +1683,62 @@ def api_statistics(request):
             'antagonism': antagonism_count,
         },
         'eskape_counts': eskape_stats,
+    })
+
+
+def api_similarity(request):
+    """JSON API: rank database phytochemicals by Tanimoto similarity to a SMILES.
+
+    Query params:
+        smiles    (required) - the query structure as a SMILES string
+        limit     (optional) - max hits to return (default 25, capped at 100)
+        threshold (optional) - minimum Tanimoto similarity, 0.0 - 1.0 (default 0)
+    """
+    query_smiles = (request.GET.get('smiles') or '').strip()
+    if not query_smiles:
+        return JsonResponse(
+            {'error': "Provide a 'smiles' query parameter, e.g. ?smiles=Cc1ccc(C(C)C)cc1O"},
+            status=400,
+        )
+
+    try:
+        limit = min(max(int(request.GET.get('limit', 25)), 1), 100)
+    except (ValueError, TypeError):
+        limit = 25
+    try:
+        threshold = min(max(float(request.GET.get('threshold', 0)), 0.0), 1.0)
+    except (ValueError, TypeError):
+        threshold = 0.0
+
+    try:
+        ranked = similarity.search_similar(query_smiles, limit=limit, threshold=threshold)
+    except ValueError as exc:
+        return JsonResponse({'error': str(exc)}, status=400)
+    except RuntimeError as exc:
+        return JsonResponse({'error': str(exc)}, status=503)
+
+    data = []
+    for r in ranked:
+        phyto = r['phytochemical']
+        exps = SynergyExperiment.objects.filter(phytochemical=phyto)
+        data.append({
+            'compound_name': phyto.compound_name,
+            'pubchem_cid': phyto.pubchem_cid,
+            'inchi_key': phyto.inchi_key,
+            'smiles': phyto.canonical_smiles,
+            'chemical_class': phyto.chemical_class,
+            'tanimoto': round(r['similarity'], 4),
+            'experiment_count': exps.count(),
+            'synergy_count': exps.filter(interpretation='Synergy').count(),
+        })
+
+    return JsonResponse({
+        'query_smiles': query_smiles,
+        'fingerprint': 'Morgan/ECFP4 (radius 2, 2048-bit)',
+        'metric': 'Tanimoto',
+        'threshold': threshold,
+        'count': len(data),
+        'results': data,
     })
 
 

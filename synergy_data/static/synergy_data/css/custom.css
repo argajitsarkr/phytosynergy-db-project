@@ -3241,3 +3241,239 @@ h1, h2, h3, h4, h5, h6 { color: var(--rzp-ink); letter-spacing: -0.01em; }
         text-align: center;
     }
 }
+
+/* ============================================================
+   CHEMICAL SIMILARITY SEARCH PAGE
+   ============================================================ */
+
+/* Controls under the SMILES bar (threshold / limit) */
+.sim-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.25rem;
+    margin-top: 0.85rem;
+}
+.sim-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-white);
+}
+.sim-control select {
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--text-white);
+    border-radius: var(--radius-sm);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+.sim-control select option { color: var(--text-primary); }
+.sim-control-note {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Example pills */
+.sim-examples {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.9rem;
+}
+.sim-examples-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+}
+.sim-example-pill {
+    display: inline-block;
+    padding: 0.2rem 0.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: var(--radius-full);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-white);
+    text-decoration: none;
+    transition: background var(--transition-fast);
+}
+.sim-example-pill:hover {
+    background: rgba(255, 255, 255, 0.18);
+    color: var(--text-white);
+}
+
+/* Intro / explainer */
+.sim-intro {
+    max-width: 760px;
+    margin: 2rem auto;
+    text-align: center;
+}
+.sim-intro-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+}
+.sim-intro-lead {
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: var(--text-secondary);
+}
+.sim-intro-steps {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+}
+.sim-step {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bg-section);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-full);
+    padding: 0.45rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+.sim-step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: var(--radius-full);
+    background: var(--primary);
+    color: var(--text-white);
+    font-size: 0.78rem;
+}
+.sim-intro-note { font-size: 0.85rem; }
+
+.sim-query-code {
+    background: var(--bg-section);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    padding: 0.1rem 0.4rem;
+    color: var(--text-primary);
+    word-break: break-all;
+}
+
+/* Result cards */
+.sim-result-card {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr) 9rem auto auto;
+    align-items: center;
+    gap: 1.25rem;
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition-base), border-color var(--transition-base);
+}
+.sim-result-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-medium);
+}
+.sim-rank {
+    font-family: var(--font-nav-mono);
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+.sim-compound {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.4rem 0;
+}
+.sim-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+/* Score column */
+.sim-score { text-align: center; }
+.sim-percent {
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1.1;
+}
+.sim-bar {
+    height: 7px;
+    background: var(--gray-200);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin: 0.35rem 0 0.3rem 0;
+}
+.sim-bar-fill {
+    height: 100%;
+    border-radius: var(--radius-full);
+}
+.sim-score-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+.sim-strong { color: var(--primary-dark); }
+.sim-bar-fill.sim-strong { background: var(--primary-dark); }
+.sim-moderate { color: var(--primary); }
+.sim-bar-fill.sim-moderate { background: var(--primary); }
+.sim-weak { color: var(--accent); }
+.sim-bar-fill.sim-weak { background: var(--accent); }
+
+/* Stats column */
+.sim-stats {
+    display: flex;
+    gap: 1.1rem;
+}
+.sim-stat { text-align: center; }
+.sim-stat-num {
+    display: block;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.1;
+}
+.sim-stat-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.sim-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    align-items: stretch;
+    min-width: 9rem;
+}
+.sim-actions .btn { white-space: nowrap; }
+
+@media (max-width: 900px) {
+    .sim-result-card {
+        grid-template-columns: 2rem 1fr;
+        grid-template-areas:
+            "rank main"
+            "score score"
+            "stats stats"
+            "actions actions";
+        row-gap: 0.85rem;
+    }
+    .sim-rank { grid-area: rank; }
+    .sim-main { grid-area: main; }
+    .sim-score { grid-area: score; text-align: left; }
+    .sim-bar { max-width: 220px; }
+    .sim-stats { grid-area: stats; justify-content: flex-start; }
+    .sim-actions { grid-area: actions; flex-direction: row; flex-wrap: wrap; }
+}
