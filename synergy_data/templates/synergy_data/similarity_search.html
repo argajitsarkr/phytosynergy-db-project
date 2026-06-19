@@ -6,19 +6,37 @@
 {% block og_title %}Chemical Similarity Search - PhytoSynergyDB{% endblock %}
 
 {% block search_banner %}
-<div class="global-search-banner">
-    <div class="container">
-        <p class="search-label">Find structurally similar phytochemicals by SMILES (Tanimoto similarity, Morgan/ECFP4 fingerprints):</p>
+<section class="simx-hero">
+    <!-- Botanical leaf bleeding off the right edge -->
+    <svg class="simx-hero-leaf" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M170 30C90 30 40 80 40 160c80 0 130-50 130-130Z" fill="currentColor"/>
+        <path d="M170 30C120 80 80 120 45 160" stroke="#516B35" stroke-width="3" stroke-linecap="round"/>
+        <path d="M150 55C130 60 115 70 105 90M140 95C122 100 110 110 102 125M120 130C108 134 100 140 95 150" stroke="#516B35" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+
+    <div class="simx-hero-inner">
+        <span class="simx-eyebrow">Structure search</span>
+        <h1 class="simx-headline">Find structurally similar phytochemicals</h1>
+        <p class="simx-subhead">
+            Search by
+            <span class="simx-underline">SMILES<svg viewBox="0 0 120 12" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 8c20-6 44-6 64-2 14 3 30 4 50-2" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span>
+            using Tanimoto similarity over Morgan / ECFP4 fingerprints.
+        </p>
+
         <form action="{% url 'similarity_search' %}" method="get">
-            <div class="search-bar-wrapper">
+            <div class="simx-searchbar">
+                <span class="simx-searchbar-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                </span>
                 <input type="text" name="smiles" value="{{ query_smiles }}"
                        spellcheck="false" autocapitalize="off" autocomplete="off"
-                       placeholder="Paste a SMILES, e.g. Cc1ccc(C(C)C)cc1O">
-                <button type="submit"><img src="{% static 'synergy_data/icons/magnifying-glass.svg' %}" alt="Search" class="icon-svg icon-svg-md"></button>
+                       placeholder="O=c1c(O)c(-c2ccc(O)c(O)c2)oc2cc(O)cc(O)c12">
+                <button type="submit" class="simx-btn-dark">Search</button>
             </div>
-            <div class="sim-controls">
-                <label class="sim-control">
-                    <span>Min. similarity</span>
+
+            <div class="simx-controls">
+                <span class="simx-chip-select">
+                    Min. similarity:
                     <select name="threshold">
                         <option value="0" {% if threshold == 0.0 %}selected{% endif %}>Any</option>
                         <option value="0.2" {% if threshold == 0.2 %}selected{% endif %}>0.20</option>
@@ -26,141 +44,146 @@
                         <option value="0.6" {% if threshold == 0.6 %}selected{% endif %}>0.60</option>
                         <option value="0.8" {% if threshold == 0.8 %}selected{% endif %}>0.80</option>
                     </select>
-                </label>
-                <label class="sim-control">
-                    <span>Max results</span>
+                </span>
+                <span class="simx-chip-select">
+                    Max results:
                     <select name="limit">
                         <option value="10" {% if limit == 10 %}selected{% endif %}>10</option>
                         <option value="25" {% if limit == 25 %}selected{% endif %}>25</option>
                         <option value="50" {% if limit == 50 %}selected{% endif %}>50</option>
                         <option value="100" {% if limit == 100 %}selected{% endif %}>100</option>
                     </select>
-                </label>
-                <span class="sim-control-note">Searching {{ total_searchable }} fingerprinted compound{{ total_searchable|pluralize }}</span>
+                </span>
+                <span class="simx-status">Searching {{ total_searchable }} fingerprinted compound{{ total_searchable|pluralize }}.</span>
             </div>
         </form>
-        <div class="sim-examples">
-            <span class="sim-examples-label">Try an example:</span>
+
+        <div class="simx-examples">
+            <span class="simx-examples-label">Try an example:</span>
             {% for ex in examples %}
-            <a class="sim-example-pill" href="{% url 'similarity_search' %}?smiles={{ ex.smiles|urlencode }}">{{ ex.name }}</a>
+            <a class="simx-example-pill" href="{% url 'similarity_search' %}?smiles={{ ex.smiles|urlencode }}">{{ ex.name }}</a>
             {% endfor %}
         </div>
     </div>
-</div>
+</section>
 {% endblock %}
 
 {% block content %}
-<div class="search-page-container">
+<div class="simx-page">
+    <div class="simx-container">
 
-    {% if error %}
-    <div class="alert alert-danger" role="alert">
-        <strong>Could not run the search.</strong> {{ error }}
-    </div>
-    {% endif %}
-
-    {% if not searched and not error %}
-    <!-- First-visit explainer -->
-    <div class="sim-intro">
-        <h1 class="sim-intro-title">Chemical Similarity Search</h1>
-        <p class="sim-intro-lead">
-            Paste the <strong>SMILES</strong> of a phytochemical and we return the structurally
-            most similar compounds already curated in PhytoSynergyDB, ranked by
-            <strong>Tanimoto similarity</strong> on 2048-bit <strong>Morgan / ECFP4</strong>
-            fingerprints. Each hit links straight to its recorded antibiotic-synergy experiments.
-        </p>
-        <div class="sim-intro-steps">
-            <div class="sim-step"><span class="sim-step-num">1</span> Paste a SMILES string above</div>
-            <div class="sim-step"><span class="sim-step-num">2</span> We fingerprint it and score every database compound</div>
-            <div class="sim-step"><span class="sim-step-num">3</span> Browse ranked hits and their synergy outcomes</div>
+        {% if error %}
+        <div class="simx-error">
+            <strong>Could not run the search.</strong> {{ error }}
         </div>
-        <p class="sim-intro-note text-muted">
-            Tanimoto ranges from 0 (no shared substructure) to 1 (identical fingerprint).
-            A score above ~0.4 typically indicates meaningful structural relatedness.
-        </p>
-    </div>
-    {% endif %}
+        {% endif %}
 
-    {% if searched and not error %}
-    <div class="results-header d-flex justify-content-between align-items-center mb-3 mt-2">
-        <div>
-            <h4 class="mb-1">Similarity results</h4>
-            <p class="text-muted mb-0" style="font-size: 0.88rem;">
-                Query SMILES <code class="sim-query-code">{{ query_smiles }}</code>
-                {% if results %}- {{ results|length }} hit{{ results|length|pluralize }}{% endif %}
+        {% if not searched and not error %}
+        <!-- First-visit explainer -->
+        <div class="simx-intro">
+            <p class="simx-intro-note">
+                Paste a SMILES above and we return the structurally most similar compounds
+                curated in PhytoSynergyDB, ranked by Tanimoto similarity on 2048-bit
+                Morgan / ECFP4 fingerprints. Each hit links to its recorded synergy experiments.
+            </p>
+            <div class="simx-intro-steps">
+                <div class="simx-step"><span class="simx-step-num">1</span> Paste a SMILES string</div>
+                <div class="simx-step"><span class="simx-step-num">2</span> We fingerprint and score every compound</div>
+                <div class="simx-step"><span class="simx-step-num">3</span> Browse ranked hits and their outcomes</div>
+            </div>
+            <p class="simx-intro-note">
+                Tanimoto ranges from 0 (no shared substructure) to 1 (identical fingerprint).
+                A score above ~0.4 usually indicates meaningful structural relatedness.
             </p>
         </div>
-    </div>
+        {% endif %}
 
-    <div class="results-list">
+        {% if searched and not error %}
+        <div class="simx-results-head">
+            <h2 class="simx-results-title">Similarity results</h2>
+            <p class="simx-results-sub">
+                Query SMILES:
+                <code class="simx-code-chip">{{ query_smiles }}</code>
+                {% if results %}<span>&middot; {{ results|length }} hit{{ results|length|pluralize }}</span>{% endif %}
+            </p>
+        </div>
+        <hr class="simx-divider">
+
         {% for r in results %}
-        <div class="sim-result-card">
-            <div class="sim-rank">#{{ forloop.counter }}</div>
-
-            <div class="sim-main">
-                <h5 class="sim-compound">{{ r.phytochemical.compound_name }}</h5>
-                <div class="sim-tags">
-                    {% if r.phytochemical.chemical_class %}
-                    <span class="chem-class-badge" title="ClassyFire chemical class">
-                        <img src="{% static 'synergy_data/icons/tag.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">{{ r.phytochemical.chemical_class }}
-                    </span>
-                    {% endif %}
-                    {% if r.phytochemical.molecular_weight %}
-                    <span class="lipinski-prop" title="Molecular Weight"><strong>MW</strong> {{ r.phytochemical.molecular_weight|floatformat:1 }}</span>
-                    {% endif %}
-                    {% if r.phytochemical.molecular_formula %}
-                    <span class="lipinski-prop" title="Molecular Formula"><strong>Formula</strong> {{ r.phytochemical.molecular_formula }}</span>
-                    {% endif %}
-                    {% if r.phytochemical.pubchem_cid %}
-                    <span class="lipinski-prop" title="PubChem CID"><strong>CID</strong> {{ r.phytochemical.pubchem_cid }}</span>
-                    {% endif %}
-                </div>
+        <article class="simx-card">
+            <div class="simx-card-top">
+                <h3 class="simx-card-name"><span class="simx-card-rank">#{{ forloop.counter }}</span>{{ r.phytochemical.compound_name }}</h3>
+                <span class="simx-score-pill {% if r.similarity >= 0.7 %}is-strong{% elif r.similarity >= 0.4 %}is-moderate{% else %}is-weak{% endif %}">
+                    {{ r.similarity|floatformat:2 }}<small>Tanimoto</small>
+                </span>
             </div>
 
-            <div class="sim-score">
-                <div class="sim-percent {% if r.similarity >= 0.7 %}sim-strong{% elif r.similarity >= 0.4 %}sim-moderate{% else %}sim-weak{% endif %}">{{ r.percent }}%</div>
-                <div class="sim-bar">
-                    <div class="sim-bar-fill {% if r.similarity >= 0.7 %}sim-strong{% elif r.similarity >= 0.4 %}sim-moderate{% else %}sim-weak{% endif %}" style="width: {{ r.percent }}%;"></div>
-                </div>
-                <div class="sim-score-label">Tanimoto {{ r.similarity|floatformat:3 }}</div>
+            <div class="simx-meta">
+                {% if r.phytochemical.chemical_class %}
+                <span class="simx-meta-item" title="ClassyFire chemical class">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>
+                    {{ r.phytochemical.chemical_class }}
+                </span>
+                {% endif %}
+                {% if r.phytochemical.molecular_weight %}
+                <span class="simx-meta-item" title="Molecular weight">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"/><path d="M3 7h18"/><path d="m6 7-3 6h6z"/><path d="m18 7-3 6h6z"/></svg>
+                    <strong>MW</strong> {{ r.phytochemical.molecular_weight|floatformat:1 }}
+                </span>
+                {% endif %}
+                <span class="simx-meta-item" title="Recorded experiments for this compound">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6v2l3 11a2 2 0 0 1-2 2.5H8A2 2 0 0 1 6 16L9 5z"/><path d="M9 3v2"/><path d="M15 3v2"/></svg>
+                    <strong>{{ r.experiment_count }}</strong> experiment{{ r.experiment_count|pluralize }}
+                </span>
+                <span class="simx-meta-item" title="Synergistic outcomes (FIC &le; 0.5)">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v3"/><path d="M12 18v3"/><path d="M5 12H2"/><path d="M22 12h-3"/><path d="M12 8a4 4 0 0 0 0 8 4 4 0 0 0 0-8Z"/></svg>
+                    <strong>{{ r.synergy_count }}</strong> synergistic
+                </span>
+                {% if r.phytochemical.pubchem_cid %}
+                <span class="simx-meta-item" title="PubChem CID">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                    CID {{ r.phytochemical.pubchem_cid }}
+                </span>
+                {% endif %}
             </div>
 
-            <div class="sim-stats">
-                <div class="sim-stat"><span class="sim-stat-num">{{ r.experiment_count }}</span><span class="sim-stat-label">experiment{{ r.experiment_count|pluralize }}</span></div>
-                <div class="sim-stat"><span class="sim-stat-num">{{ r.synergy_count }}</span><span class="sim-stat-label">synergistic</span></div>
-            </div>
-
-            <div class="sim-actions">
+            <div class="simx-card-actions">
                 {% if r.experiment_count %}
-                <a href="{% url 'database_search' %}?phytochemical={{ r.phytochemical.id }}" class="btn btn-sm btn-primary">View experiments</a>
+                <a href="{% url 'database_search' %}?phytochemical={{ r.phytochemical.id }}" class="simx-btn-primary">View experiments</a>
                 {% else %}
-                <span class="btn btn-sm btn-outline-secondary disabled">No experiments</span>
+                <span class="simx-btn-ghost is-disabled">No experiments</span>
                 {% endif %}
                 {% if r.phytochemical.canonical_smiles %}
-                <button type="button" class="btn btn-sm btn-outline-secondary btn-view3d"
+                <button type="button" class="simx-btn-ghost btn-view3d"
                         data-smiles="{{ r.phytochemical.canonical_smiles }}"
                         data-compound="{{ r.phytochemical.compound_name }}"
                         data-cid="{{ r.phytochemical.pubchem_cid|default:'' }}"
                         data-mw="{{ r.phytochemical.molecular_weight|default:'' }}">
-                    <img src="{% static 'synergy_data/icons/cube.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">3D
+                    <img src="{% static 'synergy_data/icons/cube.svg' %}" alt="" class="icon-svg icon-svg-sm">3D
                 </button>
                 {% endif %}
                 {% if r.phytochemical.pubchem_cid %}
-                <a href="https://pubchem.ncbi.nlm.nih.gov/compound/{{ r.phytochemical.pubchem_cid }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
-                    <img src="{% static 'synergy_data/icons/link.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">PubChem
+                <a href="https://pubchem.ncbi.nlm.nih.gov/compound/{{ r.phytochemical.pubchem_cid }}" target="_blank" rel="noopener" class="simx-btn-ghost">
+                    <img src="{% static 'synergy_data/icons/link.svg' %}" alt="" class="icon-svg icon-svg-sm">PubChem
                 </a>
                 {% endif %}
             </div>
-        </div>
+
+            <!-- Decorative bookmark corner -->
+            <svg class="simx-bookmark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        </article>
         {% empty %}
-        <div class="text-center p-5 rounded" style="background: var(--bg-section); border: 1px solid var(--border-light);">
-            <img src="{% static 'synergy_data/icons/cube.svg' %}" alt="" class="icon-svg icon-svg-xl" style="opacity: 0.4; margin-bottom: 1rem;">
-            <h4 style="color: var(--text-secondary);">No compounds above the threshold</h4>
-            <p class="text-muted">No database phytochemical met the minimum similarity you set. Try lowering the minimum similarity, or check the SMILES is correct.</p>
-            <a href="{% url 'similarity_search' %}?smiles={{ query_smiles|urlencode }}" class="btn btn-primary-custom mt-2">Search with no threshold</a>
+        <div class="simx-empty">
+            <div class="simx-empty-icon">
+                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+            </div>
+            <h3>No compounds above the threshold</h3>
+            <p>No database phytochemical met the minimum similarity. Try lowering it, or check the SMILES is valid.</p>
+            <a href="{% url 'similarity_search' %}?smiles={{ query_smiles|urlencode }}" class="simx-btn-primary">Search with no threshold</a>
         </div>
         {% endfor %}
+        {% endif %}
     </div>
-    {% endif %}
 </div>
 
 <!-- 3D Molecular Viewer Modal -->
