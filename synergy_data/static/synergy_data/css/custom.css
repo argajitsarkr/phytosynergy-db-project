@@ -778,9 +778,13 @@ a:hover { color: var(--accent); }
    Self-contained .rl-* block. The old .result-card grid + .rc-* /
    .lipinski-* / .chem-class-badge styles it replaced were removed.
    ============================================================ */
+/* Theme colours: brown = phytochemical side, navy = data / antibiotic side.
+   Used only on non-categorical cues (names, FIC, MIC lines, top rule); the
+   interpretation badge and the categorical class chips keep their own colours. */
 .rl-card {
     background: var(--bg-white);
     border: 1.5px solid var(--border-light);
+    border-top: 3px solid #6F431D;
     border-radius: var(--radius-lg);
     padding: 1.15rem 1.3rem;
     margin-bottom: 0.85rem;
@@ -790,6 +794,7 @@ a:hover { color: var(--accent); }
 }
 .rl-card:hover {
     border-color: #0A0A0A;
+    border-top-color: #6F431D;
     box-shadow: 0 12px 28px rgba(10,10,10,0.09);
     transform: translateY(-2px);
 }
@@ -814,7 +819,9 @@ a:hover { color: var(--accent); }
     letter-spacing: -0.01em;
     color: var(--text-primary);
 }
-.rl-card:hover .rl-title { color: var(--primary); }
+.rl-phyto { color: #6F431D; }
+.rl-abx { color: #1D276F; }
+.rl-plus { color: rgba(10,10,10,0.4); font-weight: 700; }
 .rl-subtitle { font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.15rem; }
 
 /* Tier 2: headline FIC + MIC support */
@@ -832,7 +839,7 @@ a:hover { color: var(--accent); }
     font-weight: 800;
     font-size: 1.9rem;
     line-height: 1;
-    color: var(--primary);
+    color: #1D276F;
     font-variant-numeric: tabular-nums;
 }
 .rl-fic-label {
@@ -855,6 +862,8 @@ a:hover { color: var(--accent); }
 .rl-mic { display: inline-flex; align-items: center; gap: 0.35rem; }
 .rl-mic .icon-svg { opacity: 0.5; }
 .rl-mic strong { color: var(--text-primary); font-weight: 700; }
+.rl-mic-abx, .rl-mic-abx strong { color: #1D276F; }
+.rl-mic-phyto, .rl-mic-phyto strong { color: #6F431D; }
 
 /* Tier 3: cheminformatics strip */
 .rl-chem {
@@ -948,11 +957,11 @@ a:hover { color: var(--accent); }
 .rl-btn:hover .icon-svg,
 .rl-btn-primary .icon-svg { filter: brightness(0) invert(1); }
 .rl-btn-primary {
-    background: var(--primary);
-    border-color: var(--primary);
+    background: #1D276F;
+    border-color: #1D276F;
     color: #ffffff;
 }
-.rl-btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); color: #ffffff; }
+.rl-btn-primary:hover { background: #141B4D; border-color: #141B4D; color: #ffffff; }
 .rl-btn-edit { margin-left: auto; }
 .rl-btn-done { background: var(--success-bg); border-color: var(--success-text); color: var(--success-text); }
 .rl-btn-done .icon-svg { filter: none; }

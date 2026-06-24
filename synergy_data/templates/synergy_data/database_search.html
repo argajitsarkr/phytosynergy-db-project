@@ -173,7 +173,7 @@
                         {% if experiment.assay_method %}{{ experiment.get_assay_method_display }}{% endif %}
                     </span>
                 </div>
-                <h3 class="rl-title">{{ experiment.phytochemical.compound_name }} + {{ experiment.antibiotic.antibiotic_name }}</h3>
+                <h3 class="rl-title"><span class="rl-phyto">{{ experiment.phytochemical.compound_name }}</span> <span class="rl-plus">+</span> <span class="rl-abx">{{ experiment.antibiotic.antibiotic_name }}</span></h3>
                 <div class="rl-subtitle">vs <em>{{ experiment.pathogen }}</em></div>
 
                 <!-- Tier 2: headline metric + MIC support -->
@@ -183,12 +183,12 @@
                         <span class="rl-fic-label">FIC index</span>
                     </div>
                     <div class="rl-mics">
-                        <span class="rl-mic">
-                            <img src="{% static 'synergy_data/icons/pill.svg' %}" alt="" class="icon-svg icon-svg-sm">
+                        <span class="rl-mic rl-mic-abx">
+                            <i class="fas fa-pills" aria-hidden="true"></i>
                             MIC abx (combo) <strong>{% if experiment.mic_abx_in_combo %}{{ experiment.mic_abx_in_combo|floatformat:2 }} {{ experiment.mic_units }}{% else %}-{% endif %}</strong>
                         </span>
-                        <span class="rl-mic">
-                            <img src="{% static 'synergy_data/icons/plant.svg' %}" alt="" class="icon-svg icon-svg-sm">
+                        <span class="rl-mic rl-mic-phyto">
+                            <i class="fas fa-leaf" aria-hidden="true"></i>
                             MIC phyto (combo) <strong>{% if experiment.mic_phyto_in_combo %}{{ experiment.mic_phyto_in_combo|floatformat:2 }} {{ experiment.mic_units }}{% else %}-{% endif %}</strong>
                         </span>
                     </div>
