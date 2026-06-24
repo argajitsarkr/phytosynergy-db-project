@@ -159,6 +159,25 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Static file storage. In production, serve content-hashed filenames
+# (custom.7f3a2c.css) so a changed CSS/JS/asset gets a brand-new URL and can
+# never be served stale by the browser or the Cloudflare edge cache - this ends
+# the manual "Purge Everything" dance after every deploy. In DEBUG (local
+# runserver) keep the plain storage so development works without first running
+# collectstatic.
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': (
+            'django.contrib.staticfiles.storage.StaticFilesStorage'
+            if DEBUG
+            else 'phytosynergy_project.storages.StableManifestStaticFilesStorage'
+        ),
+    },
+}
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
