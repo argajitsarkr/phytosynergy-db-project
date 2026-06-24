@@ -27,8 +27,9 @@ C:\Users\Arghya\Downloads\Projects\     ← GIT ROOT
 ├── nginx.conf                          ← proxy pass to gunicorn:8000
 ├── Procfile                            ← Heroku-style; not used in Docker deploy
 ├── phytosynergy_project/
-│   ├── settings.py                     ← env-var driven; DATABASE_URL / SECRET_KEY / DEBUG
+│   ├── settings.py                     ← env-var driven; DATABASE_URL / SECRET_KEY / DEBUG / STORAGES
 │   ├── urls.py                         ← includes synergy_data.urls
+│   ├── storages.py                     ← StableManifestStaticFilesStorage (content-hashed static in prod)
 │   └── wsgi.py
 ├── synergy_data/                       ← the only Django app
 │   ├── models.py                       ← AntibioticClass · Phytochemical · Antibiotic
@@ -51,7 +52,7 @@ C:\Users\Arghya\Downloads\Projects\     ← GIT ROOT
 │   │   ├── data_entry.html · bulk_import.html
 │   │   └── analytics.html · api_docs.html
 │   ├── static/                         ← app-level static assets
-│   └── templatetags/analytics_filters.py  ← custom filter for heatmap colour mapping
+│   └── templatetags/analytics_filters.py  ← heatmap_color (analytics) + chem_class_color (result-card class chips)
 ├── staticfiles/                        ← collectstatic output (do NOT edit manually)
 ├── CHANGELOG.md                        ← curated history of all features
 ├── DEPLOYMENT.md                       ← step-by-step server deploy guide
@@ -313,6 +314,12 @@ docker compose restart web             # nginx + db stay up; only web restarts
 - nginx serves CSS/JS from the `staticfiles/` volume populated by `collectstatic`.
 - Skipping `collectstatic` means nginx keeps serving the old CSS even with a freshly-built web image.
 - Run `docker compose exec web python manage.py collectstatic --noinput && docker compose restart nginx` after every static asset change.
+
+### 8b. Static files are CONTENT-HASHED in production - do NOT advise a manual Cloudflare purge for CSS/JS anymore
+- **As of 2026-06-25:** prod uses `STORAGES` -> `phytosynergy_project.storages.StableManifestStaticFilesStorage` (a `ManifestStaticFilesStorage` subclass with `manifest_strict = False`). `collectstatic` emits content-hashed names (`custom.<hash>.css`) and `{% static %}` renders the hashed URL, so a changed file gets a brand-new URL no cache has seen. Browsers AND the Cloudflare edge therefore CANNOT serve a stale copy - the old manual "Purge Everything after collectstatic" step (see the 2026-06-13 favicon GOTCHA) is **no longer needed for static assets**.
+- **The one standing requirement:** `collectstatic` MUST run on every deploy (already in the Deploy Workflow). Storage is gated on DEBUG: prod (DEBUG=0) = hashed; local runserver (DEBUG=1) = plain `StaticFilesStorage`, so dev works without collectstatic.
+- **GOTCHA - `collectstatic` is now STRICT about CSS `url()` refs:** if `custom.css` (or any collected CSS) references `url(...)` to a file that does not exist, `collectstatic` post-processing HARD-FAILS the deploy. Before adding a new `url()` (background image, font, etc.), make sure the target exists in `static/`. Absolute `https://` URLs and `data:` URIs are skipped (fine). The only local ref today is `../images/hero_background-green.jpg`.
+- Orphan files like `custom_<random>.css` in `staticfiles/` are harmless leftovers from earlier collectstatic runs (Django collision-rename); clear them any time with `collectstatic --noinput --clear`.
 
 ### 9. Server project path is NOT what CLAUDE.md said before
 - **Real path:** `/home/mmilab/Desktop/Database/phytosynergy-project/`
