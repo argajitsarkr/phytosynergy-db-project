@@ -236,6 +236,44 @@
     });
     </script>
 
+    <!--
+      Defeat a Chromium stale-paint bug on the dark bands (the home-page
+      "Process" / stats sections and the dark footer). They can render with an
+      unpainted, white background while they sit under the composited sticky
+      navbar, which hides the white text until a hover or scroll forces a
+      repaint. The CSS layer-promotion hacks (translateZ / will-change) only
+      hint at compositing - they do not guarantee an initial paint. This forces
+      that paint deterministically: toggling the element out of layout and back
+      synchronously (no frame is painted in between, so there is no flash)
+      makes Chromium repaint the band cleanly.
+    -->
+    <script>
+    (function () {
+        var bands = null;
+        function repaintDarkBands() {
+            if (!bands) {
+                bands = document.querySelectorAll('.section-dark, .stats-dark-band, .site-footer-dark');
+            }
+            bands.forEach(function (el) {
+                var prev = el.style.display;
+                el.style.display = 'none';
+                void el.offsetHeight;   // force a synchronous reflow
+                el.style.display = prev;
+            });
+        }
+        if (document.readyState === 'complete') {
+            repaintDarkBands();
+        } else {
+            window.addEventListener('load', repaintDarkBands);
+        }
+        // One extra nudge after the first scroll, in case a band paints lazily
+        // as it scrolls under the sticky navbar. Runs once, then detaches.
+        window.addEventListener('scroll', function () {
+            requestAnimationFrame(repaintDarkBands);
+        }, { once: true, passive: true });
+    })();
+    </script>
+
     {% block extra_js %}{% endblock %}
 
     <!-- Sitewide structured data: Organization + WebSite (enables sitelinks search box) -->
