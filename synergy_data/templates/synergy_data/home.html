@@ -195,6 +195,32 @@
     </div>
 </section>
 
+<!-- Section 4b: Data provenance (journal marquee) -->
+{% if journals_row1 %}
+<section class="section-band section-white journal-marquee-section">
+    <div class="container">
+        <span class="label-pill mb-3"><i class="fas fa-book-open"></i> Data Provenance</span>
+        <h2 class="heading-display section-heading">
+            Curated from <span class="text-primary-accent">peer-reviewed</span> literature.
+        </h2>
+        <p class="section-sub">
+            Every entry is manually extracted from published studies by the authors.
+            These are the journals behind the data.
+        </p>
+    </div>
+    <div class="jm-viewport">
+        <div class="jm-track jm-track-ltr" aria-hidden="true">
+            {% for j in journals_row1 %}<span class="jm-pill {% if forloop.counter0|divisibleby:4 %}jm-pill-accent{% endif %}">{{ j }}</span>{% endfor %}
+            {% for j in journals_row1 %}<span class="jm-pill {% if forloop.counter0|divisibleby:4 %}jm-pill-accent{% endif %}">{{ j }}</span>{% endfor %}
+        </div>
+        <div class="jm-track jm-track-rtl" aria-hidden="true">
+            {% for j in journals_row2 %}<span class="jm-pill {% if forloop.counter0|divisibleby:4 %}jm-pill-accent{% endif %}">{{ j }}</span>{% endfor %}
+            {% for j in journals_row2 %}<span class="jm-pill {% if forloop.counter0|divisibleby:4 %}jm-pill-accent{% endif %}">{{ j }}</span>{% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
 <!-- Section 5: Process (4 steps on dark band) -->
 <section class="section-dark" id="how-to-use">
     <div class="container">

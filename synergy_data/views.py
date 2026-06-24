@@ -301,6 +301,29 @@ def home_page(request):
     else:
         synergy_share = 0
 
+    # Distinct journal names for the "Data provenance" marquee on the home page.
+    # Pulled live from the curated sources so the strip always reflects the DB.
+    # De-duplicated case-insensitively, then split into two rows for the two
+    # opposite-scrolling tracks. Only shown when there are enough to scroll.
+    seen_journals = set()
+    journals = []
+    for raw in Source.objects.exclude(journal__isnull=True).exclude(
+        journal__exact=''
+    ).values_list('journal', flat=True):
+        name = (raw or '').strip()
+        key = name.lower()
+        if name and key not in seen_journals:
+            seen_journals.add(key)
+            journals.append(name)
+    journals.sort(key=str.lower)
+    if len(journals) >= 6:
+        half = (len(journals) + 1) // 2
+        journals_row1 = journals[:half]
+        journals_row2 = journals[half:]
+    else:
+        journals_row1 = []
+        journals_row2 = []
+
     # FAQ entries (also emitted as schema.org JSON-LD in template)
     faq_data = [
         {'q': 'What is the FIC index?',
@@ -343,6 +366,8 @@ def home_page(request):
         'synergy_share': synergy_share,
         'eskape_data': eskape_data,
         'recent_entries': recent_entries,
+        'journals_row1': journals_row1,
+        'journals_row2': journals_row2,
         'faq_data': faq_data,
     }
     return render(request, 'synergy_data/home.html', context)
