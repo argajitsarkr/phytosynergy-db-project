@@ -874,6 +874,197 @@ a:hover { color: var(--accent); }
     background: var(--primary-dark);
 }
 
+
+/* ============================================================
+   RESULT CARD v2 - re-tiered vertical card (database search)
+   Self-contained .rl-* block. Replaces the old .result-card grid
+   + .rc-* / .lipinski-* styles above, which are now unused.
+   ============================================================ */
+.rl-card {
+    background: var(--bg-white);
+    border: 1.5px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 1.15rem 1.3rem;
+    margin-bottom: 0.85rem;
+    transition: border-color var(--transition-base),
+                box-shadow var(--transition-base),
+                transform var(--transition-base);
+}
+.rl-card:hover {
+    border-color: #0A0A0A;
+    box-shadow: 0 12px 28px rgba(10,10,10,0.09);
+    transform: translateY(-2px);
+}
+
+/* Tier 1: identity */
+.rl-head { display: flex; align-items: center; gap: 10px; margin-bottom: 0.55rem; }
+.rl-meta-right {
+    margin-left: auto;
+    font-family: var(--font-nav-mono, 'Roboto Mono', monospace);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+.rl-title {
+    margin: 0;
+    font-family: var(--font-nav-display, 'Inter', sans-serif);
+    font-weight: 800;
+    font-size: 1.3rem;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+}
+.rl-card:hover .rl-title { color: var(--primary); }
+.rl-subtitle { font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.15rem; }
+
+/* Tier 2: headline FIC + MIC support */
+.rl-metrics {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.4rem;
+    margin: 1rem 0 0.9rem;
+}
+.rl-fic { line-height: 1; }
+.rl-fic-value {
+    display: block;
+    font-family: var(--font-nav-display, 'Inter', sans-serif);
+    font-weight: 800;
+    font-size: 1.9rem;
+    line-height: 1;
+    color: var(--primary);
+    font-variant-numeric: tabular-nums;
+}
+.rl-fic-label {
+    display: block;
+    margin-top: 0.3rem;
+    font-family: var(--font-nav-mono, 'Roboto Mono', monospace);
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.rl-mics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.25rem;
+    padding-bottom: 0.2rem;
+    font-size: 0.83rem;
+    color: var(--text-secondary);
+}
+.rl-mic { display: inline-flex; align-items: center; gap: 0.35rem; }
+.rl-mic .icon-svg { opacity: 0.5; }
+.rl-mic strong { color: var(--text-primary); font-weight: 700; }
+
+/* Tier 3: cheminformatics strip */
+.rl-chem {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.85rem;
+    padding: 0.7rem 0;
+    border-top: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+    font-family: var(--font-nav-mono, 'Roboto Mono', monospace);
+    font-size: 0.76rem;
+}
+.rl-prop { color: var(--text-secondary); white-space: nowrap; }
+.rl-prop strong { color: var(--text-primary); font-weight: 700; }
+.rl-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.65rem;
+    border-radius: var(--radius-full);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.72rem;
+    white-space: nowrap;
+}
+.rl-chip .icon-svg { width: 0.85em; height: 0.85em; opacity: 0.7; }
+/* deterministic class-colour chips (see chem_class_color template filter) */
+.rl-chip-c0 { background: #EDE9FE; color: #4B2A91; }
+.rl-chip-c1 { background: #E6F1FB; color: #0C447C; }
+.rl-chip-c2 { background: #E1F5EE; color: #0F6E56; }
+.rl-chip-c3 { background: #FAEEDA; color: #854F0B; }
+.rl-chip-c4 { background: #FAECE7; color: #993C1D; }
+.rl-chip-c5 { background: #FBEAF0; color: #993556; }
+.rl-verdict {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-full);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.72rem;
+    white-space: nowrap;
+}
+.rl-verdict-pass { background: var(--success-bg); color: var(--success-text); }
+.rl-verdict-fail { background: var(--danger-bg); color: var(--danger-text); }
+
+/* MoA / identifiers line */
+.rl-notes-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 1.4rem;
+    margin: 0.8rem 0 0.2rem;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+.rl-notes-line span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.rl-notes-line .icon-svg { opacity: 0.5; }
+
+/* Tier 4: actions footer */
+.rl-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    border-top: 1px solid var(--border-light);
+    padding-top: 0.85rem;
+    margin-top: 0.7rem;
+}
+.rl-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--bg-white);
+    border: 1.5px solid rgba(10,10,10,0.35);
+    border-radius: var(--radius-md);
+    padding: 0.45rem 0.8rem;
+    font-family: var(--font-nav-mono, 'Roboto Mono', monospace);
+    font-weight: 700;
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #0A0A0A;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+}
+.rl-btn:hover { background: #0A0A0A; border-color: #0A0A0A; color: #ffffff; }
+.rl-btn .icon-svg { width: 0.95em; height: 0.95em; }
+/* SVG icons are <img>, so invert them to white when the button fill goes dark */
+.rl-btn:hover .icon-svg,
+.rl-btn-primary .icon-svg { filter: brightness(0) invert(1); }
+.rl-btn-primary {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #ffffff;
+}
+.rl-btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); color: #ffffff; }
+.rl-btn-edit { margin-left: auto; }
+.rl-btn-done { background: var(--success-bg); border-color: var(--success-text); color: var(--success-text); }
+.rl-btn-done .icon-svg { filter: none; }
+
+@media (max-width: 575px) {
+    .rl-title { font-size: 1.12rem; }
+    .rl-fic-value { font-size: 1.6rem; }
+    .rl-btn { font-size: 0.68rem; padding: 0.4rem 0.65rem; }
+}
+
 .filter-actions {
     display: flex;
     gap: 0.6rem;

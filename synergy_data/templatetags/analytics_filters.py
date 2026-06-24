@@ -50,3 +50,20 @@ def heatmap_color(fic_value):
             return f'rgb({r},{g},{b})'
 
     return 'rgb(173,225,251)'
+
+
+@register.filter
+def chem_class_color(value):
+    """
+    Map a chemical-class name to a stable colour index (0-5) so the same class
+    always renders with the same chip colour everywhere it appears. Deterministic
+    hash of the (lower-cased) name; no map to maintain as new classes are added.
+    Returns an integer used as a CSS suffix: .rl-chip-c{0..5}.
+    """
+    if not value:
+        return 0
+    name = str(value).strip().lower()
+    total = 0
+    for ch in name:
+        total += ord(ch)
+    return total % 6

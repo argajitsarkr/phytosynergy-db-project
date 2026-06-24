@@ -1,5 +1,6 @@
 {% extends 'synergy_data/base.html' %}
 {% load static %}
+{% load analytics_filters %}
 
 {% block title %}Browse the Phytochemical-Antibiotic Synergy Database - PhytoSynergyDB{% endblock %}
 {% block meta_description %}Search and filter curated phytochemical-antibiotic synergy experiments by compound, antibiotic, ESKAPE pathogen, chemical class and FIC interpretation. Export any result set as CSV.{% endblock %}
@@ -154,41 +155,9 @@
     <!-- Results List -->
     <div class="results-list">
         {% for experiment in results %}
-            <div class="result-card">
-                <!-- Main Title Area -->
-                <div class="rc-main">
-                    <h5 class="rc-title">{{ experiment.phytochemical.compound_name }}</h5>
-                    <span class="rc-subtitle">
-                        + {{ experiment.antibiotic.antibiotic_name }} vs <em>{{ experiment.pathogen }}</em>
-                    </span>
-                </div>
-
-                <!-- FIC Index -->
-                <div class="rc-data-point">
-                    <span class="rc-value">{% if experiment.fic_index %}{{ experiment.fic_index|floatformat:2 }}{% else %}N/A{% endif %}</span>
-                    <span class="rc-label">FIC Index</span>
-                </div>
-
-                <!-- MIC Antibiotic -->
-                <div class="rc-data-point">
-                    <span class="rc-value">{% if experiment.mic_abx_in_combo %}{{ experiment.mic_abx_in_combo|floatformat:2 }}{% else %}-{% endif %}</span>
-                    <span class="rc-label">MIC Abx Combo</span>
-                </div>
-
-                <!-- MIC Phytochemical -->
-                <div class="rc-data-point">
-                    <span class="rc-value">{% if experiment.mic_phyto_in_combo %}{{ experiment.mic_phyto_in_combo|floatformat:2 }}{% else %}-{% endif %}</span>
-                    <span class="rc-label">MIC Phyto Combo</span>
-                </div>
-
-                <!-- Publication Year -->
-                <div class="rc-data-point">
-                    <span class="rc-value">{% if experiment.source.publication_year %}{{ experiment.source.publication_year }}{% else %}-{% endif %}</span>
-                    <span class="rc-label">Year</span>
-                </div>
-
-                <!-- Synergy Badge -->
-                <div class="rc-badge">
+            <article class="rl-card">
+                <!-- Tier 1: identity -->
+                <div class="rl-head">
                     {% if experiment.interpretation == 'Synergy' %}
                         <span class="badge rounded-pill synergy-badge">Synergy</span>
                     {% elif experiment.interpretation == 'Additive' %}
@@ -198,105 +167,115 @@
                     {% elif experiment.interpretation %}
                         <span class="badge rounded-pill other-badge">{{ experiment.interpretation }}</span>
                     {% endif %}
+                    <span class="rl-meta-right">
+                        {% if experiment.source.publication_year %}{{ experiment.source.publication_year }}{% endif %}
+                        {% if experiment.source.publication_year and experiment.assay_method %} &middot; {% endif %}
+                        {% if experiment.assay_method %}{{ experiment.get_assay_method_display }}{% endif %}
+                    </span>
+                </div>
+                <h3 class="rl-title">{{ experiment.phytochemical.compound_name }} + {{ experiment.antibiotic.antibiotic_name }}</h3>
+                <div class="rl-subtitle">vs <em>{{ experiment.pathogen }}</em></div>
+
+                <!-- Tier 2: headline metric + MIC support -->
+                <div class="rl-metrics">
+                    <div class="rl-fic">
+                        <span class="rl-fic-value">{% if experiment.fic_index %}{{ experiment.fic_index|floatformat:2 }}{% else %}N/A{% endif %}</span>
+                        <span class="rl-fic-label">FIC index</span>
+                    </div>
+                    <div class="rl-mics">
+                        <span class="rl-mic">
+                            <img src="{% static 'synergy_data/icons/pill.svg' %}" alt="" class="icon-svg icon-svg-sm">
+                            MIC abx (combo) <strong>{% if experiment.mic_abx_in_combo %}{{ experiment.mic_abx_in_combo|floatformat:2 }} {{ experiment.mic_units }}{% else %}-{% endif %}</strong>
+                        </span>
+                        <span class="rl-mic">
+                            <img src="{% static 'synergy_data/icons/plant.svg' %}" alt="" class="icon-svg icon-svg-sm">
+                            MIC phyto (combo) <strong>{% if experiment.mic_phyto_in_combo %}{{ experiment.mic_phyto_in_combo|floatformat:2 }} {{ experiment.mic_units }}{% else %}-{% endif %}</strong>
+                        </span>
+                    </div>
                 </div>
 
-                <!-- Footer with MoA and identifiers -->
-                <div class="rc-footer">
-                    {% if experiment.moa_observed %}
-                    <div class="rc-footer-item">
-                        <img src="{% static 'synergy_data/icons/flask.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">
-                        {{ experiment.moa_observed|truncatechars:80 }}
-                    </div>
-                    {% endif %}
-                    {% if experiment.phytochemical.pubchem_cid %}
-                    <div class="rc-footer-item">
-                        <img src="{% static 'synergy_data/icons/link.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">
-                        PubChem: {{ experiment.phytochemical.pubchem_cid }}
-                    </div>
-                    {% endif %}
-                </div>
-
-                <!-- Lipinski Properties & Chemical Class -->
-                {% if experiment.phytochemical.molecular_weight or experiment.phytochemical.chemical_class %}
-                <div class="lipinski-bar">
-                    {% if experiment.phytochemical.molecular_weight %}
-                    <span class="lipinski-prop" title="Molecular Weight">
-                        <strong>MW</strong> {{ experiment.phytochemical.molecular_weight|floatformat:2 }}
+                <!-- Tier 3: cheminformatics strip -->
+                {% if experiment.phytochemical.molecular_weight or experiment.phytochemical.chemical_class or experiment.phytochemical.xlogp != None %}
+                <div class="rl-chem">
+                    {% if experiment.phytochemical.chemical_class %}
+                    <span class="rl-chip rl-chip-c{{ experiment.phytochemical.chemical_class|chem_class_color }}" title="ClassyFire: {{ experiment.phytochemical.chemical_superclass|default:'' }} > {{ experiment.phytochemical.chemical_class }} > {{ experiment.phytochemical.chemical_subclass|default:'' }}">
+                        <img src="{% static 'synergy_data/icons/tag.svg' %}" alt="" class="icon-svg icon-svg-sm">{{ experiment.phytochemical.chemical_class }}
                     </span>
                     {% endif %}
-                    {% if experiment.phytochemical.xlogp != None %}
-                    <span class="lipinski-prop" title="Partition Coefficient (LogP)">
-                        <strong>LogP</strong> {{ experiment.phytochemical.xlogp }}
-                    </span>
-                    {% endif %}
-                    {% if experiment.phytochemical.hbd != None %}
-                    <span class="lipinski-prop" title="Hydrogen Bond Donors">
-                        <strong>HBD</strong> {{ experiment.phytochemical.hbd }}
-                    </span>
-                    {% endif %}
-                    {% if experiment.phytochemical.hba != None %}
-                    <span class="lipinski-prop" title="Hydrogen Bond Acceptors">
-                        <strong>HBA</strong> {{ experiment.phytochemical.hba }}
-                    </span>
-                    {% endif %}
-                    {% if experiment.phytochemical.tpsa != None %}
-                    <span class="lipinski-prop" title="Topological Polar Surface Area">
-                        <strong>TPSA</strong> {{ experiment.phytochemical.tpsa|floatformat:1 }}
-                    </span>
-                    {% endif %}
-                    {% if experiment.phytochemical.molecular_formula %}
-                    <span class="lipinski-prop" title="Molecular Formula">
-                        <strong>Formula</strong> {{ experiment.phytochemical.molecular_formula }}
-                    </span>
-                    {% endif %}
+                    {% if experiment.phytochemical.molecular_weight %}<span class="rl-prop" title="Molecular Weight"><strong>MW</strong> {{ experiment.phytochemical.molecular_weight|floatformat:2 }}</span>{% endif %}
+                    {% if experiment.phytochemical.xlogp != None %}<span class="rl-prop" title="Partition Coefficient (LogP)"><strong>LogP</strong> {{ experiment.phytochemical.xlogp }}</span>{% endif %}
+                    {% if experiment.phytochemical.hbd != None %}<span class="rl-prop" title="Hydrogen Bond Donors"><strong>HBD</strong> {{ experiment.phytochemical.hbd }}</span>{% endif %}
+                    {% if experiment.phytochemical.hba != None %}<span class="rl-prop" title="Hydrogen Bond Acceptors"><strong>HBA</strong> {{ experiment.phytochemical.hba }}</span>{% endif %}
+                    {% if experiment.phytochemical.tpsa != None %}<span class="rl-prop" title="Topological Polar Surface Area"><strong>TPSA</strong> {{ experiment.phytochemical.tpsa|floatformat:1 }}</span>{% endif %}
+                    {% if experiment.phytochemical.molecular_formula %}<span class="rl-prop" title="Molecular Formula"><strong>Formula</strong> {{ experiment.phytochemical.molecular_formula }}</span>{% endif %}
                     {% with lipinski=experiment.phytochemical.passes_lipinski %}
                     {% if lipinski != None %}
-                    <span class="lipinski-verdict {% if lipinski %}lipinski-pass{% else %}lipinski-fail{% endif %}" title="Lipinski's Rule of Five: MW<500, LogP<5, HBD{% templatetag openvariable %}5, HBA{% templatetag openvariable %}10">
-                        {% if lipinski %}<i class="fas fa-check-circle"></i> Drug-like{% else %}<i class="fas fa-times-circle"></i> Ro5 Violation{% endif %}
+                    <span class="rl-verdict {% if lipinski %}rl-verdict-pass{% else %}rl-verdict-fail{% endif %}" title="Lipinski's Rule of Five: MW<500, LogP<5, HBD{% templatetag openvariable %}5, HBA{% templatetag openvariable %}10">
+                        {% if lipinski %}<i class="fas fa-check-circle"></i> Drug-like{% else %}<i class="fas fa-times-circle"></i> Ro5 violation{% endif %}
                     </span>
                     {% endif %}
                     {% endwith %}
-                    {% if experiment.phytochemical.chemical_class %}
-                    <span class="chem-class-badge" title="ClassyFire: {{ experiment.phytochemical.chemical_superclass|default:'' }} > {{ experiment.phytochemical.chemical_class }} > {{ experiment.phytochemical.chemical_subclass|default:'' }}">
-                        <img src="{% static 'synergy_data/icons/tag.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">{{ experiment.phytochemical.chemical_class }}
-                    </span>
+                </div>
+                {% endif %}
+
+                <!-- MoA / identifiers line -->
+                {% if experiment.moa_observed or experiment.phytochemical.pubchem_cid %}
+                <div class="rl-notes-line">
+                    {% if experiment.moa_observed %}
+                    <span><img src="{% static 'synergy_data/icons/flask.svg' %}" alt="" class="icon-svg icon-svg-sm">MoA: {{ experiment.moa_observed|truncatechars:120 }}</span>
+                    {% endif %}
+                    {% if experiment.phytochemical.pubchem_cid %}
+                    <span><img src="{% static 'synergy_data/icons/link.svg' %}" alt="" class="icon-svg icon-svg-sm">PubChem {{ experiment.phytochemical.pubchem_cid }}</span>
                     {% endif %}
                 </div>
                 {% endif %}
 
-                <!-- Action Buttons -->
-                <div class="rc-actions">
+                <!-- Tier 4: actions footer -->
+                <div class="rl-actions">
+                    {% if experiment.source.doi %}
+                    <a href="https://doi.org/{{ experiment.source.doi }}" target="_blank" rel="noopener" class="rl-btn rl-btn-primary">
+                        <img src="{% static 'synergy_data/icons/link.svg' %}" alt="" class="icon-svg icon-svg-sm">Source paper
+                    </a>
+                    {% endif %}
                     {% if experiment.phytochemical.canonical_smiles %}
-                    <button type="button" class="btn btn-sm btn-outline-secondary btn-view3d"
+                    <button type="button" class="rl-btn btn-view3d"
                             data-smiles="{{ experiment.phytochemical.canonical_smiles }}"
                             data-compound="{{ experiment.phytochemical.compound_name }}"
                             data-cid="{{ experiment.phytochemical.pubchem_cid|default:'' }}"
                             data-mw="{{ experiment.phytochemical.molecular_weight|default:'' }}">
-                        <img src="{% static 'synergy_data/icons/cube.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">3D
+                        <img src="{% static 'synergy_data/icons/cube.svg' %}" alt="" class="icon-svg icon-svg-sm">3D
                     </button>
                     {% elif experiment.phytochemical.pubchem_cid %}
-                    <a href="https://pubchem.ncbi.nlm.nih.gov/compound/{{ experiment.phytochemical.pubchem_cid }}#section=3D-Conformer" target="_blank" class="btn btn-sm btn-outline-secondary">3D Structure</a>
-                    {% endif %}
-                    {% if experiment.source.doi %}
-                    <a href="https://doi.org/{{ experiment.source.doi }}" target="_blank" class="btn btn-sm btn-primary">Source Paper</a>
+                    <a href="https://pubchem.ncbi.nlm.nih.gov/compound/{{ experiment.phytochemical.pubchem_cid }}#section=3D-Conformer" target="_blank" rel="noopener" class="rl-btn">
+                        <img src="{% static 'synergy_data/icons/cube.svg' %}" alt="" class="icon-svg icon-svg-sm">3D
+                    </a>
                     {% endif %}
                     {% if experiment.notes %}
-                    <button type="button" class="btn btn-sm btn-outline-secondary btn-view-notes"
+                    <button type="button" class="rl-btn btn-view-notes"
                             data-bs-toggle="modal" data-bs-target="#notesModal"
                             data-compound="{{ experiment.phytochemical.compound_name }}"
                             data-antibiotic="{{ experiment.antibiotic.antibiotic_name }}"
                             data-pathogen="{{ experiment.pathogen }}"
                             data-notes="{{ experiment.notes }}">
-                        <img src="{% static 'synergy_data/icons/note.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">Notes
+                        <img src="{% static 'synergy_data/icons/note.svg' %}" alt="" class="icon-svg icon-svg-sm">Notes
                     </button>
                     {% endif %}
+                    <button type="button" class="rl-btn btn-rl-share"
+                            data-url="{% if experiment.phytochemical.pk %}{{ request.scheme }}://{{ request.get_host }}{% url 'database_search' %}?phytochemical={{ experiment.phytochemical.pk }}{% else %}{{ request.build_absolute_uri }}{% endif %}"
+                            data-title="{{ experiment.phytochemical.compound_name }} + {{ experiment.antibiotic.antibiotic_name }} vs {{ experiment.pathogen }}">
+                        <i class="fas fa-share-nodes"></i>Share
+                    </button>
+                    <button type="button" class="rl-btn btn-rl-cite"
+                            data-citation="PhytoSynergyDB. {{ experiment.phytochemical.compound_name }} + {{ experiment.antibiotic.antibiotic_name }} vs {{ experiment.pathogen }}{% if experiment.fic_index %} (FIC {{ experiment.fic_index|floatformat:2 }}){% endif %}.{% if experiment.source.doi %} https://doi.org/{{ experiment.source.doi }}{% elif experiment.source.article_title %} {{ experiment.source.article_title }}.{% endif %}">
+                        <i class="fas fa-quote-right"></i>Copy citation
+                    </button>
                     {% if user.is_authenticated %}
-                    <a href="{% url 'edit_entry' experiment.pk %}" class="btn btn-sm btn-outline-warning" title="Edit this entry">
-                        <img src="{% static 'synergy_data/icons/pencil.svg' %}" alt="" class="icon-svg icon-svg-sm me-1">Edit
+                    <a href="{% url 'edit_entry' experiment.pk %}" class="rl-btn rl-btn-edit" title="Edit this entry">
+                        <img src="{% static 'synergy_data/icons/pencil.svg' %}" alt="" class="icon-svg icon-svg-sm">Edit
                     </a>
                     {% endif %}
                 </div>
-            </div>
+            </article>
         {% empty %}
             <div class="text-center p-5 rounded" style="background: var(--bg-section); border: 1px solid var(--border-light);">
                 <img src="{% static 'synergy_data/icons/magnifying-glass.svg' %}" alt="" class="icon-svg icon-svg-xl" style="opacity: 0.4; margin-bottom: 1rem;">
@@ -405,6 +384,43 @@
             document.getElementById('notesModalBody').textContent = notes;
         });
     });
+
+    // Share: native share sheet, falling back to clipboard with a brief "Copied" state.
+    document.querySelectorAll('.btn-rl-share').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var url = this.getAttribute('data-url') || window.location.href;
+            var title = this.getAttribute('data-title') || 'PhytoSynergyDB';
+            var self = this;
+            if (navigator.share) {
+                navigator.share({ title: title, url: url }).catch(function() {});
+                return;
+            }
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(function() { rlFlash(self, 'Link copied'); });
+            }
+        });
+    });
+
+    // Copy citation: write the prebuilt citation string to the clipboard.
+    document.querySelectorAll('.btn-rl-cite').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var citation = this.getAttribute('data-citation') || '';
+            var self = this;
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(citation).then(function() { rlFlash(self, 'Copied'); });
+            }
+        });
+    });
+
+    function rlFlash(btn, msg) {
+        var original = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i>' + msg;
+        btn.classList.add('rl-btn-done');
+        setTimeout(function() {
+            btn.innerHTML = original;
+            btn.classList.remove('rl-btn-done');
+        }, 1700);
+    }
 
     document.querySelectorAll('.btn-view3d').forEach(function(btn) {
         btn.addEventListener('click', function() {
