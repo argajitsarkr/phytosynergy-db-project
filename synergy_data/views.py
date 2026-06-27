@@ -161,7 +161,9 @@ def resolve_pathogen(full_name, gram_stain=None):
     if not pathogen.gram_stain:
         resolved = (gram_stain or '').strip() or derive_gram_stain(genus)
         if resolved:
-            pathogen.gram_stain = resolved
+            # gram_stain is varchar(20); guard against an oversized sheet value
+            # crashing the row (e.g. "Gram-negative bacilli").
+            pathogen.gram_stain = resolved[:20]
             pathogen.save(update_fields=['gram_stain'])
     return pathogen
 
@@ -964,6 +966,37 @@ def normalize_assay_method(raw_value, notes=''):
     return code, notes
 
 
+# Max length of SynergyExperiment.mic_units (varchar(20) in the DB).
+MIC_UNITS_MAX_LENGTH = 20
+
+
+def normalize_mic_units(raw_value, notes=''):
+    """Fit an oversized mic_units value into the varchar(20) column.
+
+    The DB column is varchar(20). Imports occasionally carry a long descriptive
+    units string (e.g. "mixed: phytochemical µl/mL, antimicrobial µg/mL" when
+    the phytochemical is dosed by volume and the antibiotic by mass) which
+    overflows the column and crashes the row. This collapses such text to a
+    short token ('mixed') and preserves the full original by prepending it to
+    ``notes`` so no curated detail is lost.
+
+    Returns (units, notes) - both ready to assign directly to the model.
+    """
+    value = (str(raw_value).strip() if raw_value is not None else '')
+    notes = notes or ''
+    if not value:
+        return 'µg/mL', notes
+    if len(value) <= MIC_UNITS_MAX_LENGTH:
+        return value, notes
+
+    # Too long for the column: store a short token, keep the detail in notes.
+    short = 'mixed' if 'mix' in value.lower() else value[:MIC_UNITS_MAX_LENGTH]
+    prefix = f"MIC units: {value}"
+    if prefix not in notes:
+        notes = f"{prefix}\n{notes}".strip() if notes else prefix
+    return short, notes
+
+
 def _parse_upload_to_rows(uploaded_file):
     """Parse either a CSV or XLSX upload into a list of dicts keyed by
     canonical column names. Returns (rows, total_row_count)."""
@@ -1356,7 +1389,6 @@ def bulk_import_view(request):
                         mic_abx_alone = _safe_decimal(row.get('mic_abx_alone'))
                         mic_phyto_in_combo = _safe_decimal(row.get('mic_phyto_in_combo'))
                         mic_abx_in_combo = _safe_decimal(row.get('mic_abx_in_combo'))
-                        mic_units = (row.get('mic_units') or 'µg/mL').strip() or 'µg/mL'
 
                         fic_index = _safe_decimal(row.get('fic_index'))
                         if fic_index is None:
@@ -1370,6 +1402,12 @@ def bulk_import_view(request):
 
                         assay_method, notes = normalize_assay_method(
                             row.get('assay_method'), row.get('notes') or '',
+                        )
+                        # Fit an oversized units string into varchar(20); the
+                        # full original is preserved in notes (same pattern as
+                        # assay_method above).
+                        mic_units, notes = normalize_mic_units(
+                            row.get('mic_units'), notes,
                         )
 
                         SynergyExperiment.objects.create(
