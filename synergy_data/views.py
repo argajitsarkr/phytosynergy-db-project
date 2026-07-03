@@ -510,7 +510,8 @@ def _searchable_phyto_qs():
 
 def similarity_search_page(request):
     """Rank database phytochemicals by Tanimoto similarity (ECFP4) to a query SMILES."""
-    query_smiles = (request.GET.get('smiles') or '').strip()
+    query_input = (request.GET.get('smiles') or '').strip()
+    query_smiles = query_input
 
     try:
         limit = min(max(int(request.GET.get('limit', 25)), 1), 100)
@@ -523,15 +524,35 @@ def similarity_search_page(request):
 
     results = []
     error = None
-    searched = bool(query_smiles)
+    searched = bool(query_input)
+    resolved_from = None      # set when the input was a compound name, not a SMILES
+    exclude_id = None
+
+    # If the input does not parse as a SMILES, treat it as a compound name and
+    # search by that curated compound's structure instead (exact match first,
+    # then a contains fallback). This lets a researcher type "Berberine" as well
+    # as a raw SMILES string.
+    if searched and similarity.rdkit_available() and similarity.compute_fingerprint(query_input) is None:
+        named = _searchable_phyto_qs()
+        match = (named.filter(compound_name__iexact=query_input).first()
+                 or named.filter(compound_name__icontains=query_input).first())
+        if match is not None:
+            query_smiles = match.canonical_smiles
+            resolved_from = match.compound_name
+            exclude_id = match.id
 
     if searched:
         try:
             ranked = similarity.search_similar(
-                query_smiles, limit=limit, threshold=threshold
+                query_smiles, limit=limit, threshold=threshold, exclude_id=exclude_id
             )
         except ValueError as exc:
-            error = str(exc)
+            if resolved_from is None:
+                error = ("We could not read '%s' as a SMILES string or match it to a "
+                         "curated compound name. Check the structure, or try a compound "
+                         "name like 'Berberine'." % query_input)
+            else:
+                error = str(exc)
         except RuntimeError as exc:
             error = str(exc)
         else:
@@ -547,7 +568,9 @@ def similarity_search_page(request):
                 })
 
     context = {
+        'query_input': query_input,
         'query_smiles': query_smiles,
+        'resolved_from': resolved_from,
         'results': results,
         'error': error,
         'searched': searched,

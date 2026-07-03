@@ -1168,6 +1168,32 @@ a:hover { color: var(--accent); }
     margin-bottom: 0;
 }
 
+/* About page prose lists (GrantSetu editorial restyle) */
+.about-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0.5rem 0 0;
+    max-width: 880px;
+}
+.about-list li {
+    position: relative;
+    padding-left: 1.6rem;
+    margin-bottom: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+.about-list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.55em;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary);
+}
+.about-list li strong { color: var(--dark); }
+
 .citation-box {
     background: var(--bg-section);
     border: 1px solid var(--border-light);
@@ -3276,6 +3302,10 @@ h1, h2, h3, h4, h5, h6 { color: var(--rzp-ink); letter-spacing: -0.01em; }
    CHEMICAL SIMILARITY SEARCH PAGE (job-board / sage redesign)
    All tokens are scoped to .simx-* so no other page is affected.
    ============================================================ */
+/* Variables must live on BOTH the hero (rendered in the search_banner block,
+   OUTSIDE .simx-page) and the page body, or the hero's --simx-* refs resolve
+   to nothing and the search bar loses its white pill / rounding / shadow. */
+.simx-hero,
 .simx-page {
     --simx-bg: #FAFAF8;
     --simx-ink: #1A1A1A;
@@ -3290,7 +3320,8 @@ h1, h2, h3, h4, h5, h6 { color: var(--rzp-ink); letter-spacing: -0.01em; }
     --simx-radius-pill: 999px;
     --simx-shadow: 0 10px 30px rgba(31, 41, 20, 0.08);
     --simx-shadow-sm: 0 2px 10px rgba(31, 41, 20, 0.06);
-
+}
+.simx-page {
     background: var(--simx-bg);
     font-family: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
     color: var(--simx-ink);

@@ -28,9 +28,9 @@
                 <span class="simx-searchbar-icon">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                 </span>
-                <input type="text" name="smiles" value="{{ query_smiles }}"
+                <input type="text" name="smiles" value="{{ query_input }}"
                        spellcheck="false" autocapitalize="off" autocomplete="off"
-                       placeholder="O=c1c(O)c(-c2ccc(O)c(O)c2)oc2cc(O)cc(O)c12">
+                       placeholder="Paste a SMILES, or type a compound name (e.g. Berberine)">
                 <button type="submit" class="simx-btn-dark">Search</button>
             </div>
 
@@ -87,7 +87,7 @@
                 Morgan / ECFP4 fingerprints. Each hit links to its recorded synergy experiments.
             </p>
             <div class="simx-intro-steps">
-                <div class="simx-step"><span class="simx-step-num">1</span> Paste a SMILES string</div>
+                <div class="simx-step"><span class="simx-step-num">1</span> Paste a SMILES or type a compound name</div>
                 <div class="simx-step"><span class="simx-step-num">2</span> We fingerprint and score every compound</div>
                 <div class="simx-step"><span class="simx-step-num">3</span> Browse ranked hits and their outcomes</div>
             </div>
@@ -102,7 +102,7 @@
         <div class="simx-results-head">
             <h2 class="simx-results-title">Similarity results</h2>
             <p class="simx-results-sub">
-                Query SMILES:
+                {% if resolved_from %}Matched name <strong>{{ resolved_from }}</strong> &rarr; structure{% else %}Query SMILES{% endif %}:
                 <code class="simx-code-chip">{{ query_smiles }}</code>
                 {% if results %}<span>&middot; {{ results|length }} hit{{ results|length|pluralize }}</span>{% endif %}
             </p>

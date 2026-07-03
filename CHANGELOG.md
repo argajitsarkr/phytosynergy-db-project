@@ -21,6 +21,12 @@
 
 ## Phase 4 - AI-Assisted Extraction + Analytics Dashboard (2026-03-24 - ongoing)
 
+### Enhancement 5b: Similarity page - UI fix + name search + faster scoring - 2026-07-02
+- **UI fix.** The `/similarity/` hero (rendered in the base `search_banner` block) sits OUTSIDE `.simx-page`, but every `--simx-*` CSS variable was scoped to `.simx-page` - so the hero's floating search bar lost its white pill background, rounding, and shadow, and the headline/chips rendered with fallback colours (the "messed" look). Fix: the variable block now lives on a shared `.simx-hero, .simx-page` selector.
+- **Search by compound name, not only SMILES.** If the input does not parse as a SMILES, the view resolves it to a curated compound (exact `compound_name` match, then a contains fallback) and searches by that compound's structure, excluding the compound itself from the ranking so it does not trivially rank #1 at 1.00. The results header shows `Matched name X -> structure`; the search box now echoes the typed input, and unresolvable input gets a clearer error.
+- **Faster scoring.** `search_similar` now gathers all candidate fingerprints once and runs a single vectorised `DataStructs.BulkTanimotoSimilarity` C-level pass instead of a per-compound Python `tanimoto()` call. New `exclude_id` param supports the self-match exclusion above.
+- Files: `synergy_data/similarity.py`, `synergy_data/views.py` (`similarity_search_page`), `similarity_search.html`, `custom.css`. DEPLOY: CSS + template + Python changed -> rebuild web + `collectstatic` + nginx restart.
+
 ### Enhancement 5: Chemical Similarity Search (`/similarity/`) - 2026-06-20
 - **Public page** where a researcher pastes a SMILES and gets the structurally most similar phytochemicals in the DB, ranked by **Tanimoto similarity** on 2048-bit **Morgan / ECFP4** fingerprints (radius 2).
 - Each hit shows the similarity score (with a bar), chemical class, molecular weight, and experiment/synergy counts, and deep-links to that compound's experiments via `database/?phytochemical=<id>`. The 3D structure viewer (3Dmol) is reused.

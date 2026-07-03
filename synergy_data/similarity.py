@@ -118,11 +118,14 @@ def update_fingerprint(phyto):
     return True
 
 
-def search_similar(query_smiles, limit=25, threshold=0.0):
+def search_similar(query_smiles, limit=25, threshold=0.0, exclude_id=None):
     """Rank stored phytochemicals by Tanimoto similarity to ``query_smiles``.
 
     Returns a list of ``{'phytochemical': <obj>, 'similarity': <float>}`` dicts
     sorted by descending similarity (ties broken by compound name).
+
+    ``exclude_id`` drops one Phytochemical from the candidate set - used when the
+    query itself is a curated compound, so it does not trivially rank #1 at 1.00.
 
     Raises:
         RuntimeError: RDKit is not installed on the server.
@@ -146,14 +149,28 @@ def search_similar(query_smiles, limit=25, threshold=0.0):
         .exclude(canonical_smiles__exact='')
     )
 
-    results = []
+    ref_objs, ref_fps = [], []
     for phyto in candidates:
+        if exclude_id is not None and phyto.id == exclude_id:
+            continue
         fp = get_phyto_fingerprint(phyto)
         if fp is None:
             continue
-        sim = tanimoto(query_fp, fp)
-        if sim >= threshold:
-            results.append({'phytochemical': phyto, 'similarity': sim})
+        ref_objs.append(phyto)
+        ref_fps.append(fp)
+
+    if not ref_fps:
+        return []
+
+    # One vectorised C-level pass instead of a Python-level call per compound.
+    _, _, DataStructs = _rdkit()
+    sims = DataStructs.BulkTanimotoSimilarity(query_fp, ref_fps)
+
+    results = [
+        {'phytochemical': obj, 'similarity': sim}
+        for obj, sim in zip(ref_objs, sims)
+        if sim >= threshold
+    ]
 
     results.sort(key=lambda r: (-r['similarity'], r['phytochemical'].compound_name.lower()))
     return results[:limit]
