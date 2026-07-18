@@ -13,13 +13,14 @@
 **Repo:** `https://github.com/argajitsarkr/phytosynergy-db-project.git`
 **Active branch:** `main` (only branch; `color-palette-redesign` was merged & deleted on 2026-04-30)
 **Server path:** `/home/mmilab/Desktop/Database/phytosynergy-project/` (NOT `~/phytosynergy-db-project`)
+**Local dev machine git root:** `D:\Sites\Projects` (this varies by machine/user - a prior revision of this file said `C:\Users\Arghya\Downloads\Projects\`, which is stale; always confirm with `git rev-parse --show-toplevel` rather than trusting a hardcoded path here)
 
 ---
 
 ## Repository Layout
 
 ```
-C:\Users\Arghya\Downloads\Projects\     ← GIT ROOT
+<git root>                               ← confirm actual path with `git rev-parse --show-toplevel`
 ├── manage.py
 ├── requirements.txt                    ← add packages here; rebuild Docker after changes
 ├── Dockerfile                          ← Python 3.12-slim; gunicorn CMD here
@@ -39,23 +40,37 @@ C:\Users\Arghya\Downloads\Projects\     ← GIT ROOT
 │   │                                      BULK_CSV_COLUMNS · COLUMN_MAP · _canonical_header
 │   ├── urls.py                         ← URL routing (see table below)
 │   ├── pubchem_utils.py                ← PubChem + ClassyFire HTTP enrichment
+│   ├── similarity.py                   ← RDKit fingerprint/Tanimoto logic (lazy RDKit import)
+│   ├── seo_views.py                    ← robots.txt / sitemap.xml / llms.txt hand-rolled views
 │   ├── context_processors.py           ← view_counter (injected into all templates)
 │   ├── admin.py
 │   ├── tests.py
 │   ├── management/commands/
 │   │   ├── enrich_phytochemicals.py    ← offline PubChem/ClassyFire backfill
-│   │   └── compute_properties.py      ← RDKit cheminformatics batch compute
+│   │   ├── compute_properties.py       ← RDKit cheminformatics batch compute
+│   │   ├── compute_fingerprints.py     ← backfill Morgan/ECFP4 fingerprints for similarity search
+│   │   ├── prune_non_eskape.py         ← delete out-of-scope (non-ESKAPE) experiments; dry-run by default, --apply to write
+│   │   ├── backfill_gram_stain.py      ← normalize abbreviated pathogen genera + backfill gram_stain; dry-run by default, --apply to write
+│   │   └── backfill_pmid.py            ← backfill Source.pmid from DOI via NCBI E-utilities; dry-run by default, --apply to write
 │   ├── templates/synergy_data/
 │   │   ├── base.html                   ← Plus Jakarta Sans, Bootstrap 5, blue palette
 │   │   ├── home.html · about.html · login.html
 │   │   ├── database_search.html · download.html
 │   │   ├── data_entry.html · bulk_import.html
+│   │   ├── similarity_search.html
 │   │   └── analytics.html · api_docs.html
 │   ├── static/                         ← app-level static assets
 │   └── templatetags/analytics_filters.py  ← heatmap_color (analytics) + chem_class_color (result-card class chips)
 ├── staticfiles/                        ← collectstatic output (do NOT edit manually)
+├── scripts/                             ← operational shell scripts (server-side; not run from Docker)
+│   ├── deploy.sh                       ← safe deploy: pre-deploy backup, git pull, rebuild web, migrate, collectstatic, health check, auto-info for rollback (`deploy.sh rollback`)
+│   ├── backup_db.sh                    ← pg_dump -> gzip into ~/phytosynergy_backups/; daily/pre-deploy/manual tags; keeps last 30 daily backups
+│   ├── restore_db.sh                   ← restore a backup produced by backup_db.sh
+│   └── setup_cron.sh                   ← one-time cron install for a 2 AM daily backup_db.sh run
+├── phytosynergydb-worker/               ← Cloudflare Worker passthrough (maintenance-page redirect on origin-down); NOT yet deployed as of the 2026-06-12 changelog entry - confirm current status before relying on it
 ├── CHANGELOG.md                        ← curated history of all features
 ├── DEPLOYMENT.md                       ← step-by-step server deploy guide
+├── DEVELOPMENT.md, SCHEMA.md, SITE_REPORT.md, TECHNICAL_SHEET.md, README.md  ← supporting docs, not covered in detail by this file
 └── CLAUDE.md                           ← this file
 ```
 
@@ -169,6 +184,23 @@ docker compose exec web python manage.py compute_fingerprints
 # Force re-fingerprint everything, or just one compound
 docker compose exec web python manage.py compute_fingerprints --all
 docker compose exec web python manage.py compute_fingerprints --name "Berberine"
+
+# Delete out-of-scope (non-ESKAPE) synergy experiments. Dry-run by default (prints
+# what would be deleted); pass --apply to actually delete. Back up the DB first.
+docker compose exec web python manage.py prune_non_eskape
+docker compose exec web python manage.py prune_non_eskape --apply
+docker compose exec web python manage.py prune_non_eskape --apply --clean-orphan-phyto
+
+# Normalize abbreviated pathogen genera (e.g. "S." -> "Staphylococcus") and backfill
+# Pathogen.gram_stain from genus for older rows. Dry-run by default; pass --apply to write.
+docker compose exec web python manage.py backfill_gram_stain
+docker compose exec web python manage.py backfill_gram_stain --apply
+
+# Backfill Source.pmid from DOI via NCBI E-utilities (esearch). Offline only - makes
+# one external HTTP call per source, never run inside a web request. Dry-run by
+# default; pass --apply to write. NCBI allows ~3 req/sec without an API key.
+docker compose exec web python manage.py backfill_pmid
+docker compose exec web python manage.py backfill_pmid --apply --email "you@example.com"
 ```
 
 ---
@@ -198,12 +230,11 @@ synergy experiments via `database/?phytochemical=<id>`.
 ## Correct Workflow for Making Changes
 
 1. **Read this file first**
-2. Edit files inside `C:\Users\Arghya\Downloads\Projects\`
+2. Edit files inside the git root (confirm the path with `git rev-parse --show-toplevel` - it varies by machine, see the note under Project Overview)
 3. Run `python manage.py check` to catch Django-level errors before committing
 4. Stage specific files - **NEVER `git add .`** (the root contains personal files)
 5. Commit and push:
    ```bash
-   cd "C:/Users/Arghya/Downloads/Projects"
    git add <specific files>
    git commit -m "descriptive message"
    git push origin main
@@ -364,6 +395,7 @@ Imported via the single Google Fonts URL at the top of `custom.css`. Do NOT add 
 
 | Date | Commit | Description |
 |------|--------|-------------|
+| 2026-07-18 | - | **CLAUDE.md accuracy pass (docs only, no code change).** Fixed five drift items found vs. the actual repo: (1) the hardcoded local git root `C:\Users\Arghya\Downloads\Projects\` was stale (current dev machine root is `D:\Sites\Projects`) - replaced with a note to confirm via `git rev-parse --show-toplevel` in both the Project Overview and the Correct Workflow steps, since the path is machine-dependent and will drift again; (2) Management Commands section was missing three existing commands - `prune_non_eskape` (dry-run delete of non-ESKAPE experiments, `--apply`/`--clean-orphan-phyto`), `backfill_gram_stain` (normalize abbreviated genera + backfill gram_stain, `--apply`), `backfill_pmid` (DOI -> PMID via NCBI E-utilities, offline-only, `--apply`/`--email`) - all added with usage examples; (3) `scripts/` directory (deploy.sh, backup_db.sh, restore_db.sh, setup_cron.sh) was absent from the Repository Layout tree - added with one-line descriptions; (4) `phytosynergydb-worker/` was only mentioned in an old changelog row - added to the layout tree with a note that its deploy status needs reconfirming; (5) `similarity.py`, `seo_views.py`, `similarity_search.html`, and the supporting doc files (DEVELOPMENT.md, SCHEMA.md, SITE_REPORT.md, TECHNICAL_SHEET.md, README.md) were missing from the layout tree - added. No em/en dashes introduced.
 | 2026-07-02 | - | **About page rebuilt in GrantSetu / NUUK editorial style + similarity page UI fix & functionality upgrade.** ABOUT: `about.html` rewritten to reuse the proven home-page GrantSetu classes - `hero-nuuk` hero (`label-pill` + `heading-display` + mini-stats), alternating `section-band section-white` / `section-tinted` sections each led by a label pill + display heading, a dark `section-dark` Methodology band with a `grid-band-dark` 6-cell grid, the Data Model as a `grid-band grid-2x2`, the FIC table in `table-bordered-nuuk`, FAQ as `faq-row` `<details>`, and a closing `cta-band`. ALL prior content preserved (Problem/Approach, Scope, Data Model, Methodology, FIC standards, Limitations, Versioning, FAQ, Cite, License, Terms, Privacy) - only re-styled/re-tiered. Dropped the old `.about-page-header` hero and sticky `.about-toc` (their CSS is now dead, left in place). Added one small new CSS block `.about-list` (dotted-bullet list). SIMILARITY (`/similarity/`): (1) UI fix - the hero renders in the base `search_banner` block OUTSIDE `.simx-page`, but all `--simx-*` vars were scoped to `.simx-page`, so the search bar lost its white pill / rounding / shadow and text colours fell back (the "messed" look); moved the var block onto a shared `.simx-hero, .simx-page` selector. (2) Name search - `similarity_search_page` now resolves a non-SMILES input to a curated compound by name (iexact then icontains) and searches by its structure, excluding the self-match (new `exclude_id` param on `search_similar`); results header shows `Matched name X -> structure`, the box echoes the typed input, unresolvable input gets a clearer error. (3) Faster scoring - `search_similar` runs one `DataStructs.BulkTanimotoSimilarity` C-level pass instead of a per-compound Python `tanimoto()` loop. Files: `about.html`, `similarity_search.html`, `views.py`, `similarity.py`, `custom.css`. `py_compile` clean; no em/en dashes. NOTE: not verified live (Chrome extension not connected) - needs eyes-on after deploy, and per the 2026-06-13 reverted-redesigns lesson the About restyle should be previewed before trusting. DEPLOY: templates + Python + CSS changed -> `git pull && docker compose build web && docker compose up -d web && docker compose exec web python manage.py collectstatic --noinput && docker compose restart nginx`. |
 | 2026-06-28 | - | **Bulk import: fix `value too long for type character varying(20)` on `mic_units`** (same class of bug as the 2026-06-18 varchar(50) assay_method overflow). A maintainer sheet had `mic_units = "mixed: phytochemical µl/mL, antimicrobial µg/mL"` (47 chars) on 4 rows, where the phytochemical was dosed by volume and the antibiotic by mass; `mic_units` is `varchar(20)`, so every such row crashed at the confirm step. Added `normalize_mic_units(raw_value, notes)` + `MIC_UNITS_MAX_LENGTH=20` in views.py (mirrors `normalize_assay_method`): any units string over 20 chars collapses to a short token (`mixed`, else a 20-char trim) and the full original is preserved by prepending `MIC units: ...` to `notes`, so no curated detail is lost. Wired into the bulk-import confirm step right after `normalize_assay_method` (chained on the same `notes`), replacing the old raw `mic_units = (row.get('mic_units') or 'µg/mL').strip()` line. Also defensively guarded `gram_stain` in `resolve_pathogen` with `[:20]` (also varchar(20); e.g. `Gram-negative bacilli` is 21). The third varchar(20) field, `interpretation`, was already safe (importer forces one of the four valid words). Also produced a corrected `_FIXED.xlsx` for the maintainer's failing upload (mic_units -> `mixed`, full string moved to notes). `py_compile` clean; no em/en dashes. DEPLOY: code-only change -> `git pull && docker compose build web && docker compose up -d web` (no collectstatic/nginx). |
 | 2026-06-25 | - | **Result card: navy + brown thematic colour split** (`#1D276F` navy = data / antibiotic side, `#6F431D` brown = phytochemical / botanical side). Approved via mockup first. In `database_search.html` the title now wraps each name (`<span class="rl-phyto">` brown phytochemical, `<span class="rl-abx">` navy antibiotic, muted `+`) so the pairing title doubles as a legend; the two MIC lines got `rl-mic-abx` (navy) / `rl-mic-phyto` (brown) classes and their icons switched to FontAwesome (`fa-pills` / `fa-leaf`) so the glyph inherits the theme colour. In custom.css: brown 3px `border-top` on `.rl-card` (preserved on hover), navy FIC value + abx MIC, brown phyto MIC, navy `.rl-btn-primary` (Source paper). IMPORTANT - the theme is non-semantic and used ONLY on these cues: the interpretation badge keeps its meaning-colours and the categorical class chips keep the `chem_class_color` map (a class reads the same colour on cards and, later, in filters), so the two colour systems never collide. `#1D276F` is a near-match to the existing brand navy, so it is not a palette shift; brown is the genuinely new accent. Deferred this round (maintainer said skip): the chemical-class filter dropdown -> colour chips, and an analytics chemical-class chart. Braces balanced; no em/en dashes. |
