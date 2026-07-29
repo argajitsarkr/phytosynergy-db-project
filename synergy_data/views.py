@@ -274,7 +274,6 @@ def home_page(request):
     synergy_entries_count = SynergyExperiment.objects.count()
     phytochemical_count = Phytochemical.objects.count()
     antibiotic_count = Antibiotic.objects.count()
-    source_count = Source.objects.count()
     eskape_pathogen_count = 6
     synergy_confirmed_count = SynergyExperiment.objects.filter(
         interpretation='Synergy'
@@ -302,29 +301,6 @@ def home_page(request):
         synergy_share = round(100.0 * synergy_confirmed_count / synergy_entries_count)
     else:
         synergy_share = 0
-
-    # Distinct journal names for the "Data provenance" marquee on the home page.
-    # Pulled live from the curated sources so the strip always reflects the DB.
-    # De-duplicated case-insensitively, then split into two rows for the two
-    # opposite-scrolling tracks. Only shown when there are enough to scroll.
-    seen_journals = set()
-    journals = []
-    for raw in Source.objects.exclude(journal__isnull=True).exclude(
-        journal__exact=''
-    ).values_list('journal', flat=True):
-        name = (raw or '').strip()
-        key = name.lower()
-        if name and key not in seen_journals:
-            seen_journals.add(key)
-            journals.append(name)
-    journals.sort(key=str.lower)
-    if len(journals) >= 6:
-        half = (len(journals) + 1) // 2
-        journals_row1 = journals[:half]
-        journals_row2 = journals[half:]
-    else:
-        journals_row1 = []
-        journals_row2 = []
 
     # FAQ entries (also emitted as schema.org JSON-LD in template)
     faq_data = [
@@ -362,14 +338,11 @@ def home_page(request):
         'synergy_entries_count': synergy_entries_count,
         'phytochemical_count': phytochemical_count,
         'antibiotic_count': antibiotic_count,
-        'source_count': source_count,
         'eskape_pathogen_count': eskape_pathogen_count,
         'synergy_confirmed_count': synergy_confirmed_count,
         'synergy_share': synergy_share,
         'eskape_data': eskape_data,
         'recent_entries': recent_entries,
-        'journals_row1': journals_row1,
-        'journals_row2': journals_row2,
         'faq_data': faq_data,
     }
     return render(request, 'synergy_data/home.html', context)
@@ -384,7 +357,6 @@ def about_page(request):
     total_phytochemicals = Phytochemical.objects.count()
     total_antibiotics = Antibiotic.objects.count()
     total_pathogens = Pathogen.objects.count()
-    total_sources = Source.objects.count()
     total_synergy = SynergyExperiment.objects.filter(interpretation='Synergy').count()
     last_curation_date = timezone.now().strftime('%B %Y')
 
@@ -417,7 +389,6 @@ def about_page(request):
         'total_phytochemicals': total_phytochemicals,
         'total_antibiotics': total_antibiotics,
         'total_pathogens': total_pathogens,
-        'total_sources': total_sources,
         'total_synergy': total_synergy,
         'last_curation_date': last_curation_date,
         'about_faqs': about_faqs,
@@ -1987,7 +1958,6 @@ def analytics_page(request):
     total_phytochemicals = Phytochemical.objects.count()
     total_antibiotics = Antibiotic.objects.count()
     total_pathogens = Pathogen.objects.count()
-    total_sources = Source.objects.count()
 
     context = {
         'interpretation_json': json.dumps(interpretation_data),
@@ -2003,6 +1973,5 @@ def analytics_page(request):
         'total_phytochemicals': total_phytochemicals,
         'total_antibiotics': total_antibiotics,
         'total_pathogens': total_pathogens,
-        'total_sources': total_sources,
     }
     return render(request, 'synergy_data/analytics.html', context)
