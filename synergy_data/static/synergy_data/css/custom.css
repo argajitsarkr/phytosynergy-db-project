@@ -2160,7 +2160,12 @@ select:focus {
     font-weight: 900;
     font-size: clamp(2.5rem, 6vw, 4.5rem);
     letter-spacing: -0.03em;
-    color: var(--primary);
+    /* Must be white, NOT var(--primary). The band background is var(--rzp-ink)
+       and both variables resolve to #0D2366, so var(--primary) rendered the
+       numbers navy-on-navy (contrast 1:1 - invisible). They only became
+       readable when the user drag-selected them, because ::selection forces
+       color:#fff. This was misdiagnosed as a Chromium stale-paint bug. */
+    color: #ffffff;
     margin: 0;
     line-height: 1;
 }
