@@ -3682,3 +3682,86 @@ h1, h2, h3, h4, h5, h6 { color: var(--rzp-ink); letter-spacing: -0.01em; }
     .simx-btn-dark { order: 3; width: 100%; justify-content: center; }
     .simx-card-top { flex-direction: column; }
 }
+
+
+/* ============================================================
+   SEARCHABLE FILTER DROPDOWNS (.fsel)
+   Database search filter row. These replace native <select>s:
+   a native select popup cannot have its height capped in CSS, so
+   with 100+ antibiotics Chrome expanded the list over the entire
+   viewport. The closed control deliberately reuses .form-select
+   .form-select-sm so it looks identical to the old selects.
+   ============================================================ */
+.fsel {
+    position: relative;
+}
+/* Match the native select's caret and left-aligned label. */
+.fsel-toggle {
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.fsel-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 1056;              /* above Bootstrap modal backdrop (1050) */
+    background: #ffffff;
+    border: 1px solid var(--rzp-hairline);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(13, 35, 102, 0.12);
+    padding: 0.5rem;
+}
+.fsel.is-open .fsel-menu {
+    display: block;
+}
+.fsel-search {
+    width: 100%;
+    font-size: 0.85rem;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--rzp-hairline);
+    border-radius: 8px;
+    margin-bottom: 0.4rem;
+    outline: none;
+}
+.fsel-search:focus {
+    border-color: var(--primary);
+}
+/* THE FIX: the list scrolls inside a capped box instead of the popup
+   growing to fit every option. */
+.fsel-list {
+    max-height: 240px;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.fsel-opt {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fsel-opt:hover {
+    background: var(--primary-light);
+}
+.fsel-opt.is-selected {
+    background: var(--primary-light);
+    font-weight: 600;
+    color: var(--primary);
+}
+.fsel-empty {
+    display: none;
+    margin: 0;
+    padding: 0.5rem 0.6rem;
+    font-size: 0.85rem;
+    color: var(--rzp-body);
+}

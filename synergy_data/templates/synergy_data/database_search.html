@@ -88,37 +88,76 @@
 
             <!-- Advanced Filters Row -->
             <div class="row mt-3">
+                {# Searchable filter dropdowns. These replace native <select>s because a
+                   native select popup cannot have its height capped by CSS - with 100+
+                   antibiotics Chrome expanded the list over the whole viewport. Each one
+                   submits the SAME parameter name and the SAME value (pathogen/antibiotic
+                   send an id, mechanism/chemical_class send a string) via a hidden input,
+                   so _apply_search_filters is unchanged. Closed appearance is identical:
+                   the toggle reuses .form-select.form-select-sm. #}
                 <div class="col-md-3">
-                    <select name="pathogen" class="form-select form-select-sm" onchange="this.form.submit()">
-                        <option value="">Any Pathogen (with strain)</option>
-                        {% for p in pathogens %}
-                            <option value="{{ p.id }}" {% if p.id|stringformat:"s" == selected_pathogen %}selected{% endif %}>{{ p }}</option>
-                        {% endfor %}
-                    </select>
+                    <div class="fsel" data-placeholder="Any Pathogen (with strain)">
+                        <input type="hidden" name="pathogen" value="{{ selected_pathogen|default:'' }}">
+                        <button type="button" class="form-select form-select-sm fsel-toggle">Any Pathogen (with strain)</button>
+                        <div class="fsel-menu">
+                            <input type="text" class="fsel-search" placeholder="Type to filter..." autocomplete="off" aria-label="Filter pathogens">
+                            <ul class="fsel-list">
+                                <li class="fsel-opt" data-value="">Any Pathogen (with strain)</li>
+                                {% for p in pathogens %}
+                                    <li class="fsel-opt{% if p.id|stringformat:"s" == selected_pathogen %} is-selected{% endif %}" data-value="{{ p.id }}">{{ p }}</li>
+                                {% endfor %}
+                            </ul>
+                            <p class="fsel-empty">No match</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-3">
-                    <select name="antibiotic" class="form-select form-select-sm" onchange="this.form.submit()">
-                        <option value="">Any Antibiotic</option>
-                        {% for a in antibiotics %}
-                            <option value="{{ a.id }}" {% if a.id|stringformat:"s" == selected_antibiotic %}selected{% endif %}>{{ a.antibiotic_name }}</option>
-                        {% endfor %}
-                    </select>
+                    <div class="fsel" data-placeholder="Any Antibiotic">
+                        <input type="hidden" name="antibiotic" value="{{ selected_antibiotic|default:'' }}">
+                        <button type="button" class="form-select form-select-sm fsel-toggle">Any Antibiotic</button>
+                        <div class="fsel-menu">
+                            <input type="text" class="fsel-search" placeholder="Type to filter..." autocomplete="off" aria-label="Filter antibiotics">
+                            <ul class="fsel-list">
+                                <li class="fsel-opt" data-value="">Any Antibiotic</li>
+                                {% for a in antibiotics %}
+                                    <li class="fsel-opt{% if a.id|stringformat:"s" == selected_antibiotic %} is-selected{% endif %}" data-value="{{ a.id }}">{{ a.antibiotic_name }}</li>
+                                {% endfor %}
+                            </ul>
+                            <p class="fsel-empty">No match</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-3">
-                    <select name="mechanism" class="form-select form-select-sm" onchange="this.form.submit()">
-                        <option value="">Any Mechanism</option>
-                        {% for m in mechanisms %}
-                             <option value="{{ m }}" {% if m == selected_mechanism %}selected{% endif %}>{{ m }}</option>
-                        {% endfor %}
-                    </select>
+                    <div class="fsel" data-placeholder="Any Mechanism">
+                        <input type="hidden" name="mechanism" value="{{ selected_mechanism|default:'' }}">
+                        <button type="button" class="form-select form-select-sm fsel-toggle">Any Mechanism</button>
+                        <div class="fsel-menu">
+                            <input type="text" class="fsel-search" placeholder="Type to filter..." autocomplete="off" aria-label="Filter mechanisms">
+                            <ul class="fsel-list">
+                                <li class="fsel-opt" data-value="">Any Mechanism</li>
+                                {% for m in mechanisms %}
+                                    <li class="fsel-opt{% if m == selected_mechanism %} is-selected{% endif %}" data-value="{{ m }}">{{ m }}</li>
+                                {% endfor %}
+                            </ul>
+                            <p class="fsel-empty">No match</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-3">
-                    <select name="chemical_class" class="form-select form-select-sm" onchange="this.form.submit()">
-                        <option value="">Any Chemical Class</option>
-                        {% for cc in chemical_classes %}
-                            <option value="{{ cc }}" {% if cc == selected_chemical_class %}selected{% endif %}>{{ cc }}</option>
-                        {% endfor %}
-                    </select>
+                    <div class="fsel" data-placeholder="Any Chemical Class">
+                        <input type="hidden" name="chemical_class" value="{{ selected_chemical_class|default:'' }}">
+                        <button type="button" class="form-select form-select-sm fsel-toggle">Any Chemical Class</button>
+                        <div class="fsel-menu">
+                            <input type="text" class="fsel-search" placeholder="Type to filter..." autocomplete="off" aria-label="Filter chemical classes">
+                            <ul class="fsel-list">
+                                <li class="fsel-opt" data-value="">Any Chemical Class</li>
+                                {% for cc in chemical_classes %}
+                                    <li class="fsel-opt{% if cc == selected_chemical_class %} is-selected{% endif %}" data-value="{{ cc }}">{{ cc }}</li>
+                                {% endfor %}
+                            </ul>
+                            <p class="fsel-empty">No match</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -482,6 +521,86 @@
         }
         document.getElementById('mol-viewer-container').innerHTML = '';
     });
+})();
+
+/* ------------------------------------------------------------------
+   Searchable filter dropdowns (.fsel)
+   Replaces the native <select>s on the filter row. A native select
+   popup cannot have its height capped in CSS, so with 100+ antibiotics
+   Chrome expanded the list over the whole viewport. This keeps the same
+   submitted parameter name/value (via the hidden input) and the same
+   auto-submit-on-choice behaviour the selects had.
+   ------------------------------------------------------------------ */
+(function () {
+    var wraps = document.querySelectorAll('.fsel');
+    if (!wraps.length) { return; }
+
+    function closeAll(except) {
+        wraps.forEach(function (w) {
+            if (w !== except) { w.classList.remove('is-open'); }
+        });
+    }
+
+    wraps.forEach(function (wrap) {
+        var toggle = wrap.querySelector('.fsel-toggle');
+        var hidden = wrap.querySelector('input[type="hidden"]');
+        var search = wrap.querySelector('.fsel-search');
+        var empty  = wrap.querySelector('.fsel-empty');
+        var opts   = Array.prototype.slice.call(wrap.querySelectorAll('.fsel-opt'));
+
+        // Label the closed control with the current selection, so a filter
+        // that is active after a page load still reads correctly.
+        var current = wrap.querySelector('.fsel-opt.is-selected');
+        toggle.textContent = current ? current.textContent : wrap.dataset.placeholder;
+
+        toggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var opening = !wrap.classList.contains('is-open');
+            closeAll(wrap);
+            wrap.classList.toggle('is-open', opening);
+            if (opening) {
+                search.value = '';
+                opts.forEach(function (o) { o.hidden = false; });
+                empty.style.display = 'none';
+                search.focus();
+            }
+        });
+
+        // Clicks inside the popup (notably the search box) must not bubble to
+        // the document handler below, which would close the menu immediately.
+        wrap.querySelector('.fsel-menu').addEventListener('click', function (e) {
+            e.stopPropagation();
+        });
+
+        search.addEventListener('input', function () {
+            var q = search.value.trim().toLowerCase();
+            var shown = 0;
+            opts.forEach(function (o) {
+                var hit = !q || o.textContent.toLowerCase().indexOf(q) !== -1;
+                o.hidden = !hit;
+                if (hit) { shown++; }
+            });
+            empty.style.display = shown ? 'none' : 'block';
+        });
+
+        // Keep typing from submitting the surrounding form on Enter.
+        search.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); }
+            if (e.key === 'Escape') { wrap.classList.remove('is-open'); toggle.focus(); }
+        });
+
+        wrap.querySelector('.fsel-list').addEventListener('click', function (e) {
+            var opt = e.target.closest('.fsel-opt');
+            if (!opt) { return; }
+            hidden.value = opt.dataset.value;
+            toggle.textContent = opt.textContent;
+            wrap.classList.remove('is-open');
+            // Mirrors the old onchange="this.form.submit()" on the selects.
+            if (hidden.form) { hidden.form.submit(); }
+        });
+    });
+
+    document.addEventListener('click', function () { closeAll(null); });
 })();
 </script>
 {% endblock %}
