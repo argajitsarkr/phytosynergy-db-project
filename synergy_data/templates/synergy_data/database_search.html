@@ -88,13 +88,19 @@
 
             <!-- Advanced Filters Row -->
             <div class="row mt-3">
-                {# Searchable filter dropdowns. These replace native <select>s because a
-                   native select popup cannot have its height capped by CSS - with 100+
-                   antibiotics Chrome expanded the list over the whole viewport. Each one
-                   submits the SAME parameter name and the SAME value (pathogen/antibiotic
-                   send an id, mechanism/chemical_class send a string) via a hidden input,
-                   so _apply_search_filters is unchanged. Closed appearance is identical:
-                   the toggle reuses .form-select.form-select-sm. #}
+                {% comment %}
+                   Searchable filter dropdowns. These replace the native select
+                   elements because a native select popup cannot have its height
+                   capped by CSS - with 100+ antibiotics Chrome expanded the list
+                   over the whole viewport. Each one submits the SAME parameter
+                   name and the SAME value (pathogen/antibiotic send an id,
+                   mechanism/chemical_class send a string) via a hidden input, so
+                   _apply_search_filters is unchanged. Closed appearance is
+                   identical: the toggle reuses .form-select.form-select-sm.
+                   NOTE: keep this as a comment block. A hash-style Django
+                   comment only works on a SINGLE line; spanning one over
+                   several lines leaks the raw text onto the rendered page.
+                {% endcomment %}
                 <div class="col-md-3">
                     <div class="fsel" data-placeholder="Any Pathogen (with strain)">
                         <input type="hidden" name="pathogen" value="{{ selected_pathogen|default:'' }}">
