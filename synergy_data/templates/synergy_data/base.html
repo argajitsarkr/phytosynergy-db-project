@@ -26,12 +26,6 @@
     <meta property="og:image" content="{% block og_image %}{{ SITE_URL }}{% static 'synergy_data/images/hero-background-light.jpg' %}{% endblock %}">
     <meta property="og:locale" content="en_US">
 
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{% block twitter_title %}PhytoSynergyDB - Phytochemical-Antibiotic Synergy Database{% endblock %}">
-    <meta name="twitter:description" content="{% block twitter_description %}A free, expert-curated database of phytochemical-antibiotic synergy experiments against ESKAPE pathogens.{% endblock %}">
-    <meta name="twitter:image" content="{% block twitter_image %}{{ SITE_URL }}{% static 'synergy_data/images/hero-background-light.jpg' %}{% endblock %}">
-
     <!-- 1. Main Framework CSS -->
     {% bootstrap_css %}
 
@@ -176,7 +170,6 @@
                     <ul class="footer-links">
                         <li><a href="{% url 'about' %}">About</a></li>
                         <li><a href="{% url 'about' %}#contact">Contact</a></li>
-                        <li><a href="https://github.com/argajitsarkr/phytosynergy-db-project" target="_blank" rel="noopener">GitHub</a></li>
                     </ul>
                     <p class="footer-disclaimer">
                         Data curated from peer-reviewed publications. PhytoSynergyDB is an
@@ -210,13 +203,7 @@
             <div class="footer-bottom-bar">
                 <p class="footer-copy">&copy; {% now "Y" %} PhytoSynergyDB &middot; Built by researchers, for researchers</p>
                 <div class="footer-social">
-                    <a href="https://github.com/argajitsarkr/phytosynergy-db-project" target="_blank" rel="noopener" aria-label="GitHub">
-                        <i class="fab fa-github"></i>
-                    </a>
-                    <a href="https://twitter.com/" target="_blank" rel="noopener" aria-label="X / Twitter">
-                        <i class="fab fa-x-twitter"></i>
-                    </a>
-                    <a href="mailto:contact@phytosynergydb.in" aria-label="Email">
+                    <a href="mailto:argajit05@gmail.com" aria-label="Email">
                         <img src="{% static 'synergy_data/icons/mailbox.svg' %}" alt="Email" class="icon-svg icon-svg-md">
                     </a>
                 </div>
@@ -287,8 +274,7 @@
           "name": "PhytoSynergyDB",
           "url": "{{ SITE_URL }}/",
           "logo": "{{ SITE_URL }}{% static 'synergy_data/images/logo.png' %}",
-          "description": "An expert-curated database of phytochemical-antibiotic synergy experiments against ESKAPE pathogens for antimicrobial resistance research.",
-          "sameAs": ["https://github.com/argajitsarkr/phytosynergy-db-project"]
+          "description": "An expert-curated database of phytochemical-antibiotic synergy experiments against ESKAPE pathogens for antimicrobial resistance research."
         },
         {
           "@type": "WebSite",
