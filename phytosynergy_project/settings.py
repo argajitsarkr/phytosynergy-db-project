@@ -69,6 +69,7 @@ BING_SITE_VERIFICATION = os.environ.get('BING_SITE_VERIFICATION', '')
 INSTALLED_APPS = [
     'synergy_data',
     'bootstrap5',
+    'axes',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -85,7 +86,38 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # AxesMiddleware must be LAST so it sees the outcome of authentication.
+    'axes.middleware.AxesMiddleware',
 ]
+
+# django-axes: lock out repeated failed logins on /accounts/login/ and /admin/.
+# Both were previously unlimited.
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',   # must come first
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+AXES_FAILURE_LIMIT = int(os.environ.get('AXES_FAILURE_LIMIT', '5'))
+AXES_COOLOFF_TIME = int(os.environ.get('AXES_COOLOFF_TIME_HOURS', '1'))  # hours
+AXES_RESET_ON_SUCCESS = True
+
+# IMPORTANT - lock on USERNAME only, never on IP.
+# This app sits behind cloudflared -> nginx -> gunicorn, so unless the real
+# client IP is resolved perfectly, every request looks like it comes from the
+# proxy. Locking on ip_address in that situation means 5 bad logins by anyone
+# lock out EVERY curator at once - a self-inflicted denial of service. Locking
+# on the username cannot do that. The trade-off is that someone could
+# deliberately lock a known username for AXES_COOLOFF_TIME; with a handful of
+# internal curators that is much the lesser risk.
+AXES_LOCKOUT_PARAMETERS = ['username']
+
+# Resolve the true client IP for the audit log (not for lockout decisions).
+# cloudflared sets CF-Connecting-IP; nginx passes it through.
+AXES_IPWARE_META_PRECEDENCE_ORDER = (
+    'HTTP_CF_CONNECTING_IP',
+    'HTTP_X_FORWARDED_FOR',
+    'REMOTE_ADDR',
+)
 
 ROOT_URLCONF = 'phytosynergy_project.urls'
 
