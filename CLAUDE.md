@@ -447,7 +447,8 @@ docker compose restart web             # nginx + db stay up; only web restarts
   ```
   Confirm the byte count looks right and, ideally, that two downloads are `cmp`-identical.
 - **After deploying any SRI change, check the canaries:** `/analytics/` charts must draw and the 3D viewer modal on `/database/` must render a molecule.
-- Bootstrap is exempt: `django-bootstrap-v5` renders its own CDN tags WITH integrity already, and there is no `BOOTSTRAP5` override in settings.py.
+- Bootstrap is exempt, and this was VERIFIED against the pinned wheel (`django-bootstrap-v5==1.0.11`), not assumed: `BOOTSTRAP5_DEFAULTS` in `bootstrap5/bootstrap.py` carries `integrity` + `crossorigin` for both `css_url` and `javascript_url`, and the render path (`bootstrap_css` -> `render_link_tag` -> `sanitize_url_dict` copies the WHOLE dict -> `render_tag` -> `flatatt`) emits every key as a real HTML attribute. There is no `BOOTSTRAP5` override in settings.py, so those defaults apply.
+- **BUT note what those defaults pin: Bootstrap 5.1.3 (November 2021).** The version is baked into the package defaults, not chosen by us. If it is ever upgraded by adding a `BOOTSTRAP5` dict to settings.py, that override REPLACES the default dict - so the new entry MUST include its own matching `integrity` and `crossorigin` keys, derived with the file-based method above. Overriding only the `href`/`url` silently drops SRI on the site's largest JS dependency; getting the hash wrong instead breaks every page's CSS and JS at once.
 
 ### 13. This app is behind a proxy - NEVER key a lockout or rate limit on the client IP
 - **The trap:** traffic arrives Cloudflare -> `cloudflared` container -> nginx -> gunicorn. So `$remote_addr` in nginx, and `REMOTE_ADDR` in Django, are the PROXY's address on every single request. Anything keyed on them treats the entire internet as ONE client.
